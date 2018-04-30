@@ -4,124 +4,11 @@
 #include<algorithm>
 #include<complex>
 #include<math.h>
+#include "tensortools.h"
+#include "Main.h"
+#include "CONTRACT.h"
 using namespace std;
 
-std::string evaluate();
-void decompose_factors(string str);
-std::string replace_fund();
-void replace_k();
-void replace_f();
-void replace_d();
-void replace_2fd();
-void replace_2df();
-bool is_free_index(int index);
-void del_all_indices();
-void reset();
-std::string build_string(bool evaluated);
-
-class three_ind {
-    std::vector<std::vector<int>> ind;
-    public:
-        void set_indices(int i, int j, int k) {
-            std::vector<int> new_ind {i, j, k};
-            ind.push_back(new_ind);
-        }
-        void del_indices(size_t it) {
-            ind.erase(ind.begin()+it);
-        }
-        void clear_indices() {
-            ind.clear();
-        }
-        void find_and_rep_indices(int old_ind, int new_ind) {
-            for (int it(0); it<ind.size(); ++it) replace(ind[it].begin(), ind[it].end(), old_ind, new_ind);
-        }
-        int matching_indices(size_t it1, size_t it2) {
-            int cntr(0);
-            for (size_t i(0);i<ind[it2].size();i++) cntr+=count(ind[it1].begin(), ind[it1].end()+1, ind[it2][i]);
-            return cntr;
-        }
-        void swap_indices_at(size_t pos, size_t it1, size_t it2) {
-            int dummy=ind[pos][it1];
-            ind[pos][it1]=ind[pos][it2];
-            ind[pos][it2]=dummy;
-        }
-        void rotate_indices_at(size_t it) {
-            std::rotate(ind[it].begin(), ind[it].begin()+1,ind[it].end());
-        }
-        int count_index(int index) {
-            int cntr(0);
-            for (size_t it(0); it<ind.size(); ++it) cntr+=count(ind[it].begin(), ind[it].end(), index);
-            return cntr;
-        }
-        int count_index_at(int index, size_t pos) {
-            int cntr(0);
-            cntr+=count(ind[pos].begin(), ind[pos].end()+1, index);
-            return cntr;
-        }
-        int index(size_t it0, size_t it1) {
-            return (ind.at(it0)).at(it1);
-        }
-        size_t len() {
-            return ind.size();
-        }
-        std::pair<size_t,size_t> find_index(int index, size_t start) {
-            if (ind.size()>0) {
-                size_t it(start);
-                size_t f=find(ind[start].begin(), ind[start].end()+1, index)-ind[start].begin();
-                while (it<ind.size() && f>=3) {
-                    if ((f=find(ind[it].begin(), ind[it].end()+1, index)-ind[it].begin())>=3) it++;
-                }
-                return std::pair<size_t,size_t>(it,f);
-            }
-            else return std::pair<size_t,size_t>(1,3);
-        }
-        bool has_index_at(int index, size_t it) {
-            if (find(ind[it].begin(), ind[it].end()+1, index)<ind[it].end()) return true;
-            else return false;
-        }
-};
-class two_ind {
-    std::vector<std::vector<int>> ind;
-    public:
-        void set_indices(int i, int j) {
-            std::vector<int> new_ind {i, j};
-            ind.push_back(new_ind);
-        }
-        void del_indices(int it) {
-            ind.erase(ind.begin()+it);
-        }
-        void clear_indices() {
-            ind.clear();
-        }
-        void find_and_rep_indices(int old_ind, int new_ind) {
-            for (int it(0); it<ind.size(); ++it) replace(ind[it].begin(), ind[it].end(), old_ind, new_ind);
-        }
-        int count_index(int index) {
-            int cntr(0);
-            for (size_t it(0); it<ind.size(); ++it) cntr+=count(ind[it].begin(), ind[it].end(), index);
-            return cntr;
-        }
-        int index(size_t it0, size_t it1) {
-            return (ind.at(it0)).at(it1);
-        }
-        size_t len() {
-            return ind.size();
-        }
-        std::pair<size_t,size_t> find_index(int index, size_t start) {
-            if (ind.size()>0) {
-                size_t it(start+1);
-                size_t f=find(ind[start].begin(), ind[start].end(), index)-ind[start].begin();
-                while (it<ind.size() && f>=2) {
-                    f=find(ind[it].begin(), ind[it].end(), index)-ind[it].begin();
-                    ++it;
-                }
-                return std::pair<size_t,size_t>(it-1,f);
-            }
-            else return std::pair<size_t,size_t>(1,2);
-        }
-};
-
-std::string expr;
 three_ind symmetric;
 three_ind antisymmetric;
 three_ind fundamental;
@@ -130,174 +17,145 @@ two_ind kronecker_eval;
 std::complex<float> prefactor = 1.;
 static float NC = 3.; // number of colours
 
-int main(int argc, char **argv) {
-    for (int i=1;i<argc;i++) expr+=argv[i];
-    cout << "= " << evaluate() << endl;
-}
-std::string evaluate() {
-    expr=replace_fund();
-    std::string eval="";
-    for (size_t i(0), mpos(expr.find('+'));mpos!=std::string::npos || expr.length()>0;mpos=expr.find('+')) {
-        ++i;
-        // decompose input into summands
-        std::string summand;
-        if (mpos==std::string::npos) {
-            summand=expr;
-            expr="";
-        }
-        else {
-            summand=expr.substr(0,mpos);
-            expr=expr.substr(mpos+1);
-        }
-        // decompose summand into factors
+void evaluate(terms& expr) {
+    replace_fund(expr);
+    for (size_t i(0);i<expr.no_of_terms();i++) {
         reset();
-        decompose_factors(summand);
+        symmetric=expr.sym[i];
+        antisymmetric=expr.asym[i];
+        fundamental=expr.fund[i];
+        kronecker=expr.kron[i];
+        prefactor=expr.pref[i];
+        
         // evaluate factor
-        /* replace this by overall routine */
-        replace_k();
-        replace_f();
-        replace_d();
-        replace_2fd();
-        replace_2df();
-        /***********************************/
-        if (eval!="") eval+="+";
-        eval+=build_string(true);
-    }
-    return eval;
-}
-void decompose_factors(string str) {
-    for (size_t i(0), mpos(str.find('*'));mpos!=std::string::npos || str.length()>0;mpos=str.find('*')) {
-        ++i;
-        std::string factor;
-        if (mpos==std::string::npos) {
-            factor=str;
-            str="";
+        fully_contract();
+    
+        if (nonvanishing_expr()) {
+            expr.sym[i]=symmetric;
+            expr.asym[i]=antisymmetric;
+            expr.fund[i]=fundamental;
+            expr.kron[i]=kronecker_eval;
+            expr.pref[i]=prefactor;
         }
-        else {
-            factor=str.substr(0,mpos);
-            str=str.substr(mpos+1);
-        }
-        // TODO implement better error handling
-        if (factor.find("c_[")==0 && factor[factor.length()-1]==']') {
-            size_t cpos(factor.find(','));
-            if (cpos==std::string::npos || factor.find(',',cpos+1)!=std::string::npos)
-                cout << "Invalid prefactor." << endl;
-            std::complex<float> prfct=stof(factor.substr(3,cpos-3))+stof(factor.substr(cpos+1,factor.length()-cpos-2))*1.i;
-            prefactor*=prfct;
-        }
-        else if(factor.find("f_[")==0 && factor[factor.length()-1]==']') {
-            size_t c1pos(factor.find(','));
-            if (c1pos==std::string::npos)
-                cout << "Invalid number of indices for f." << endl;
-            size_t c2pos(factor.find(',',c1pos+1));
-            if (c2pos==std::string::npos || factor.find(',',c2pos+1)!=std::string::npos)
-                cout << "Invalid number of indices for f." << endl;
-            antisymmetric.set_indices(stoi(factor.substr(3,c1pos-3)), stoi(factor.substr(c1pos+1,c2pos-c1pos-1)), stoi(factor.substr(c2pos+1,factor.length()-c2pos-2)));
-        }
-        else if(factor.find("d_[")==0 && factor[factor.length()-1]==']') {
-            size_t c1pos(factor.find(','));
-            if (c1pos==std::string::npos)
-                cout << "Invalid number of indices for d." << endl;
-            size_t c2pos(factor.find(',',c1pos+1));
-            if (c2pos==std::string::npos || factor.find(',',c2pos+1)!=std::string::npos)
-                cout << "Invalid number of indices for d." << endl;
-            symmetric.set_indices(stoi(factor.substr(3,c1pos-3)), stoi(factor.substr(c1pos+1,c2pos-c1pos-1)), stoi(factor.substr(c2pos+1,factor.length()-c2pos-2)));
-        }
-        else if(factor.find("t_[")==0 && factor[factor.length()-1]==']') {
-            size_t c1pos(factor.find(','));
-            if (c1pos==std::string::npos)
-                cout << "Invalid number of indices for t." << endl;
-            size_t c2pos(factor.find(',',c1pos+1));
-            if (c2pos==std::string::npos || factor.find(',',c2pos+1)!=std::string::npos)
-                cout << "Invalid number of indices for t." << endl;
-            fundamental.set_indices(stoi(factor.substr(3,c1pos-3)), stoi(factor.substr(c1pos+1,c2pos-c1pos-1)), stoi(factor.substr(c2pos+1,factor.length()-c2pos-2)));
-        }
-        else if (factor.find("k_[")==0 && factor[factor.length()-1]==']') {
-            size_t cpos(factor.find(','));
-            if (cpos==std::string::npos || factor.find(',',cpos+1)!=std::string::npos)
-                cout << "Invalid number of indices for k." << endl;
-            kronecker.set_indices(stoi(factor.substr(3,cpos-3)),stoi(factor.substr(cpos+1,factor.length()-cpos-2)));
-        }
-        else cout << "Invalid input." << endl;
+        else delete_term(i, expr);
     }
 }
-std::string replace_fund() {
-    std::string eval="";
-    for (size_t i(0), mpos(expr.find('+'));mpos!=std::string::npos || expr.length()>0;mpos=expr.find('+')) {
-        ++i;
-        // decompose input into summands
-        std::string summand;
-        if (mpos==std::string::npos) {
-            summand=expr;
-            expr="";
+void fully_contract() {
+    replace_k();
+    replace_f();
+    replace_d();
+    replace_2fd();
+    replace_2df();
+    
+    // check for Tr(T_i)
+    size_t i=0;
+    while (i<fundamental.len()) {
+        if (fundamental.index(i,1)==fundamental.index(i,2)) {
+            del_all_indices();
+            prefactor=0;
         }
-        else {
-            summand=expr.substr(0,mpos);
-            expr=expr.substr(mpos+1);
-        }
-        // decompose summand into factors
-        reset();
-        decompose_factors(summand);
-        // replace t*t by deltas
+        else i++;
+    }
+}
+void replace_fund(terms& expr) {
+    for (size_t i(0);i<expr.no_of_terms();i++) {
         size_t it1(0);
-        std::pair<size_t,size_t> itf1(it1+1,0);
         bool evaluated(false);
-        summand="";
-        while(!evaluated && fundamental.len()>0) {
-            if (fundamental.index(it1,1)==fundamental.index(it1,2)) {
-                del_all_indices();
-                prefactor=0.;
-            }
-            else if (fundamental.count_index(fundamental.index(it1,0))>1) {
-                itf1=fundamental.find_index(fundamental.index(it1,0),itf1.first);
+        while(!evaluated && expr.fund[i].len()>0) {
+            std::pair<size_t,size_t> itf1(it1+1,0);
+            if (expr.fund[i].index(it1,1)==expr.fund[i].index(it1,2)) delete_term(i,expr);
+            else if (expr.fund[i].count_index(expr.fund[i].index(it1,0))>1) {
+                itf1=expr.fund[i].find_index(expr.fund[i].index(it1,0),itf1.first);
                 if (itf1.second==0) {
-                    std::string a=to_string(fundamental.index(it1,1)), b=to_string(fundamental.index(it1,2)), 
-                    c=to_string(fundamental.index(itf1.first,1)), d=to_string(fundamental.index(itf1.first,2));
-                    fundamental.del_indices(itf1.first);
-                    fundamental.del_indices(it1);
-                    if (summand!="") summand+="+";
-                    summand+="c_[0.5,0.]*k_["+a+","+d+"]*k_["+c+","+b+"]+c_[-"+to_string(1./(2.*NC))+",0.]*k_["+a+","+b+"]*k_["+c+","+d+"]";
+                    int a=expr.fund[i].index(it1,1), b=expr.fund[i].index(it1,2), 
+                    c=expr.fund[i].index(itf1.first,1), d=expr.fund[i].index(itf1.first,2);
+                    expr.fund[i].del_indices(itf1.first);
+                    expr.fund[i].del_indices(it1);
+                    // second term
+                    expr.sym.push_back(expr.sym[i]);
+                    expr.asym.push_back(expr.asym[i]);
+                    expr.fund.push_back(expr.fund[i]);
+                    expr.kron.push_back(expr.kron[i]);
+                    expr.pref.push_back(expr.pref[i]);
+                    expr.pref[expr.no_of_terms()-1]*=-1./(2.*NC);
+                    expr.kron[expr.no_of_terms()-1].set_indices(a,b);
+                    expr.kron[expr.no_of_terms()-1].set_indices(c,d);
+                    // first term
+                    expr.kron[i].set_indices(a,d);
+                    expr.kron[i].set_indices(c,b);
+                    expr.pref[i]*=0.5;
                 }
                 else it1++;
             }
-            else if (fundamental.count_index(fundamental.index(it1,2))>1) {
-                itf1=fundamental.find_index(fundamental.index(it1,2),itf1.first);
+            else if (expr.fund[i].count_index(expr.fund[i].index(it1,2))>1) {
+                itf1=expr.fund[i].find_index(expr.fund[i].index(it1,2),itf1.first);
                 if (itf1.second==1) {
-                    std::string a=to_string(fundamental.index(it1,1)), c=to_string(fundamental.index(itf1.first,2)), 
-                    i=to_string(fundamental.index(it1,0)), j=to_string(fundamental.index(itf1.first,0)), x=to_string(fundamental.index(it1,2));
-                    fundamental.del_indices(itf1.first);
-                    fundamental.del_indices(it1);
-                    if (summand!="") summand+="+";
-                    summand+="c_["+to_string(1./(2.*NC))+",0.]*k_["+i+","+j+"]*k_["+a+","+c+"]+c_[0.5,0.]*d_["+i+","+j+","+x+"]*t_["+x+","+a+","+c+"]+c_[0.,0.5]*f_["+i+","+j+","+x+"]*t_["+x+","+a+","+c+"]";
+                    int a=expr.fund[i].index(it1,1), c=expr.fund[i].index(itf1.first,2), 
+                    j=expr.fund[i].index(it1,0), k=expr.fund[i].index(itf1.first,0), x=expr.fund[i].index(it1,2);
+                    expr.fund[i].del_indices(itf1.first);
+                    expr.fund[i].del_indices(it1);
+                    // third term
+                    std::complex<float> z(0.,1./2.);
+                    expr.sym.push_back(expr.sym[i]);
+                    expr.asym.push_back(expr.asym[i]);
+                    expr.fund.push_back(expr.fund[i]);
+                    expr.kron.push_back(expr.kron[i]);
+                    expr.pref.push_back(expr.pref[i]);
+                    expr.pref[expr.no_of_terms()-1]*=z;
+                    expr.asym[expr.no_of_terms()-1].set_indices(j,k,x);
+                    expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
+                    // second term
+                    expr.sym.push_back(expr.sym[i]);
+                    expr.asym.push_back(expr.asym[i]);
+                    expr.fund.push_back(expr.fund[i]);
+                    expr.kron.push_back(expr.kron[i]);
+                    expr.pref.push_back(expr.pref[i]);
+                    expr.pref[expr.no_of_terms()-1]*=1./2.;
+                    expr.sym[expr.no_of_terms()-1].set_indices(j,k,x);
+                    expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
+                    // first term
+                    expr.pref[i]*=1./(2.*NC);
+                    expr.kron[i].set_indices(j,k);
+                    expr.kron[i].set_indices(a,c);
                 }
                 else it1++;
             }
-            else if (fundamental.count_index(fundamental.index(it1,1))>1) {
-                itf1=fundamental.find_index(fundamental.index(it1,1),itf1.first);
+            else if (expr.fund[i].count_index(expr.fund[i].index(it1,1))>1) {
+                itf1=expr.fund[i].find_index(expr.fund[i].index(it1,1),itf1.first);
                 if (itf1.second==2) {
-                    std::string a=to_string(fundamental.index(itf1.first,1)), c=to_string(fundamental.index(it1,2)), 
-                    i=to_string(fundamental.index(itf1.first,0)), j=to_string(fundamental.index(it1,0)), x=to_string(fundamental.index(it1,1));
-                    fundamental.del_indices(itf1.first);
-                    fundamental.del_indices(it1);
-                    if (summand!="") summand+="+";
-                    summand+="c_["+to_string(1./(2.*NC))+",0.]*k_["+i+","+j+"]*k_["+a+","+c+"]+c_[0.5,0.]*d_["+i+","+j+","+x+"]*t_["+x+","+a+","+c+"]+c_[0.,0.5]*f_["+i+","+j+","+x+"]*t_["+x+","+a+","+c+"]";
+                    int a=expr.fund[i].index(itf1.first,1), c=expr.fund[i].index(it1,2), 
+                    j=expr.fund[i].index(itf1.first,0), k=expr.fund[i].index(it1,0), x=expr.fund[i].index(it1,1);
+                    expr.fund[i].del_indices(itf1.first);
+                    expr.fund[i].del_indices(it1);
+                    // third term
+                    std::complex<float> z(0.,1./2.);
+                    expr.sym.push_back(expr.sym[i]);
+                    expr.asym.push_back(expr.asym[i]);
+                    expr.fund.push_back(expr.fund[i]);
+                    expr.kron.push_back(expr.kron[i]);
+                    expr.pref.push_back(expr.pref[i]);
+                    expr.pref[expr.no_of_terms()-1]*=z;
+                    expr.asym[expr.no_of_terms()-1].set_indices(j,k,x);
+                    expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
+                    // second term
+                    expr.sym.push_back(expr.sym[i]);
+                    expr.asym.push_back(expr.asym[i]);
+                    expr.fund.push_back(expr.fund[i]);
+                    expr.kron.push_back(expr.kron[i]);
+                    expr.pref.push_back(expr.pref[i]);
+                    expr.pref[expr.no_of_terms()-1]*=1./2.;
+                    expr.sym[expr.no_of_terms()-1].set_indices(j,k,x);
+                    expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
+                    // first term
+                    expr.pref[i]*=1./(2.*NC);
+                    expr.kron[i].set_indices(j,k);
+                    expr.kron[i].set_indices(a,c);
                 }
             }
-            else it1++;
-            if (it1>=fundamental.len()) evaluated=true;
-        }
-        // multiply by rest of factor
-        if (summand=="") eval=build_string(false);
-        else {
-            for (size_t i(0), mpos(summand.find('+'));mpos!=std::string::npos || summand.length()>0;mpos=summand.find('+')) {
-                if (eval!="") eval+="+";
-                eval+=build_string(false)+"*"+summand.substr(0,mpos);
-                if (mpos==std::string::npos) summand="";
-                else summand=summand.substr(mpos+1);
-            }
+             else it1++;
+             if (it1>=expr.fund[i].len()) evaluated=true;
         }
     }
-    return eval;
 }
 void replace_k() {
     while(kronecker.len()>0) {
@@ -314,7 +172,7 @@ void replace_k() {
         else if (!(is_free_index(ind_j))) {
             symmetric.find_and_rep_indices(ind_j,ind_i);
             antisymmetric.find_and_rep_indices(ind_j,ind_i);
-                fundamental.find_and_rep_indices(ind_j,ind_i);
+            fundamental.find_and_rep_indices(ind_j,ind_i);
             kronecker.find_and_rep_indices(ind_j,ind_i);
         }
         else kronecker_eval.set_indices(ind_i,ind_j);
@@ -356,7 +214,7 @@ void replace_f() {
                         kronecker.set_indices(antisymmetric.index(it1,0),antisymmetric.index(itf1.first,0));
                         antisymmetric.del_indices(itf1.first);
                         antisymmetric.del_indices(it1);
-                        replace_k();
+                        fully_contract(); 
                         part_evaluated=true;
                     }
                     // replace 3 f's by one f
@@ -388,6 +246,7 @@ void replace_f() {
                             antisymmetric.del_indices(itf2.first);
                         }
                         antisymmetric.del_indices(it1);
+                        fully_contract();
                         part_evaluated=true;
                     }
                     else {
@@ -428,14 +287,8 @@ void replace_d() {
                     // replace 2 d's by kronecker
                     if (symmetric.matching_indices(it1,itf1.first)>=2) {
                         while (symmetric.index(itf1.first,1)!=symmetric.index(it1,1)) symmetric.rotate_indices_at(itf1.first);
-                        if (symmetric.index(it1,2)==symmetric.index(itf1.first,0)) {
-                            prefactor*=-1;
-                            symmetric.swap_indices_at(itf1.first,0,2);
-                        }
-                        else if (symmetric.index(it1,0)==symmetric.index(itf1.first,2)) {
-                            prefactor*=-1;
-                            symmetric.swap_indices_at(it1,0,2); 
-                        }
+                        if (symmetric.index(it1,2)==symmetric.index(itf1.first,0)) symmetric.swap_indices_at(itf1.first,0,2);
+                        else if (symmetric.index(it1,0)==symmetric.index(itf1.first,2)) symmetric.swap_indices_at(it1,0,2); 
                         else if (symmetric.index(it1,0)==symmetric.index(itf1.first,0)) {
                             symmetric.swap_indices_at(itf1.first,0,2);
                             symmetric.swap_indices_at(it1,0,2);
@@ -444,7 +297,7 @@ void replace_d() {
                         kronecker.set_indices(symmetric.index(it1,0),symmetric.index(itf1.first,0));
                         symmetric.del_indices(itf1.first);
                         symmetric.del_indices(it1);
-                        replace_k();
+                        fully_contract();
                         part_evaluated=true;
                     }
                     // replace 3 d's by one d
@@ -464,6 +317,7 @@ void replace_d() {
                             symmetric.del_indices(itf2.first);
                         }
                         symmetric.del_indices(it1);
+                        fully_contract();
                         part_evaluated=true;
                     }
                     else { 
@@ -531,6 +385,7 @@ void replace_2fd() {
                         antisymmetric.del_indices(itf2.first);
                     }
                     symmetric.del_indices(it1);
+                    fully_contract();
                     part_evaluated=true;
                 }
                 else {
@@ -584,6 +439,7 @@ void replace_2df() {
                         symmetric.del_indices(itf2.first);
                     }
                     antisymmetric.del_indices(it1);
+                    fully_contract(); 
                     part_evaluated=true;
                 }
                 else {
@@ -603,43 +459,6 @@ void replace_2df() {
         if (it1>=antisymmetric.len()) evaluated=true;
     }
 }
-// void replace_2f() {
-//     size_t it1(0);
-//     bool evaluated(false);
-//     while(!evaluated && antisymmetric.len()>0) {
-//         std::pair<size_t,size_t> itf1(it1+1,0);
-//         bool part_evaluated(false);
-//         int sign(1), i, j, k, l, x;
-//         while (!part_evaluated && antisymmetric.len()>0) {
-//             if (antisymmetric.count_index(antisymmetric.index(it1,0))>0) {
-//                 cout << "check" << endl;
-//                 itf1=antisymmetric.find_index(antisymmetric.index(it1,0),itf1.first);
-//                 cout << itf1.first << " " << itf1.second << endl;
-//                 if (itf1.second!=0) {
-//                         antisymmetric.swap_indices_at(itf1.first,itf1.second,0);
-//                         sign*=-1;
-//                 }
-//                 i=antisymmetric.index(it1,1), j=antisymmetric.index(it1,2), k=antisymmetric.index(itf1.first,1), l=antisymmetric.index(itf1.first,2), x=antisymmetric.index(itf1.first,0);
-//                 antisymmetric.del_indices(itf1.first);
-//                 antisymmetric.del_indices(it1);
-//                 cout << build_string() << endl;
-//                 if (sign<0) expr+="+"; 
-//                 expr+=to_string(-sign*2./NC)+"*"+build_string()+"*"+"k_["+to_string(i)+","+to_string(l)+"]*k_["+to_string(j)+","+to_string(k)+"]";
-//                 if (sign>0) expr+="+";
-//                 else expr+="-";
-//                 expr+=build_string()+"*d_["+to_string(i)+","+to_string(k)+","+to_string(x)+"]*d_["+to_string(j)+","+to_string(l)+","+to_string(x)+"]";
-//                 if(sign<0) expr+="+";
-//                 else expr+="-";
-//                 expr+=build_string()+"*d_["+to_string(i)+","+to_string(k)+","+to_string(x)+"]*d_["+to_string(j)+","+to_string(l)+","+to_string(x)+"]";
-//                 prefactor*=sign*2./NC;
-//                 kronecker.set_indices(i,k);
-//                 kronecker.set_indices(j,l);
-//                 
-//             }
-//         }
-//         if (it1>=symmetric.len()) evaluated=true;
-//     }
-// }
 bool is_free_index(int index) {
     int cntr(0);
     cntr+=kronecker.count_index(index);
@@ -660,18 +479,7 @@ void reset() {
     prefactor=1.;
     del_all_indices();
 }
-std::string build_string(bool evaluated) {
-    string str;
-    if (prefactor.real()!=0. || prefactor.imag()!=0.) str+="c_["+to_string(prefactor.real())+","+to_string(prefactor.imag())+"]";
-    if (symmetric.len()>0) 
-        for (int i(0); i<symmetric.len(); i++) str+="*d_["+to_string(symmetric.index(i,0))+","+to_string(symmetric.index(i,1))+","+to_string(symmetric.index(i,2))+"]";
-    if (antisymmetric.len()>0) 
-        for (int i(0); i<antisymmetric.len(); i++) str+="*f_["+to_string(antisymmetric.index(i,0))+","+to_string(antisymmetric.index(i,1))+","+to_string(antisymmetric.index(i,2))+"]"; 
-    if (fundamental.len()>0)
-        for (int i(0); i<fundamental.len(); i++) str+="*t_["+to_string(fundamental.index(i,0))+","+to_string(fundamental.index(i,1))+","+to_string(fundamental.index(i,2))+"]"; 
-    if (evaluated && kronecker_eval.len()>0) 
-        for (int i(0); i<kronecker_eval.len(); i++) str+="*k_["+to_string(kronecker_eval.index(i,0))+","+to_string(kronecker_eval.index(i,1))+"]";
-    else if (!evaluated && kronecker.len()>0)
-        for (int i(0); i<kronecker.len(); i++) str+="*k_["+to_string(kronecker.index(i,0))+","+to_string(kronecker.index(i,1))+"]";
-    return str;
+bool nonvanishing_expr() {
+    if (prefactor.real()!=0. && prefactor.imag()!=0. && symmetric.len()!=0 && antisymmetric.len()!=0 && fundamental.len()!=0 && kronecker_eval.len()!=0) return false;
+    else return true;
 }
