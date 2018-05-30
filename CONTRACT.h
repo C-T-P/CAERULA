@@ -1,9 +1,13 @@
 #ifndef CONTRACT_H
 #define CONTRACT_H
 
-void evaluate(terms& expr);
+void evaluate(colour_term& expr);
+void sort(colour_term& expr);
+void sort_indices(colour_term& expr);
+void sort_tensors(colour_term& expr);
+void add_terms(colour_term& expr);
 void fully_contract();
-void replace_fund(terms& expr);
+bool replace_fund(colour_term& expr);
 void replace_k();
 void replace_f();
 void replace_d();

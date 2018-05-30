@@ -1,9 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-std::string factorise(std::string string);
-void decompose_terms(std::string& input, terms& expr);
-void delete_term(int j, terms& expr);
-std::string build_string(terms& expr);
+void read_in_process(std::string filename, diagram& process, std::vector<std::string>& basis_str);
+void decompose_terms(std::string& input, colour_term& expr);
 
 #endif

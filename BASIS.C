@@ -1,56 +1,71 @@
-#include<string>
-#include<iostream>
-#include<vector>
-#include<algorithm>
-#include<complex>
-#include<math.h>
 #include "tensortools.h"
 #include "Main.h"
+#include "CONTRACT.h"
+#include "I3NSERT.h"
 #include "BASIS.h"
-using namespace std;
 
-void fully_simplify(terms& expr) {
-    sort_indices(expr);
-    sort_tensors(expr);
-    simplify_terms(expr);
-}
-void sort_indices(terms &expr) {
-    for (size_t i(0);i<expr.kron.size();i++) {
-        for (size_t j(0);j<expr.kron[i].len();j++) if (expr.kron[i].index(j,0)>expr.kron[i].index(j,1)) expr.kron[i].swap_indices_at(j);
-        for (size_t j(0);j<expr.sym[i].len();j++) {
-            while (expr.sym[i].index(j,0)>expr.sym[i].index(j,1) || expr.sym[i].index(j,0)>expr.sym[i].index(j,2)) expr.sym[i].rotate_indices_at(j);
-            if (expr.sym[i].index(j,1)>expr.sym[i].index(j,2)) expr.sym[i].swap_indices_at(j,1,2);
-        }
-        for (size_t j(0);j<expr.asym[i].len();j++) {
-            while (expr.asym[i].index(j,0)>expr.asym[i].index(j,1) || expr.asym[i].index(j,0)>expr.asym[i].index(j,2)) expr.asym[i].rotate_indices_at(j);
-            if (expr.asym[i].index(j,1)>expr.asym[i].index(j,2)) {
-                expr.asym[i].swap_indices_at(j,1,2);
-                expr.pref[i]*=-1.;
+// calculate soft matrix
+std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colour_term> basis) {
+    std::vector<std::vector<std::complex<float>>> soft_matrix(basis.size(), std::vector<std::complex<float>>(basis.size(),0.));
+    colour_term ct;
+    for (size_t i(0);i<basis.size();i++) {
+        for (size_t j(0);j<basis.size();j++) {
+            if(i<=j) {
+                // transpose of basis[i] ?!
+                ct=basis[i].cconj().multiply(basis[j]);
+                evaluate(ct);
+                soft_matrix[i][j]=ct.build_complex();
             }
+            else soft_matrix[i][j]=conj(soft_matrix[j][i]);
         }
     }
-}
-void sort_tensors(terms &expr) {
-    for (size_t i(0);i<expr.sym.size();i++) {
-        expr.sym[i].sort_list();
-        expr.asym[i].sort_list();
-        expr.fund[i].sort_list();
-        expr.kron[i].sort_list();
-    }
-}
-void simplify_terms(terms &expr) {
-    size_t i(0);
-    float eps=1.e-6;
-    while (i<expr.no_of_terms()) {
-        size_t j(i+1);
-        while (j<expr.no_of_terms()) {
-            if (expr.sym[i].get_all_indices()==expr.sym[j].get_all_indices() && expr.asym[i].get_all_indices()==expr.asym[j].get_all_indices() && expr.fund[i].get_all_indices()==expr.fund[j].get_all_indices() && expr.kron[i].get_all_indices()==expr.kron[j].get_all_indices()) {
-                expr.pref[i]+=expr.pref[j];
-                delete_term(j, expr);
-            }
-            else j++;
+    return soft_matrix;
+} 
+
+// calculate colour change matrix for insertion between leg lno1 and lno2
+std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vector<colour_term> basis, std::vector<std::vector<std::complex<float>>> soft_matrix, diagram process, unsigned int lno1, unsigned int lno2) {
+    colour_term insertion_op=construct_insertion_op(process,lno1,lno2);
+    colour_term ct;
+    std::vector<std::vector<std::complex<float>>> ccm(basis.size(),std::vector<std::complex<float>>(basis.size(),0.));
+    std::complex<double> t_ccm[basis.size()][basis.size()];
+    for (size_t i(0);i<basis.size();i++) {
+        for (size_t j(0);j<basis.size();j++) {
+            // transpose of basis[i] ?!
+            ct=basis[i].cconj().multiply(insertion_op.multiply(make_internal(process,basis[j])));
+            evaluate(ct);
+            t_ccm[i][j]=ct.build_complex();
+            if (isnan(t_ccm[i][j].real())) cerr << "Error: C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] = " <<ct.build_string() << "\n" << endl;
         }
-        i++;
     }
-    for (size_t i(0);i<expr.pref.size(); i++) if (abs(expr.pref[i].real())<eps && abs(expr.pref[i].imag())<eps) delete_term(i,expr);
+    
+    // express in terms of basis
+    gsl_vector_complex *b=gsl_vector_complex_alloc(basis.size()), *x=gsl_vector_complex_alloc(basis.size());
+    gsl_matrix_complex *S=gsl_matrix_complex_alloc(basis.size(),basis.size());
+    gsl_permutation *p=gsl_permutation_alloc(basis.size());
+    int n;
+    for (size_t j(0);j<basis.size();j++)
+        for (size_t k(0);k<basis.size();k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(soft_matrix[j][k].real(),soft_matrix[j][k].imag()));    
+    for (size_t i(0);i<basis.size();i++) {
+        for (size_t j(0);j<basis.size();j++) gsl_vector_complex_set(b,j,gsl_complex_rect(t_ccm[i][j].real(),t_ccm[i][j].imag()));
+            
+        gsl_linalg_complex_LU_decomp(S, p, &n);
+        gsl_linalg_complex_LU_solve(S, p, b, x);
+        for (size_t j(0);j<basis.size();j++) ccm[j][i]=std::complex<float>(GSL_REAL(gsl_vector_complex_get(x,j)),GSL_IMAG(gsl_vector_complex_get(x,j)));
+    }
+    
+    gsl_permutation_free(p);
+    gsl_vector_complex_free(x);
+    gsl_vector_complex_free(b);
+    gsl_matrix_complex_free(S);
+    
+    return ccm;
+}
+
+// shift external to internal indices (by multiplying with Kroneckers)
+colour_term make_internal(diagram process, colour_term expr) {
+    for (unsigned int lno(1);lno<process.no_of_legs();lno++)
+        for (size_t tno(0);tno<expr.no_of_terms();tno++)
+            expr.kron.at(tno).set_indices(lno+2000,lno);
+    evaluate(expr);
+    return expr;
 }

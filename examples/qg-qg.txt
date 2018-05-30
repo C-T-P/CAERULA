@@ -1,0 +1,9 @@
+# legs will be numbered from 1 to n in the order given here
+l	in	1
+l	in	21
+l	out	1
+l	out	21
+# basis vectors will be numbered from 1 to n in the order given here
+b	k_[1,3]*k_[2,4]
+b	d_[2,4,201]*t_[201,3,1]
+b	c_[0,1.]*f_[2,4,201]*t_[201,3,1]

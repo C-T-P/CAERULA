@@ -1,0 +1,41 @@
+#include "tensortools.h"
+#include "Main.h"
+#include "CONTRACT.h"
+#include "I3NSERT.h"
+
+// construct insertion operator for gluon insertion between leg lno1 and lno2 as a colour term
+colour_term construct_insertion_op(diagram process, unsigned int lno1, unsigned int lno2) {
+    three_ind symmetric;
+    three_ind antisymmetric;
+    three_ind fundamental;
+    two_ind kronecker;
+    std::complex<float> prefactor(1.);
+    
+    if (process.leg(lno1).second==21) {
+        antisymmetric.set_indices(lno1,1001,lno1+2000);
+        prefactor*=std::complex<float>(0.,1.);
+    }
+    else if ((process.leg(lno1).second>=1 and process.leg(lno1).second<=6 and process.is_in_leg(lno1)) or (process.leg(lno1).second<=-1 and process.leg(lno1).second>=-6 and !process.is_in_leg(lno1))) fundamental.set_indices(1001,lno1+2000,lno1);
+    else if ((process.leg(lno1).second>=1 and process.leg(lno1).second<=6 and !process.is_in_leg(lno1)) or (process.leg(lno1).second<=-1 and process.leg(lno1).second>=-6 and process.is_in_leg(lno1))) fundamental.set_indices(1001,lno1,lno1+2000);
+    else cerr << "Error constructing the insertion operator between leg " << lno1 << " and leg " << lno2 << ": leg " << lno1 << " is not a quark, anti quark, or gluon." << endl;
+    
+    if (process.leg(lno2).second==21) { 
+        antisymmetric.set_indices(lno2,1001,lno2+2000);
+        prefactor*=std::complex<float>(0.,1.);
+    }
+    else if ((process.leg(lno2).second>=1 and process.leg(lno2).second<=6 and process.is_in_leg(lno2)) or (process.leg(lno2).second<=-1 and process.leg(lno2).second>=-6 and !process.is_in_leg(lno2))) fundamental.set_indices(1001,lno2+2000,lno2);
+    else if ((process.leg(lno2).second>=1 and process.leg(lno2).second<=6 and !process.is_in_leg(lno2)) or (process.leg(lno2).second<=-1 and process.leg(lno2).second>=-6 and process.is_in_leg(lno2))) fundamental.set_indices(1001,lno2,lno2+2000);
+    else cerr << "Error constructing the insertion operator between leg " << lno1 << " and leg " << lno2 << ": leg " << lno2 << " is not a quark, anti quark, or gluon." << endl;
+    
+    for (unsigned int lno(1);lno<process.no_of_legs();lno++)
+        if (lno!=lno1 and lno!=lno2) kronecker.set_indices(lno+2000,lno);
+    
+    colour_term insertion_op;
+    insertion_op.sym.push_back(symmetric);
+    insertion_op.asym.push_back(antisymmetric);
+    insertion_op.fund.push_back(fundamental);
+    insertion_op.kron.push_back(kronecker);
+    insertion_op.pref.push_back(prefactor);
+    
+    return insertion_op;
+}
