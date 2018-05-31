@@ -14,7 +14,7 @@ using namespace std;
 
 class diagram {
     /* 
-     incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in secont component
+     incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
      */
     std::vector<std::pair<unsigned int,int>> in_legs;
     std::vector<std::pair<unsigned int,int>> out_legs;
