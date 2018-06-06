@@ -8,6 +8,7 @@ void sort_tensors(colour_term& expr);
 void add_terms(colour_term& expr);
 void fully_contract();
 bool replace_fund(colour_term& expr);
+void check_fund_trace();
 void replace_k();
 void replace_f();
 void replace_d();

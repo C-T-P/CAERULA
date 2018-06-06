@@ -18,3 +18,7 @@ I3NSERT.o: I3NSERT.C
 
 clean:
 	rm -f $(objects)
+
+force:
+	touch Main.C BASIS.C CONTRACT.C I3NSERT.C
+	make

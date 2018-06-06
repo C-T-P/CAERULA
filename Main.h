@@ -2,6 +2,6 @@
 #define MAIN_H
 
 void read_in_process(std::string filename, diagram& process, std::vector<std::string>& basis_str);
-void decompose_terms(std::string& input, colour_term& expr);
+colour_term decompose_terms(std::string& input, diagram process);
 
 #endif

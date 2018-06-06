@@ -30,28 +30,26 @@ class diagram {
         }
         void add_out_leg(int ptcl_id) {
             int index=in_legs.size()+out_legs.size()+1;
-            in_legs.push_back(std::pair<int,int>(index,ptcl_id));
+            out_legs.push_back(std::pair<int,int>(index,ptcl_id));
         }
         void delete_all_legs() {
             in_legs.clear();
             out_legs.clear();
         }
         unsigned int no_of_legs() {
-            return in_legs.size()+out_legs.size()+1;
+            return in_legs.size()+out_legs.size();
         }
-        // leg numbering starts at 1 !!!
         std::pair<unsigned int,int> leg(unsigned int index) {
-            index-=1;
-            if (index<in_legs.size()) return in_legs.at(index);
-            else if (index<out_legs.size()) return in_legs.at(index);
+            // leg numbering starts at 1 !!!
+            if (index<=in_legs.size()) return in_legs.at(index-1);
+            else if (index<=out_legs.size()+in_legs.size()) return out_legs.at(index-in_legs.size()-1);
             else {
                 cerr << "Leg " << index << " does not exist in diagram." << endl;
                 return std::pair<int,int>(0,0);
             }
         }
         bool is_in_leg(unsigned int index) {
-            index-=1;
-            if (index<in_legs.size()) return true;
+            if (index<=in_legs.size()) return true;
             else return false;
         }
 };
@@ -140,22 +138,35 @@ class three_ind {
 };
 class two_ind {
     std::vector<std::vector<int>> ind;
+    std::vector<bool> gluonic_k;
     public:
-        void set_indices(int i, int j) {
+        void set_indices(int i, int j, bool gluonic) {
             std::vector<int> new_ind {i, j};
             ind.push_back(new_ind);
+            gluonic_k.push_back(gluonic);
         }
-        void append_by(std::vector<std::vector<int>> ind_v) {
-            ind.insert(ind.end(),ind_v.begin(),ind_v.end());
+        bool is_gluonic(size_t it) {
+            return gluonic_k.at(it);
+        }
+        void append_by(two_ind tensor) {
+            std::vector<std::vector<int>> all_ind=tensor.get_all_indices();
+            std::vector<bool> all_flags=tensor.get_all_flags();
+            ind.insert(ind.end(),all_ind.begin(),all_ind.end());
+            gluonic_k.insert(gluonic_k.end(),all_flags.begin(),all_flags.end());
         }
         std::vector<std::vector<int>> get_all_indices() {
             return ind;
         }
+        std::vector<bool> get_all_flags() {
+            return gluonic_k;
+        }
         void del_indices(int it) {
             ind.erase(ind.begin()+it);
+            gluonic_k.erase(gluonic_k.begin()+it);
         }
         void clear_indices() {
             ind.clear();
+            gluonic_k.clear();
         }
         void find_and_rep_indices(int old_ind, int new_ind) {
             for (size_t it(0); it<ind.size(); ++it) replace(ind[it].begin(), ind[it].end(), old_ind, new_ind);
@@ -257,7 +268,7 @@ struct colour_term {
                 symmmetric.append_by(ct.sym.at(t_it2).get_all_indices());
                 asymmmetric.append_by(ct.asym.at(t_it2).get_all_indices());
                 fundamental.append_by(ct.fund.at(t_it2).get_all_indices());
-                kronecker.append_by(ct.kron.at(t_it2).get_all_indices());
+                kronecker.append_by(ct.kron.at(t_it2));
                 prefactor*=ct.pref.at(t_it2);
                 ct_r.sym.push_back(symmmetric);
                 ct_r.asym.push_back(asymmmetric);
@@ -277,6 +288,20 @@ struct colour_term {
         ct.pref=pref;
         for (size_t i(0);i<pref.size();i++) ct.pref[i]=conj(ct.pref[i]);
         return ct;
+    }
+    // Scalar Product < A | B > = Tr(A^+ B) (anti-hermitian in first argument)
+    // NOTE: Returns colour term, which has to be evaluated !!!
+    colour_term scprod(colour_term ct2) {
+        colour_term ct1;
+        ct1.sym=sym;
+        ct1.asym=asym;
+        ct1.fund=fund;
+        ct1.kron=kron;
+        ct1.pref=pref;
+        for (size_t t_it(0);t_it<ct1.no_of_terms();t_it++)
+            for (size_t f_it(0);f_it<ct1.fund.at(t_it).len();f_it++)
+                ct1.fund.at(t_it).swap_indices_at(f_it,1,2);
+        return ct1.cconj().multiply(ct2);
     }
     void delete_term(size_t j) {
         sym.erase(sym.begin()+j);

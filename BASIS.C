@@ -4,16 +4,34 @@
 #include "I3NSERT.h"
 #include "BASIS.h"
 
+// construct trace basis for processes with n gluons and up to 1 quark and 1 antiquark
+std::vector<colour_term> construct_trace_basis(diagram process) {
+    std::vector<colour_term> trace_basis;
+    three_ind symmetric;
+    three_ind antisymmetric;
+    three_ind fundamental;
+    two_ind kronecker;
+    std::complex<float> prefactor(1.);
+    
+    
+    
+    return trace_basis;
+}
+
 // calculate soft matrix
 std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colour_term> basis) {
     std::vector<std::vector<std::complex<float>>> soft_matrix(basis.size(), std::vector<std::complex<float>>(basis.size(),0.));
     colour_term ct;
+    ct.delete_all_terms();
     for (size_t i(0);i<basis.size();i++) {
         for (size_t j(0);j<basis.size();j++) {
             if(i<=j) {
                 // transpose of basis[i] ?!
-                ct=basis[i].cconj().multiply(basis[j]);
+                cout << i << " " << j << endl;
+                ct=basis[i].scprod(basis[j]);
+                cout << ct.build_string() << endl;
                 evaluate(ct);
+                cout << " = " << ct.build_string() << "\n" << endl;
                 soft_matrix[i][j]=ct.build_complex();
             }
             else soft_matrix[i][j]=conj(soft_matrix[j][i]);
@@ -30,8 +48,7 @@ std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vec
     std::complex<double> t_ccm[basis.size()][basis.size()];
     for (size_t i(0);i<basis.size();i++) {
         for (size_t j(0);j<basis.size();j++) {
-            // transpose of basis[i] ?!
-            ct=basis[i].cconj().multiply(insertion_op.multiply(make_internal(process,basis[j])));
+            ct=basis[i].scprod(insertion_op.multiply(make_internal(process,basis[j])));
             evaluate(ct);
             t_ccm[i][j]=ct.build_complex();
             if (isnan(t_ccm[i][j].real())) cerr << "Error: C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] = " <<ct.build_string() << "\n" << endl;
@@ -57,15 +74,20 @@ std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vec
     gsl_vector_complex_free(x);
     gsl_vector_complex_free(b);
     gsl_matrix_complex_free(S);
-    
-    return ccm;
+
+    return ccm; 
 }
 
 // shift external to internal indices (by multiplying with Kroneckers)
 colour_term make_internal(diagram process, colour_term expr) {
-    for (unsigned int lno(1);lno<process.no_of_legs();lno++)
-        for (size_t tno(0);tno<expr.no_of_terms();tno++)
-            expr.kron.at(tno).set_indices(lno+2000,lno);
+    bool gluonic(false);
+    for (unsigned int lno(1);lno<=process.no_of_legs();lno++) {
+        for (size_t tno(0);tno<expr.no_of_terms();tno++) {
+            if (process.leg(lno).second==21) gluonic=true;
+            else gluonic=false;
+            expr.kron.at(tno).set_indices(lno+2000,lno,gluonic);
+        }
+    }
     evaluate(expr);
     return expr;
 }

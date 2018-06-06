@@ -12,8 +12,11 @@ static float NC(3.); // number of colours
  
 // contract all repeated indices in whole expression
 void evaluate(colour_term& expr) {
-    // TODO overall algorithm for replacements that yield sums
+    // TODO overall algorithm for replacements that yield sums (?
+//     cout << "run in" << endl;
+    cout << "\n" << expr.build_string() << endl;
     replace_fund(expr);
+//     cout << "replaced fund 1. x" << endl;
     for (size_t i(0);i<expr.no_of_terms();i++) {
         reset();
         symmetric=expr.sym[i];
@@ -21,7 +24,7 @@ void evaluate(colour_term& expr) {
         fundamental=expr.fund[i];
         kronecker=expr.kron[i];
         prefactor=expr.pref[i];
-        
+    
         // evaluate factor
         fully_contract();
     
@@ -50,11 +53,11 @@ void sort_indices(colour_term& expr) {
     for (size_t i(0);i<expr.kron.size();i++) {
         for (size_t j(0);j<expr.kron[i].len();j++) if (expr.kron[i].index(j,0)>expr.kron[i].index(j,1)) expr.kron[i].swap_indices_at(j);
         for (size_t j(0);j<expr.sym[i].len();j++) {
-            while (expr.sym[i].index(j,0)>expr.sym[i].index(j,1) || expr.sym[i].index(j,0)>expr.sym[i].index(j,2)) expr.sym[i].rotate_indices_at(j);
+            while (expr.sym[i].index(j,0)>expr.sym[i].index(j,1) or expr.sym[i].index(j,0)>expr.sym[i].index(j,2)) expr.sym[i].rotate_indices_at(j);
             if (expr.sym[i].index(j,1)>expr.sym[i].index(j,2)) expr.sym[i].swap_indices_at(j,1,2);
         }
         for (size_t j(0);j<expr.asym[i].len();j++) {
-            while (expr.asym[i].index(j,0)>expr.asym[i].index(j,1) || expr.asym[i].index(j,0)>expr.asym[i].index(j,2)) expr.asym[i].rotate_indices_at(j);
+            while (expr.asym[i].index(j,0)>expr.asym[i].index(j,1) or expr.asym[i].index(j,0)>expr.asym[i].index(j,2)) expr.asym[i].rotate_indices_at(j);
             if (expr.asym[i].index(j,1)>expr.asym[i].index(j,2)) {
                 expr.asym[i].swap_indices_at(j,1,2);
                 expr.pref[i]*=-1.;
@@ -80,7 +83,7 @@ void add_terms(colour_term& expr) {
     while (i<expr.no_of_terms()) {
         size_t j(i+1);
         while (j<expr.no_of_terms()) {
-            if (expr.sym[i].get_all_indices()==expr.sym[j].get_all_indices() && expr.asym[i].get_all_indices()==expr.asym[j].get_all_indices() && expr.fund[i].get_all_indices()==expr.fund[j].get_all_indices() && expr.kron[i].get_all_indices()==expr.kron[j].get_all_indices()) {
+            if (expr.sym[i].get_all_indices()==expr.sym[j].get_all_indices() and expr.asym[i].get_all_indices()==expr.asym[j].get_all_indices() and expr.fund[i].get_all_indices()==expr.fund[j].get_all_indices() and expr.kron[i].get_all_indices()==expr.kron[j].get_all_indices()) {
                 expr.pref[i]+=expr.pref[j];
                 expr.delete_term(j);
             }
@@ -88,36 +91,45 @@ void add_terms(colour_term& expr) {
         }
         i++;
     }
-    for (size_t i(0);i<expr.pref.size(); i++) if (abs(expr.pref[i].real())<eps && abs(expr.pref[i].imag())<eps) expr.delete_term(i);
+    for (size_t i(0);i<expr.pref.size(); i++) if (abs(expr.pref[i].real())<eps and abs(expr.pref[i].imag())<eps) expr.delete_term(i);
 }
 
 
 // contract all repeated indices in one product s.t. at most one common index remains
 void fully_contract() {
-    replace_k();
-    replace_f();
-    replace_d();
-    replace_2fd();
-    replace_2df();
+//     colour_term ct;
+//     ct.sym.push_back(symmetric);
+//     ct.asym.push_back(antisymmetric);
+//     ct.fund.push_back(fundamental);
+//     ct.kron.push_back(kronecker);
+//     ct.kron.push_back(kronecker_eval);
+//     ct.pref.push_back(prefactor);
+//     cout << "\n" <<  ct.build_string() << endl;
     
-    // check for Tr(T_i)
-    size_t i=0;
-    while (i<fundamental.len()) {
-        if (fundamental.index(i,1)==fundamental.index(i,2)) {
-            del_all_indices();
-            prefactor=0;
-        }
-        else i++;
-    }
+    replace_k();
+//     cout << "replaced k" << endl;
+    check_fund_trace();
+//     cout << "checked fund trace" << endl;
+    replace_f();
+//     cout << "replaced f" << endl;
+    replace_d();
+//     cout << "replaced d" << endl;
+    replace_2fd();
+//     cout << "replaced 2fd" << endl;
+    replace_2df();
+//     cout << "replaced 2df" << endl;
+    check_fund_trace();
+//     cout << "checked fund trace" << endl;
 }
 
 // replace products of fundamental generators
 bool replace_fund(colour_term& expr) {
     bool replacements_made(false);
     for (size_t i(0);i<expr.no_of_terms();i++) {
+//         cout << i << endl;
         size_t it1(0);
         bool evaluated(false);
-        while(!evaluated && expr.fund[i].len()>0) {
+        while(!evaluated and expr.fund[i].len()>0) {
             std::pair<size_t,size_t> itf1(it1+1,0);
             if (expr.fund[i].index(it1,1)==expr.fund[i].index(it1,2)) expr.delete_term(i);
             else if (expr.fund[i].count_index(expr.fund[i].index(it1,0))>1) {
@@ -134,11 +146,11 @@ bool replace_fund(colour_term& expr) {
                     expr.kron.push_back(expr.kron[i]);
                     expr.pref.push_back(expr.pref[i]);
                     expr.pref[expr.no_of_terms()-1]*=-1./(2.*NC);
-                    expr.kron[expr.no_of_terms()-1].set_indices(a,b);
-                    expr.kron[expr.no_of_terms()-1].set_indices(c,d);
+                    expr.kron[expr.no_of_terms()-1].set_indices(a,b,false);
+                    expr.kron[expr.no_of_terms()-1].set_indices(c,d,false);
                     // first term
-                    expr.kron[i].set_indices(a,d);
-                    expr.kron[i].set_indices(c,b);
+                    expr.kron[i].set_indices(a,d,false);
+                    expr.kron[i].set_indices(c,b,false);
                     expr.pref[i]*=0.5;
                     replacements_made=true;
                 }
@@ -171,8 +183,8 @@ bool replace_fund(colour_term& expr) {
                     expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
                     // first term
                     expr.pref[i]*=1./(2.*NC);
-                    expr.kron[i].set_indices(j,k);
-                    expr.kron[i].set_indices(a,c);
+                    expr.kron[i].set_indices(j,k,true);
+                    expr.kron[i].set_indices(a,c,false);
                     replacements_made=true;
                 }
                 else it1++;
@@ -204,8 +216,8 @@ bool replace_fund(colour_term& expr) {
                     expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
                     // first term
                     expr.pref[i]*=1./(2.*NC);
-                    expr.kron[i].set_indices(j,k);
-                    expr.kron[i].set_indices(a,c);
+                    expr.kron[i].set_indices(j,k,true);
+                    expr.kron[i].set_indices(a,c,false);
                     replacements_made=true;
                 }
                 else it1++;
@@ -217,12 +229,27 @@ bool replace_fund(colour_term& expr) {
     return replacements_made;
 }
 
+// check for Tr(T_i)
+void check_fund_trace() {
+    size_t it=0;
+    while (it<fundamental.len()) {
+        if (fundamental.index(it,1)==fundamental.index(it,2)) {
+            del_all_indices();
+            prefactor=0;
+        }
+        else it++;
+    }
+}
+
 // contract indices of Kronecker deltas
 void replace_k() {
     while(kronecker.len()>0) {
         int ind_i=kronecker.index(0,0), ind_j=kronecker.index(0,1);
         if (!(is_free_index(ind_i))) {
-            if (ind_i==ind_j) prefactor = prefactor*NC;
+            if (ind_i==ind_j) {
+                if (kronecker.is_gluonic(0)) prefactor*=(pow(NC,2)-1.); 
+                else prefactor*=NC;
+            }
             else {
                 symmetric.find_and_rep_indices(ind_i,ind_j);
                 antisymmetric.find_and_rep_indices(ind_i,ind_j);
@@ -236,7 +263,10 @@ void replace_k() {
             fundamental.find_and_rep_indices(ind_j,ind_i);
             kronecker.find_and_rep_indices(ind_j,ind_i);
         }
-        else kronecker_eval.set_indices(ind_i,ind_j);
+        else {
+            if (kronecker.is_gluonic(0)) kronecker_eval.set_indices(ind_i,ind_j,true);
+            else kronecker_eval.set_indices(ind_i,ind_j,false);
+        }
         kronecker.del_indices(0);
     }
 }
@@ -306,7 +336,7 @@ void replace_f() {
                             antisymmetric.swap_indices_at(it1,0,2);
                         }
                         prefactor*=NC;
-                        kronecker.set_indices(antisymmetric.index(it1,0),antisymmetric.index(itf1.first,0));
+                        kronecker.set_indices(antisymmetric.index(it1,0),antisymmetric.index(itf1.first,0),true);
                         antisymmetric.del_indices(itf1.first);
                         antisymmetric.del_indices(it1);
                         fully_contract(); 
@@ -328,7 +358,7 @@ void replace_f() {
                             antisymmetric.swap_indices_at(it1,0,1);
                         }
                         prefactor*=NC;
-                        kronecker.set_indices(antisymmetric.index(it1,0),antisymmetric.index(itf2.first,0));
+                        kronecker.set_indices(antisymmetric.index(it1,0),antisymmetric.index(itf2.first,0),true);
                         antisymmetric.del_indices(itf2.first);
                         antisymmetric.del_indices(it1);
                         fully_contract(); 
@@ -362,8 +392,8 @@ void replace_f() {
 void replace_d() {
     size_t it1(0);
     bool evaluated(false);
-    while(!evaluated && symmetric.len()>0) {
-        if (symmetric.count_index_at(symmetric.index(it1,0),it1)>1 || symmetric.count_index_at(symmetric.index(it1,1),it1)>1) {
+    while(!evaluated and symmetric.len()>0) {
+        if (symmetric.count_index_at(symmetric.index(it1,0),it1)>1 or symmetric.count_index_at(symmetric.index(it1,1),it1)>1) {
             prefactor=0;
             del_all_indices();
         }
@@ -372,7 +402,7 @@ void replace_d() {
             bool part_evaluated(false);
             int n(0);
             while (!part_evaluated) {
-                if (symmetric.count_index(symmetric.index(it1,1))>1 && symmetric.count_index(symmetric.index(it1,2))>1) {
+                if (symmetric.count_index(symmetric.index(it1,1))>1 and symmetric.count_index(symmetric.index(it1,2))>1) {
                     itf1=symmetric.find_index(symmetric.index(it1,1),it1+1);
                     itf2=symmetric.find_index(symmetric.index(it1,2),it1+1); 
                     // replace 3 d's by one d
@@ -405,7 +435,7 @@ void replace_d() {
                             symmetric.swap_indices_at(it1,0,2);
                         }
                         prefactor*=(pow(NC,2)-4)/NC;
-                        kronecker.set_indices(symmetric.index(it1,0),symmetric.index(itf1.first,0));
+                        kronecker.set_indices(symmetric.index(it1,0),symmetric.index(itf1.first,0),true);
                         symmetric.del_indices(itf1.first);
                         symmetric.del_indices(it1);
                         fully_contract();
@@ -421,7 +451,7 @@ void replace_d() {
                             symmetric.swap_indices_at(it1,0,1);
                         }
                         prefactor*=NC;
-                        kronecker.set_indices(symmetric.index(it1,0),symmetric.index(itf2.first,0));
+                        kronecker.set_indices(symmetric.index(it1,0),symmetric.index(itf2.first,0),true);
                         symmetric.del_indices(itf2.first);
                         symmetric.del_indices(it1);
                         fully_contract(); 
@@ -455,17 +485,17 @@ void replace_d() {
 void replace_2fd() {
     size_t it1(0);
     bool evaluated(false);
-    while(!evaluated && antisymmetric.len()>0 && symmetric.len()>0) {
+    while(!evaluated and antisymmetric.len()>0 and symmetric.len()>0) {
         std::pair<size_t,size_t> itf0(0,0), itf1(0,0), itf2(0,0);
         bool part_evaluated(false);
         int n(0);
-        while (!part_evaluated && antisymmetric.len()>0) {
-            if (antisymmetric.count_index(symmetric.index(it1,1))>0 && antisymmetric.count_index(symmetric.index(it1,2))>0) {
-                itf0=antisymmetric.find_index(symmetric.index(it1,0),it1);
-                itf1=antisymmetric.find_index(symmetric.index(it1,1),it1);
-                itf2=antisymmetric.find_index(symmetric.index(it1,2),it1);
+        while (!part_evaluated and antisymmetric.len()>0) {
+            if (antisymmetric.count_index(symmetric.index(it1,1))>0 and antisymmetric.count_index(symmetric.index(it1,2))>0) {
+                itf0=antisymmetric.find_index(symmetric.index(it1,0),0);
+                itf1=antisymmetric.find_index(symmetric.index(it1,1),0);
+                itf2=antisymmetric.find_index(symmetric.index(it1,2),0);
                 // product of d and f with 2 contracted indices yields 0
-                if (itf0.first==itf1.first || itf0.first==itf2.first || itf1.first==itf2.first) {
+                if (itf0.first==itf1.first or itf0.first==itf2.first or itf1.first==itf2.first) {
                     prefactor=0;
                     del_all_indices();
                 }
@@ -527,17 +557,17 @@ void replace_2fd() {
 void replace_2df() {
     size_t it1(0);
     bool evaluated(false);
-    while(!evaluated && antisymmetric.len()>0 && symmetric.len()>0) {
+    while(!evaluated and antisymmetric.len()>0 and symmetric.len()>0) {
         std::pair<size_t,size_t> itf0(0,0), itf1(0,0), itf2(0,0);
         bool part_evaluated(false);
         int n(0);
-        while (!part_evaluated && symmetric.len()>0) {
-            if (symmetric.count_index(antisymmetric.index(it1,1))>0 && symmetric.count_index(antisymmetric.index(it1,2))>0) {
-                itf0=symmetric.find_index(antisymmetric.index(it1,0),it1);
-                itf1=symmetric.find_index(antisymmetric.index(it1,1),it1);
-                itf2=symmetric.find_index(antisymmetric.index(it1,2),it1);
+        while (!part_evaluated and symmetric.len()>0) {
+            if (symmetric.count_index(antisymmetric.index(it1,1))>0 and symmetric.count_index(antisymmetric.index(it1,2))>0) {
+                itf0=symmetric.find_index(antisymmetric.index(it1,0),0);
+                itf1=symmetric.find_index(antisymmetric.index(it1,1),0);
+                itf2=symmetric.find_index(antisymmetric.index(it1,2),0);
                 // product of d and f with 2 contracted indices yields 0
-                if (itf0.first==itf1.first || itf0.first == itf2.first || itf1.first==itf2.first) {
+                if (itf0.first==itf1.first or itf0.first == itf2.first or itf1.first==itf2.first) {
                     prefactor=0;
                     del_all_indices();
                 }
@@ -611,6 +641,6 @@ void reset() {
 
 // check if a product vanishes
 bool nonvanishing_expr() {
-    if (prefactor.real()!=0. && prefactor.imag()!=0. && symmetric.len()!=0 && antisymmetric.len()!=0 && fundamental.len()!=0 && kronecker_eval.len()!=0) return false;
+    if (prefactor.real()!=0. and prefactor.imag()!=0. and symmetric.len()!=0 and antisymmetric.len()!=0 and fundamental.len()!=0 and kronecker_eval.len()!=0) return false;
     else return true;
 }

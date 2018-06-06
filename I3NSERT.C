@@ -11,25 +11,45 @@ colour_term construct_insertion_op(diagram process, unsigned int lno1, unsigned 
     two_ind kronecker;
     std::complex<float> prefactor(1.);
     
+    // TODO minus sign for final state antiquark and initial state quark
+    
     if (process.leg(lno1).second==21) {
         antisymmetric.set_indices(lno1,1001,lno1+2000);
         prefactor*=std::complex<float>(0.,1.);
     }
-    else if ((process.leg(lno1).second>=1 and process.leg(lno1).second<=6 and process.is_in_leg(lno1)) or (process.leg(lno1).second<=-1 and process.leg(lno1).second>=-6 and !process.is_in_leg(lno1))) fundamental.set_indices(1001,lno1+2000,lno1);
+    else if ((process.leg(lno1).second>=1 and process.leg(lno1).second<=6 and process.is_in_leg(lno1)) or (process.leg(lno1).second<=-1 and process.leg(lno1).second>=-6 and !process.is_in_leg(lno1))) { 
+        fundamental.set_indices(1001,lno1+2000,lno1);
+        prefactor*=-1;
+    }
     else if ((process.leg(lno1).second>=1 and process.leg(lno1).second<=6 and !process.is_in_leg(lno1)) or (process.leg(lno1).second<=-1 and process.leg(lno1).second>=-6 and process.is_in_leg(lno1))) fundamental.set_indices(1001,lno1,lno1+2000);
-    else cerr << "Error constructing the insertion operator between leg " << lno1 << " and leg " << lno2 << ": leg " << lno1 << " is not a quark, anti quark, or gluon." << endl;
+    else {
+        cerr << "Error constructing the insertion operator between leg " << lno1 << " and leg " << lno2 << ": leg " << lno1 << " is not a quark, anti quark, or gluon." << endl;
+        exit(EXIT_FAILURE);
+    }
     
     if (process.leg(lno2).second==21) { 
         antisymmetric.set_indices(lno2,1001,lno2+2000);
         prefactor*=std::complex<float>(0.,1.);
     }
-    else if ((process.leg(lno2).second>=1 and process.leg(lno2).second<=6 and process.is_in_leg(lno2)) or (process.leg(lno2).second<=-1 and process.leg(lno2).second>=-6 and !process.is_in_leg(lno2))) fundamental.set_indices(1001,lno2+2000,lno2);
+    else if ((process.leg(lno2).second>=1 and process.leg(lno2).second<=6 and process.is_in_leg(lno2)) or (process.leg(lno2).second<=-1 and process.leg(lno2).second>=-6 and !process.is_in_leg(lno2))) {
+        fundamental.set_indices(1001,lno2+2000,lno2);
+        prefactor*=-1;
+    }
     else if ((process.leg(lno2).second>=1 and process.leg(lno2).second<=6 and !process.is_in_leg(lno2)) or (process.leg(lno2).second<=-1 and process.leg(lno2).second>=-6 and process.is_in_leg(lno2))) fundamental.set_indices(1001,lno2,lno2+2000);
-    else cerr << "Error constructing the insertion operator between leg " << lno1 << " and leg " << lno2 << ": leg " << lno2 << " is not a quark, anti quark, or gluon." << endl;
-    
-    for (unsigned int lno(1);lno<process.no_of_legs();lno++)
-        if (lno!=lno1 and lno!=lno2) kronecker.set_indices(lno+2000,lno);
-    
+    else { 
+        cerr << "Error constructing the insertion operator between leg " << lno1 << " and leg " << lno2 << ": leg " << lno2 << " is not a quark, anti quark, or gluon." << endl;
+        exit(EXIT_FAILURE);
+    }
+     
+    bool gluonic(false);
+    for (unsigned int lno(1);lno<=process.no_of_legs();lno++) {
+        if (lno!=lno1 and lno!=lno2) {
+            if (process.leg(lno).second==21) gluonic=true;
+            else gluonic=false;
+            kronecker.set_indices(lno+2000,lno,gluonic);
+        }
+    }
+
     colour_term insertion_op;
     insertion_op.sym.push_back(symmetric);
     insertion_op.asym.push_back(antisymmetric);
