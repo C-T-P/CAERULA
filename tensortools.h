@@ -12,6 +12,8 @@
 #include<math.h>
 using namespace std;
 
+static float NC(3.); // number of colours
+
 class diagram {
     /* 
      incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
@@ -121,7 +123,7 @@ class three_ind {
             });
         }
         std::pair<size_t,size_t> find_index(int index, size_t start) {
-            if (ind.size()>0) {
+            if (ind.size()-1>=start) {
                 size_t it(start);
                 size_t f=find(ind[start].begin(), ind[start].end()+1, index)-ind[start].begin();
                 while (it<ind.size() && f>=3) {
@@ -129,7 +131,7 @@ class three_ind {
                 }
                 return std::pair<size_t,size_t>(it,f);
             }
-            else return std::pair<size_t,size_t>(1,3);
+            else return std::pair<size_t,size_t>(ind.size(),3);
         }
         bool has_index_at(int index, size_t it) {
             if (find(ind[it].begin(), ind[it].end()+1, index)<ind[it].end()) return true;
@@ -137,72 +139,83 @@ class three_ind {
         }
 };
 class two_ind {
-    std::vector<std::vector<int>> ind;
-    std::vector<bool> gluonic_k;
+    struct flagged_indices {
+        std::vector<int> ind;
+        bool gluonic_k;
+        flagged_indices(std::vector<int> k_indices, bool is_gluonic) {
+            ind=k_indices;
+            gluonic_k=is_gluonic;
+        }
+    };
+    std::vector<flagged_indices> indices;
     public:
         void set_indices(int i, int j, bool gluonic) {
-            std::vector<int> new_ind {i, j};
-            ind.push_back(new_ind);
-            gluonic_k.push_back(gluonic);
+            indices.push_back(flagged_indices(std::vector<int> {i, j},gluonic));
         }
         bool is_gluonic(size_t it) {
-            return gluonic_k.at(it);
+            return indices.at(it).gluonic_k;
         }
         void append_by(two_ind tensor) {
-            std::vector<std::vector<int>> all_ind=tensor.get_all_indices();
-            std::vector<bool> all_flags=tensor.get_all_flags();
-            ind.insert(ind.end(),all_ind.begin(),all_ind.end());
-            gluonic_k.insert(gluonic_k.end(),all_flags.begin(),all_flags.end());
+            for (size_t p_it(0); p_it<tensor.len();p_it++) {
+                indices.push_back(flagged_indices(std::vector<int>{tensor.index(p_it,0),tensor.index(p_it,1)},tensor.is_gluonic(p_it)));
+            }
         }
         std::vector<std::vector<int>> get_all_indices() {
-            return ind;
+            std::vector<std::vector<int>> all_indices;
+            for (size_t p_it(0);p_it<indices.size();p_it++) {
+                all_indices.push_back(indices.at(p_it).ind);
+            }
+            return all_indices;
         }
         std::vector<bool> get_all_flags() {
-            return gluonic_k;
+            std::vector<bool> all_flags;
+            for (size_t p_it(0);p_it<indices.size();p_it++) {
+                all_flags.push_back(indices.at(p_it).gluonic_k);
+            }
+            return all_flags;
         }
         void del_indices(int it) {
-            ind.erase(ind.begin()+it);
-            gluonic_k.erase(gluonic_k.begin()+it);
+            indices.erase(indices.begin()+it);
         }
         void clear_indices() {
-            ind.clear();
-            gluonic_k.clear();
+            indices.clear();
         }
         void find_and_rep_indices(int old_ind, int new_ind) {
-            for (size_t it(0); it<ind.size(); ++it) replace(ind[it].begin(), ind[it].end(), old_ind, new_ind);
+            for (size_t it(0); it<indices.size(); ++it) replace(indices[it].ind.begin(), indices[it].ind.end(), old_ind, new_ind);
         }
         int count_index(int index) {
             int cntr(0);
-            for (size_t it(0); it<ind.size(); ++it) cntr+=count(ind[it].begin(), ind[it].end(), index);
+            for (size_t it(0); it<indices.size(); ++it) cntr+=count(indices[it].ind.begin(), indices[it].ind.end(), index);
             return cntr;
         }
         void swap_indices_at(size_t pos) {
-            int dummy=ind[pos][1];
-            ind[pos][1]=ind[pos][0];
-            ind[pos][0]=dummy;
+            int dummy=indices[pos].ind[1];
+            indices[pos].ind[1]=indices[pos].ind[0];
+            indices[pos].ind[0]=dummy;
         }
         int index(size_t it0, size_t it1) {
-            return (ind.at(it0)).at(it1);
+            return indices.at(it0).ind.at(it1);
         }
         size_t len() {
-            return ind.size();
+            return indices.size();
         }
-        void sort_list() {            
-            std::sort(ind.begin(), ind.end(),[](const std::vector<int>& ind1, const std::vector<int>& ind2) {
-                if (ind1[0]>ind2[0]) return false;
-                else if (ind1[0]==ind2[0]) {
-                    if (ind1[1]>ind2[1]) return false;
+        void sort_list() {
+            std::sort(indices.begin(), indices.end(),[](const flagged_indices& ind1, const flagged_indices& ind2) {
+                if (ind1.ind[0]>ind2.ind[0]) return false;
+                else if (ind1.ind[0]==ind2.ind[0]) {
+                    if (ind1.ind[1]>ind2.ind[1]) return false;
                     else return true;
                 }
                 else return true;
             });
+            
         }
         std::pair<size_t,size_t> find_index(int index, size_t start) {
-            if (ind.size()>0) {
+            if (indices.size()>0) {
                 size_t it(start+1);
-                size_t f=find(ind[start].begin(), ind[start].end(), index)-ind[start].begin();
-                while (it<ind.size() && f>=2) {
-                    f=find(ind[it].begin(), ind[it].end(), index)-ind[it].begin();
+                size_t f=find(indices[start].ind.begin(), indices[start].ind.end(), index)-indices[start].ind.begin();
+                while (it<indices.size() && f>=2) {
+                    f=find(indices[it].ind.begin(), indices[it].ind.end(), index)-indices[it].ind.begin();
                     ++it;
                 }
                 return std::pair<size_t,size_t>(it-1,f);
@@ -216,6 +229,7 @@ struct colour_term {
     std::vector<three_ind> fund;
     std::vector<two_ind> kron;
     std::vector<std::complex<float>> pref;
+    std::vector<int> NC_ctr;
     size_t no_of_terms() {
         return pref.size();
     };
@@ -264,17 +278,17 @@ struct colour_term {
                 asymmmetric=asym.at(t_it1);
                 fundamental=fund.at(t_it1);
                 kronecker=kron.at(t_it1);
-                prefactor=pref.at(t_it1);
+                prefactor=pref.at(t_it1)*ct.pref.at(t_it2);
                 symmmetric.append_by(ct.sym.at(t_it2).get_all_indices());
                 asymmmetric.append_by(ct.asym.at(t_it2).get_all_indices());
                 fundamental.append_by(ct.fund.at(t_it2).get_all_indices());
                 kronecker.append_by(ct.kron.at(t_it2));
-                prefactor*=ct.pref.at(t_it2);
                 ct_r.sym.push_back(symmmetric);
                 ct_r.asym.push_back(asymmmetric);
                 ct_r.fund.push_back(fundamental);
                 ct_r.kron.push_back(kronecker);
                 ct_r.pref.push_back(prefactor);
+                ct_r.NC_ctr.push_back(NC_ctr.at(t_it1)+ct.NC_ctr.at(t_it2));
             }
         }
         return ct_r;
@@ -286,10 +300,11 @@ struct colour_term {
         ct.fund=fund;
         ct.kron=kron;
         ct.pref=pref;
+        ct.NC_ctr=NC_ctr;
         for (size_t i(0);i<pref.size();i++) ct.pref[i]=conj(ct.pref[i]);
         return ct;
     }
-    // Scalar Product < A | B > = Tr(A^+ B) (anti-hermitian in first argument)
+    // Scalar Product < A | B > = Tr(A^+ B) (anti-linear in first argument)
     // NOTE: Returns colour term, which has to be evaluated !!!
     colour_term scprod(colour_term ct2) {
         colour_term ct1;
@@ -298,10 +313,22 @@ struct colour_term {
         ct1.fund=fund;
         ct1.kron=kron;
         ct1.pref=pref;
+        ct1.NC_ctr=NC_ctr;
         for (size_t t_it(0);t_it<ct1.no_of_terms();t_it++)
             for (size_t f_it(0);f_it<ct1.fund.at(t_it).len();f_it++)
                 ct1.fund.at(t_it).swap_indices_at(f_it,1,2);
         return ct1.cconj().multiply(ct2);
+    }
+    colour_term term(size_t termno) {
+        colour_term ct;
+        ct.delete_all_terms();
+        ct.sym.push_back(sym[termno]);
+        ct.asym.push_back(asym[termno]);
+        ct.fund.push_back(fund[termno]);
+        ct.kron.push_back(kron[termno]);
+        ct.pref.push_back(pref[termno]);
+        ct.NC_ctr.push_back(NC_ctr[termno]);
+        return ct;
     }
     void delete_term(size_t j) {
         sym.erase(sym.begin()+j);
@@ -309,6 +336,7 @@ struct colour_term {
         fund.erase(fund.begin()+j);
         kron.erase(kron.begin()+j);
         pref.erase(pref.begin()+j);
+        NC_ctr.erase(NC_ctr.begin()+j);
     }
     void delete_all_terms() {
         sym.clear();
@@ -316,6 +344,7 @@ struct colour_term {
         fund.clear();
         kron.clear();
         pref.clear();
+        NC_ctr.clear();
     }
     std::string build_string() {
         std::string return_str;

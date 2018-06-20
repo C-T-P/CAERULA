@@ -11,8 +11,6 @@ colour_term construct_insertion_op(diagram process, unsigned int lno1, unsigned 
     two_ind kronecker;
     std::complex<float> prefactor(1.);
     
-    // TODO minus sign for final state antiquark and initial state quark
-    
     if (process.leg(lno1).second==21) {
         antisymmetric.set_indices(lno1,1001,lno1+2000);
         prefactor*=std::complex<float>(0.,1.);
@@ -56,6 +54,7 @@ colour_term construct_insertion_op(diagram process, unsigned int lno1, unsigned 
     insertion_op.fund.push_back(fundamental);
     insertion_op.kron.push_back(kronecker);
     insertion_op.pref.push_back(prefactor);
+    insertion_op.NC_ctr.push_back(0);
     
     return insertion_op;
 }

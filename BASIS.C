@@ -5,34 +5,32 @@
 #include "BASIS.h"
 
 // construct trace basis for processes with n gluons and up to 1 quark and 1 antiquark
-std::vector<colour_term> construct_trace_basis(diagram process) {
-    std::vector<colour_term> trace_basis;
-    three_ind symmetric;
-    three_ind antisymmetric;
-    three_ind fundamental;
-    two_ind kronecker;
-    std::complex<float> prefactor(1.);
-    
-    
-    
-    return trace_basis;
-}
+// std::vector<colour_term> construct_trace_basis(diagram process) {
+//     std::vector<colour_term> trace_basis;
+//     three_ind symmetric;
+//     three_ind antisymmetric;
+//     three_ind fundamental;
+//     two_ind kronecker;
+//     std::complex<float> prefactor(1.);
+//     
+//     
+//     
+//     return trace_basis;
+// }
 
 // calculate soft matrix
 std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colour_term> basis) {
     std::vector<std::vector<std::complex<float>>> soft_matrix(basis.size(), std::vector<std::complex<float>>(basis.size(),0.));
     colour_term ct;
-    ct.delete_all_terms();
     for (size_t i(0);i<basis.size();i++) {
         for (size_t j(0);j<basis.size();j++) {
             if(i<=j) {
-                // transpose of basis[i] ?!
-                cout << i << " " << j << endl;
+//                 cout << "\n<b_" << i+1 << ",b_" << j+1 << "> = " << endl;
+                ct.delete_all_terms();;
                 ct=basis[i].scprod(basis[j]);
-                cout << ct.build_string() << endl;
-                evaluate(ct);
-                cout << " = " << ct.build_string() << "\n" << endl;
-                soft_matrix[i][j]=ct.build_complex();
+//                 cout << ct.build_string() << endl;
+                soft_matrix[i][j]=evaluate_colour_term_to_order(ct,INT_MAX);
+//                 cout << soft_matrix[i][j] << endl;
             }
             else soft_matrix[i][j]=conj(soft_matrix[j][i]);
         }
@@ -48,12 +46,13 @@ std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vec
     std::complex<double> t_ccm[basis.size()][basis.size()];
     for (size_t i(0);i<basis.size();i++) {
         for (size_t j(0);j<basis.size();j++) {
+            cout << "\rC_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] being calculated..." << flush;
             ct=basis[i].scprod(insertion_op.multiply(make_internal(process,basis[j])));
-            evaluate(ct);
-            t_ccm[i][j]=ct.build_complex();
+            t_ccm[i][j]=evaluate_colour_term_to_order(ct,INT_MAX);
             if (isnan(t_ccm[i][j].real())) cerr << "Error: C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] = " <<ct.build_string() << "\n" << endl;
         }
     }
+    cout << endl;
     
     // express in terms of basis
     gsl_vector_complex *b=gsl_vector_complex_alloc(basis.size()), *x=gsl_vector_complex_alloc(basis.size());
@@ -78,16 +77,15 @@ std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vec
     return ccm; 
 }
 
-// shift external to internal indices (by multiplying with Kroneckers)
+// shift external to internal indices
 colour_term make_internal(diagram process, colour_term expr) {
-    bool gluonic(false);
     for (unsigned int lno(1);lno<=process.no_of_legs();lno++) {
-        for (size_t tno(0);tno<expr.no_of_terms();tno++) {
-            if (process.leg(lno).second==21) gluonic=true;
-            else gluonic=false;
-            expr.kron.at(tno).set_indices(lno+2000,lno,gluonic);
+        for (size_t t_it(0);t_it<expr.no_of_terms();t_it++) {
+            expr.sym[t_it].find_and_rep_indices(lno,lno+2000);
+            expr.asym[t_it].find_and_rep_indices(lno,lno+2000);
+            expr.fund[t_it].find_and_rep_indices(lno,lno+2000);
+            expr.kron[t_it].find_and_rep_indices(lno,lno+2000);
         }
     }
-    evaluate(expr);
     return expr;
 }

@@ -1,20 +1,22 @@
 objects = Main.o BASIS.o CONTRACT.o I3NSERT.o
 path-to-gsl = /usr/include/gsl
 
+CXX = g++ -g -std=c++11
+
 Spectrum: $(objects)
-	g++ -std=c++11 -o Spectrum -L$(path-to-gsl) -I$(path-to-gsl) -lgsl -lgslcblas -lm Main.o BASIS.o CONTRACT.o I3NSERT.o
+	$(CXX) -o Spectrum -L$(path-to-gsl) -I$(path-to-gsl) -lgsl -lgslcblas -lm Main.o BASIS.o CONTRACT.o I3NSERT.o
 
 Main.o:	Main.C
-	g++ -std=c++11 -c -Wall Main.C
+	$(CXX) -c -Wall Main.C
 
 BASIS.o: BASIS.C
-	g++ -std=c++11 -c -Wall -L$(path-to-gsl) -I$(path-to-gsl) -lgsl -lgslcblas -lm BASIS.C
+	$(CXX) -c -Wall -L$(path-to-gsl) -I$(path-to-gsl) -lgsl -lgslcblas -lm BASIS.C
 
 CONTRACT.o: CONTRACT.C
-	g++ -std=c++11 -c -Wall CONTRACT.C
+	$(CXX) -c -Wall CONTRACT.C
 
 I3NSERT.o: I3NSERT.C
-	g++ -std=c++11 -c -Wall I3NSERT.C
+	$(CXX) -c -Wall I3NSERT.C
 
 clean:
 	rm -f $(objects)

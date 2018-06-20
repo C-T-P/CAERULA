@@ -14,17 +14,39 @@ int main(int argc, char **argv) {
     for (int i(1);i<argc;i++) filename+=argv[i];
     read_in_process(filename, process, basis_strs);
     
-    // debugging
-//     colour_term ct;
-//     string str="c_[0.000000,-1.000000]*d_[103,104,5]*f_[101,102,5]*t_[101,1,2]*t_[102,4,3]*t_[103,2,1]*t_[104,3,4]";
-//     ct=decompose_terms(str,process);
-//     cout << ct.build_string() << endl;
-//     evaluate(ct);
-//     cout << ct.build_string() << endl;
-    
-    // give out leg indices and particle ids (particle specs)
+    // give out leg indices and particle ids
     cout << "\nProcess:\n" << "leg\t" << "PID" << endl;
     for (size_t i(1);i<=process.no_of_legs();i++) cout << process.leg(i).first << "\t" << process.leg(i).second << endl;
+    
+    // debugging
+//     string str="k_[4,101]*k_[101,2]*k_[102,1]*k_[102,3]";
+//     colour_term ct=decompose_terms(str,process);
+//     cout << ct.build_string() << endl;
+//     cout << "\nIndices: " << endl;
+//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
+//         for (size_t j(0);j<ct.kron[0].get_all_indices()[i].size();j++) {
+//             cout << ct.kron[0].get_all_indices()[i][j] << "\t" ;
+//         }
+//         cout << endl;
+//     }
+//     cout << "\nFlags: " << endl;
+//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
+//         cout << ct.kron[0].get_all_flags()[i] << endl ;
+//     }
+//     sort_colour_term(ct);
+//     cout << "\nIndices: " << endl;
+//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
+//         for (size_t j(0);j<ct.kron[0].get_all_indices()[i].size();j++) {
+//             cout << ct.kron[0].get_all_indices()[i][j] << "\t" ;
+//         }
+//         cout << endl;
+//     }
+//     cout << "\nFlags: " << endl;
+//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
+//         cout << ct.kron[0].get_all_flags()[i] << endl ;
+//     }
+//     cout << ct.build_string() << endl;
+    
     
     // save basis vectors as colour terms
     std::vector<colour_term> basis;
@@ -101,6 +123,8 @@ colour_term decompose_terms(std::string& input, diagram process) {
     three_ind antisymmetric;
     three_ind fundamental;
     two_ind kronecker;
+    int NC_order_c;
+    int NC_order_r;
     std::complex<float> prefactor = 1.;
     for (size_t i(0), mpos(input.find('+'));mpos!=std::string::npos || input.length()>0;mpos=input.find('+')) {
         ++i;
@@ -119,7 +143,9 @@ colour_term decompose_terms(std::string& input, diagram process) {
         symmetric.clear_indices();
         antisymmetric.clear_indices();
         fundamental.clear_indices();
-        prefactor = 1.;
+        prefactor=1.;
+        NC_order_c=0;
+        NC_order_r=0;
         for (size_t j(0), mpos(summand.find('*'));mpos!=std::string::npos || summand.length()>0;mpos=summand.find('*')) {
             ++j;
             std::string factor;
@@ -137,7 +163,30 @@ colour_term decompose_terms(std::string& input, diagram process) {
                     cerr << "Invalid prefactor." << endl;
                     exit(EXIT_FAILURE);
                 }
-                std::complex<float> prfct=stof(factor.substr(3,cpos-3))+stof(factor.substr(cpos+1,factor.length()-cpos-2))*complex<float>(0.,1.);
+                std::complex<float> prfct(0.);
+                size_t spos(factor.substr(3,cpos-3).find("1/NC"));
+                if (spos==std::string::npos) prfct+=stof(factor.substr(3,cpos-3));
+                else {
+                    size_t ppos=factor.substr(3,cpos-3).find('^');
+                    float exponent(1);
+                    if (ppos!=std::string::npos) exponent=stof(factor.substr(3+ppos+1,cpos-ppos-2));
+                    NC_order_r+=exponent;
+                    prfct+=1./pow(NC,exponent);
+                }
+                spos=factor.substr(cpos+1,factor.length()-cpos-2).find("1/NC");
+                if (spos==std::string::npos) prfct+=stof(factor.substr(cpos+1,factor.length()-cpos-2))*std::complex<float>(0.,1.);
+                else {
+                    size_t ppos=factor.substr(cpos+1,factor.length()-cpos-2).find('^');
+                    float exponent(1);
+                    if (ppos!=std::string::npos) exponent=stof(factor.substr(cpos+ppos+2,factor.length()-ppos-3));
+                    NC_order_c+=exponent;
+                    prfct+=(float)1./pow(NC,exponent)*std::complex<float>(0.,1.);
+                }
+                // only same orders in 1/NC in real and imaginary part are supported
+                if (NC_order_c!=NC_order_r and NC_order_c!=0 and NC_order_r!=0) {
+                    cerr << "Error: Expected equal orders in 1/NC for real and imaginary part of prefactor, but real part has order " << NC_order_r << " and imaginary part has order " << NC_order_c << ".\n Specify real and imaginary part seperately to avoid this error." << endl;
+                    exit(EXIT_FAILURE);
+                }
                 prefactor*=prfct;
             }
             else if(factor.find("f_[")==0 && factor[factor.length()-1]==']') {
@@ -187,7 +236,7 @@ colour_term decompose_terms(std::string& input, diagram process) {
                 }
                 int ind_i=stoi(factor.substr(3,cpos-3)), ind_j=stoi(factor.substr(cpos+1,factor.length()-cpos-2));
                 bool gluonic(false);
-                if (process.leg((unsigned int)ind_i).second==21 and process.leg((unsigned int)ind_j).second==21) gluonic=true;
+                if (process.leg((unsigned int)ind_i).second==21 or process.leg((unsigned int)ind_j).second==21) gluonic=true;
                 kronecker.set_indices(ind_i,ind_j,gluonic);
             }
             else cerr << "Invalid input." << endl;
@@ -197,6 +246,7 @@ colour_term decompose_terms(std::string& input, diagram process) {
         expr.fund.push_back(fundamental);
         expr.kron.push_back(kronecker);
         expr.pref.push_back(prefactor);
+        expr.NC_ctr.push_back(NC_order_r);
     }
     return expr;
 }
