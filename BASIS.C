@@ -19,7 +19,7 @@
 // }
 
 // calculate soft matrix
-std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colour_term> basis) {
+std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colour_term> basis, int NC_order) {
     std::vector<std::vector<std::complex<float>>> soft_matrix(basis.size(), std::vector<std::complex<float>>(basis.size(),0.));
     colour_term ct;
     for (size_t i(0);i<basis.size();i++) {
@@ -29,7 +29,7 @@ std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colou
                 ct.delete_all_terms();;
                 ct=basis[i].scprod(basis[j]);
 //                 cout << ct.build_string() << endl;
-                soft_matrix[i][j]=evaluate_colour_term_to_order(ct,INT_MAX);
+                soft_matrix[i][j]=evaluate_colour_term_to_order(ct,NC_order);
 //                 cout << soft_matrix[i][j] << endl;
             }
             else soft_matrix[i][j]=conj(soft_matrix[j][i]);
@@ -39,7 +39,7 @@ std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colou
 } 
 
 // calculate colour change matrix for insertion between leg lno1 and lno2
-std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vector<colour_term> basis, std::vector<std::vector<std::complex<float>>> soft_matrix, diagram process, unsigned int lno1, unsigned int lno2) {
+std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vector<colour_term> basis, std::vector<std::vector<std::complex<float>>> soft_matrix, diagram process, unsigned int lno1, unsigned int lno2, int NC_order) {
     colour_term insertion_op=construct_insertion_op(process,lno1,lno2);
     colour_term ct;
     std::vector<std::vector<std::complex<float>>> ccm(basis.size(),std::vector<std::complex<float>>(basis.size(),0.));
@@ -48,7 +48,7 @@ std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vec
         for (size_t j(0);j<basis.size();j++) {
             cout << "\rC_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] being calculated..." << flush;
             ct=basis[i].scprod(insertion_op.multiply(make_internal(process,basis[j])));
-            t_ccm[i][j]=evaluate_colour_term_to_order(ct,INT_MAX);
+            t_ccm[i][j]=evaluate_colour_term_to_order(ct,NC_order);
             if (isnan(t_ccm[i][j].real())) cerr << "Error: C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] = " <<ct.build_string() << "\n" << endl;
         }
     }

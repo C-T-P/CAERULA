@@ -6,6 +6,12 @@
 #include "Main.h"
 
 int main(int argc, char **argv) {
+    // define order in 1/NC to which the terms shall be evaluated
+    const int NC_order=INT_MAX;
+    cout << "Order of 1/NC set to ";
+    if (NC_order!=INT_MAX) cout << NC_order << "." << endl;
+    else cout << "Infinity." << endl;
+    
     // read in process file and basis vecs as strings and store process specs
     std::string filename;
     std::vector<std::string> basis_strs;
@@ -19,33 +25,10 @@ int main(int argc, char **argv) {
     for (size_t i(1);i<=process.no_of_legs();i++) cout << process.leg(i).first << "\t" << process.leg(i).second << endl;
     
     // debugging
-//     string str="k_[4,101]*k_[101,2]*k_[102,1]*k_[102,3]";
+//     string str="c_[-1.000000,0.000000]*f_[2,1001,2002]*f_[3,1001,2003]*t_[1,102,101]*t_[3,103,102]*t_[2,101,103]*t_[2001,106,104]*t_[2003,104,105]*t_[2002,105,106]*k_[2001,1]";
 //     colour_term ct=decompose_terms(str,process);
 //     cout << ct.build_string() << endl;
-//     cout << "\nIndices: " << endl;
-//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
-//         for (size_t j(0);j<ct.kron[0].get_all_indices()[i].size();j++) {
-//             cout << ct.kron[0].get_all_indices()[i][j] << "\t" ;
-//         }
-//         cout << endl;
-//     }
-//     cout << "\nFlags: " << endl;
-//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
-//         cout << ct.kron[0].get_all_flags()[i] << endl ;
-//     }
-//     sort_colour_term(ct);
-//     cout << "\nIndices: " << endl;
-//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
-//         for (size_t j(0);j<ct.kron[0].get_all_indices()[i].size();j++) {
-//             cout << ct.kron[0].get_all_indices()[i][j] << "\t" ;
-//         }
-//         cout << endl;
-//     }
-//     cout << "\nFlags: " << endl;
-//     for (size_t i(0);i<ct.kron[0].get_all_indices().size();i++) {
-//         cout << ct.kron[0].get_all_flags()[i] << endl ;
-//     }
-//     cout << ct.build_string() << endl;
+//     cout << "order 1: " << evaluate_colour_term_to_order(ct,INT_MAX) << endl;
     
     
     // save basis vectors as colour terms
@@ -58,7 +41,7 @@ int main(int argc, char **argv) {
     }
     
     // calculate and give out soft matrix
-    std::vector<std::vector<std::complex<float>>> soft_matrix=calc_soft_matrix(basis);
+    std::vector<std::vector<std::complex<float>>> soft_matrix=calc_soft_matrix(basis,NC_order);
     cout << "\nSoft Matrix:" << endl;
     for (size_t i(0);i<soft_matrix.size();i++) {
         for (size_t j(0);j<soft_matrix[i].size();j++) 
@@ -71,7 +54,7 @@ int main(int argc, char **argv) {
     cout << "\nColour Change Matrices:" << endl;
     for (unsigned int lno1(1);lno1<=process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=process.no_of_legs();lno2++) {
-            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2));
+            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order));
             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
             for (size_t i(0);i<colour_change_matrices.back().size();i++) {
                 for (size_t j(0);j<colour_change_matrices.back()[i].size();j++) 

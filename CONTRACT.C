@@ -10,32 +10,32 @@ static float eps(1.e-4); // cutoff value - all floats smaller than this will be 
 std::complex<float> evaluate_colour_term_to_order(colour_term& expr, unsigned int NC_order) {
     std::complex<float> cf(0);
     if (NC_order==INT_MAX) {
-        for (size_t i(0);i<expr.no_of_terms();i++) {
-            contract_product(expr.pref[i], expr.kron[i], expr.sym[i], expr.asym[i], expr.fund[i]);
-            if (vanishing_expr(expr.pref[i], expr.kron[i], expr.sym[i], expr.asym[i], expr.fund[i])) {
-                expr.delete_term(i);
-                i--;
+        for (size_t t_it(0);t_it<expr.no_of_terms();t_it++) {
+            contract_product(expr.pref[t_it], expr.kron[t_it], expr.sym[t_it], expr.asym[t_it], expr.fund[t_it]);
+            if (vanishing_expr(expr.pref[t_it], expr.kron[t_it], expr.sym[t_it], expr.asym[t_it], expr.fund[t_it])) {
+                expr.delete_term(t_it);
+                t_it--;
             }
         }
         replace_d_and_f_by_t(expr);
         sort_colour_term(expr);
-        replace_fund(expr);
-        
-        while (expr.no_of_terms()>0) {
-            contract_product(expr.pref[0],expr.kron[0],expr.sym[0],expr.asym[0],expr.fund[0]);
-            cf+=expr.term(0).build_complex();
-            expr.delete_term(0);
-        }
-        if (abs(cf.real())<eps and abs(cf.imag())<eps) cf=0.;
+        replace_fund(expr,INT_MAX);
     }
     else {
+        for (size_t t_it(0);t_it<expr.no_of_terms();t_it++) replace_k(expr.pref[t_it], expr.kron[t_it], expr.sym[t_it], expr.asym[t_it], expr.fund[t_it]);
         replace_d_and_f_by_t(expr);
-        // TODO implement here evaluation of products of T's up to certain order in 1/NC
+        replace_fund(expr,NC_order);
     }
+    while (expr.no_of_terms()>0) {
+        contract_product(expr.pref[0],expr.kron[0],expr.sym[0],expr.asym[0],expr.fund[0]);
+        cf+=expr.term(0).build_complex();
+        expr.delete_term(0);
+    }
+    if (abs(cf.real())<eps and abs(cf.imag())<eps) cf=0.;
     return cf;
 }
 
-// simplifies colour term by contracting all repeated indices - yields colour term with minimal amount of internal indices
+// simplifies colour term by contracting repeated indices - yields colour term with smaller amount of internal indices
 // accepts colour terms with uncontracted external indices
 void simplify_colour_term(colour_term& expr) {
     for (size_t i(0);i<expr.no_of_terms();i++) {
@@ -46,7 +46,7 @@ void simplify_colour_term(colour_term& expr) {
         }
     }
     sort_colour_term(expr);
-    if(replace_fund(expr)) simplify_colour_term(expr);
+    if(replace_fund(expr,INT_MAX)) simplify_colour_term(expr);
 }
 
 // sort indices and terms and add terms of identical tensors in an expression
@@ -162,10 +162,9 @@ void replace_d_and_f_by_t(colour_term& expr){
 }
 
 // replace products of fundamental generators
-bool replace_fund(colour_term& expr) {
+bool replace_fund(colour_term& expr, int NC_order) {
     bool replacements_made(false);
     for (size_t i(0);i<expr.no_of_terms();i++) {
-//         cout << "i = " << i << "\texpr.no_of_terms() = " << expr.no_of_terms() << endl;
         size_t it1(0);
         bool evaluated(false);
         while(!evaluated and expr.fund[i].len()>0) {
@@ -173,6 +172,7 @@ bool replace_fund(colour_term& expr) {
             if (expr.fund[i].index(it1,1)==expr.fund[i].index(it1,2)) {
                 expr.delete_term(i);
                 i--;
+                if (i>=expr.no_of_terms()) evaluated=true;
             }
             else if (expr.fund[i].count_index(expr.fund[i].index(it1,0))>1) {
                 itf1=expr.fund[i].find_index(expr.fund[i].index(it1,0),itf1.first);
@@ -182,16 +182,19 @@ bool replace_fund(colour_term& expr) {
                     expr.fund[i].del_indices(itf1.first);
                     expr.fund[i].del_indices(it1);
                     // second term
-                    expr.sym.push_back(expr.sym[i]);
-                    expr.asym.push_back(expr.asym[i]);
-                    expr.fund.push_back(expr.fund[i]);
-                    expr.kron.push_back(expr.kron[i]);
-                    expr.pref.push_back(expr.pref[i]);
-                    expr.NC_ctr.push_back(expr.NC_ctr[i]);
-                    expr.pref[expr.no_of_terms()-1]*=-1./(2.*NC);
-                    expr.NC_ctr[expr.no_of_terms()-1]++;
-                    expr.kron[expr.no_of_terms()-1].set_indices(a,b,false);
-                    expr.kron[expr.no_of_terms()-1].set_indices(c,d,false);
+                    if (NC_order==INT_MAX or expr.NC_ctr[i]<NC_order) {
+                        expr.sym.push_back(expr.sym[i]);
+                        expr.asym.push_back(expr.asym[i]);
+                        expr.fund.push_back(expr.fund[i]);
+                        expr.kron.push_back(expr.kron[i]);
+                        expr.pref.push_back(expr.pref[i]);
+                        expr.NC_ctr.push_back(expr.NC_ctr[i]);
+                        expr.pref[expr.no_of_terms()-1]*=-1./(2.*NC);
+                        expr.NC_ctr[expr.no_of_terms()-1]++;
+                        expr.kron[expr.no_of_terms()-1].set_indices(a,b,false);
+                        expr.kron[expr.no_of_terms()-1].set_indices(c,d,false);
+                    }
+                    
                     // first term
                     expr.kron[i].set_indices(a,d,false);
                     expr.kron[i].set_indices(c,b,false);
