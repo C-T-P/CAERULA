@@ -58,19 +58,10 @@ void sort_colour_term(colour_term& expr) {
 
 // sort indices with increasing value
 void sort_indices(colour_term& expr) {
-    for (size_t i(0);i<expr.kron.size();i++) {
-        for (size_t j(0);j<expr.kron[i].len();j++) if (expr.kron[i].index(j,0)>expr.kron[i].index(j,1)) expr.kron[i].swap_indices_at(j);
-        for (size_t j(0);j<expr.sym[i].len();j++) {
-            while (expr.sym[i].index(j,0)>expr.sym[i].index(j,1) or expr.sym[i].index(j,0)>expr.sym[i].index(j,2)) expr.sym[i].rotate_indices_at(j);
-            if (expr.sym[i].index(j,1)>expr.sym[i].index(j,2)) expr.sym[i].swap_indices_at(j,1,2);
-        }
-        for (size_t j(0);j<expr.asym[i].len();j++) {
-            while (expr.asym[i].index(j,0)>expr.asym[i].index(j,1) or expr.asym[i].index(j,0)>expr.asym[i].index(j,2)) expr.asym[i].rotate_indices_at(j);
-            if (expr.asym[i].index(j,1)>expr.asym[i].index(j,2)) {
-                expr.asym[i].swap_indices_at(j,1,2);
-                expr.pref[i]*=-1.;
-            }
-        }
+    for (size_t t_it(0);t_it<expr.no_of_terms();t_it++) {
+        for (size_t p_it(0);p_it<expr.kron[t_it].len();t_it++) expr.kron[t_it].sort_indices_at(p_it);
+        for (size_t p_it(0);p_it<expr.sym[t_it].len();t_it++) expr.sym[t_it].sort_indices_at(p_it);
+        for (size_t p_it(0);p_it<expr.asym[t_it].len();t_it++) expr.asym[t_it].sort_indices_at(p_it);
     }
 }
 
