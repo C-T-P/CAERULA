@@ -92,6 +92,9 @@ class three_ind {
         void rotate_indices_at(size_t it) {
             std::rotate(ind[it].begin(), ind[it].begin()+1,ind[it].end());
         }
+        void sort_indices_at(size_t it) {
+            std::sort(ind[it].begin(),ind[it].end());
+        }
         int count_index(int index) {
             int cntr(0);
             for (size_t it(0); it<ind.size(); ++it) cntr+=count(ind[it].begin(), ind[it].end(), index);
@@ -114,8 +117,7 @@ class three_ind {
                 else if (ind1[0]==ind2[0]) {
                     if (ind1[1]>ind2[1]) return false;
                     else if (ind1[1]==ind2[1]) {
-                        if (ind1[2]>ind2[2]) return false;
-                        else return true;
+                        return ind1[2]<ind2[2];
                     }
                     else return true;
                 }
@@ -192,6 +194,9 @@ class two_ind {
             int dummy=indices[pos].ind[1];
             indices[pos].ind[1]=indices[pos].ind[0];
             indices[pos].ind[0]=dummy;
+        }
+        void sort_indices_at(size_t it) {
+            std::sort(indices[it].ind.begin(),indices[it].ind.end());
         }
         int index(size_t it0, size_t it1) {
             return indices.at(it0).ind.at(it1);
