@@ -1,0 +1,13 @@
+# legs will be numbered from 1 to n in the order given here
+l	in	21
+l	in	21
+l	out	21
+l	out	21
+l	out	21
+l	out	21
+# basis vectors will be numbered from 1 to n in the order given here
+# IMPORTANT: indices have to match the leg number !
+b	c_[0.039283710065919304,0.]*f_[2,1,101]*f_[3,101,102]*f_[4,102,105]*f_[5,105,6]
+#+c_[0.039283710065919304,0.]*f_[5,1,101]*f_[4,101,102]*f_[3,102,105]*f_[2,105,6]
+b	c_[0.039283710065919304,0.]*f_[3,1,101]*f_[4,101,102]*f_[5,102,105]*f_[2,105,6]
+#+c_[0.039283710065919304,0.]*f_[2,1,101]*f_[5,101,102]*f_[4,102,105]*f_[3,105,6]
