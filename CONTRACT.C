@@ -2,13 +2,13 @@
 #include "Main.h"
 #include "CONTRACT.h"
 
-static float eps(1.e-4); // cutoff value - all floats smaller than this will be treated as 0
+static double eps(1.e-4); // cutoff value - all doubles smaller than this will be treated as 0
 
 // evaluates colour term to order NC_order in 1/NC
 // if NC_order is set to INT_MAX, the expression is evaluated exactly to all orders in 1/NC
-// expects expression with completely contracted indices and returns complex float - will return NAN if not all indices are contracted
-std::complex<float> evaluate_colour_term_to_order(colour_term& expr, unsigned int NC_order) {
-    std::complex<float> cf(0);
+// expects expression with completely contracted indices and returns complex double - will return NAN if not all indices are contracted
+complex<double> evaluate_colour_term_to_order(colour_term& expr, unsigned int NC_order) {
+    complex<double> cf(0);
     if (NC_order==INT_MAX) {
         for (size_t t_it(0);t_it<expr.no_of_terms();t_it++) {
             contract_product(expr.pref[t_it], expr.kron[t_it], expr.sym[t_it], expr.asym[t_it], expr.fund[t_it]);
@@ -94,7 +94,7 @@ void add_terms(colour_term& expr) {
 
 
 // contract all repeated indices in one product according to identities of delta, f, d, and t
-void contract_product(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void contract_product(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     replace_k(prefactor, kronecker, symmetric, antisymmetric, fundamental);
     check_fund_trace(prefactor, kronecker, symmetric, antisymmetric, fundamental);
     replace_f(prefactor, kronecker, symmetric, antisymmetric, fundamental);
@@ -120,13 +120,13 @@ void replace_d_and_f_by_t(colour_term& expr){
             expr.kron.push_back(expr.kron[t_it]);
             expr.pref.push_back(expr.pref[t_it]);
             expr.NC_ctr.push_back(expr.NC_ctr[t_it]);
-            expr.pref[expr.no_of_terms()-1]*=std::complex<float>(2.,0.);
+            expr.pref[expr.no_of_terms()-1]*=complex<double>(2.,0.);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_j, int_ind_a, int_ind_b);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_i, int_ind_b, int_ind_c);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_k, int_ind_c, int_ind_a);
             
             // first term
-            expr.pref[t_it]*=std::complex<float>(2.,0.);
+            expr.pref[t_it]*=complex<double>(2.,0.);
             expr.fund[t_it].set_indices(ind_i, int_ind_a, int_ind_b);
             expr.fund[t_it].set_indices(ind_j, int_ind_b, int_ind_c);
             expr.fund[t_it].set_indices(ind_k, int_ind_c, int_ind_a);
@@ -147,13 +147,13 @@ void replace_d_and_f_by_t(colour_term& expr){
             expr.kron.push_back(expr.kron[t_it]);
             expr.pref.push_back(expr.pref[t_it]);
             expr.NC_ctr.push_back(expr.NC_ctr[t_it]);
-            expr.pref[expr.no_of_terms()-1]*=std::complex<float>(0.,2.);
+            expr.pref[expr.no_of_terms()-1]*=complex<double>(0.,2.);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_j, int_ind_a, int_ind_b);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_i, int_ind_b, int_ind_c);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_k, int_ind_c, int_ind_a);
             
             // first term
-            expr.pref[t_it]*=std::complex<float>(0.,-2.);
+            expr.pref[t_it]*=complex<double>(0.,-2.);
             expr.fund[t_it].set_indices(ind_i, int_ind_a, int_ind_b);
             expr.fund[t_it].set_indices(ind_j, int_ind_b, int_ind_c);
             expr.fund[t_it].set_indices(ind_k, int_ind_c, int_ind_a);
@@ -168,7 +168,7 @@ bool replace_fund(colour_term& expr, int NC_order) {
         size_t it1(0);
         bool evaluated(false);
         while(!evaluated and expr.fund[i].len()>0) {
-            std::pair<size_t,size_t> itf1(it1+1,0);
+            pair<size_t,size_t> itf1(it1+1,0);
             if (expr.fund[i].index(it1,1)==expr.fund[i].index(it1,2)) {
                 expr.delete_term(i);
                 i--;
@@ -217,7 +217,7 @@ bool replace_fund(colour_term& expr, int NC_order) {
                     expr.kron.push_back(expr.kron[i]);
                     expr.pref.push_back(expr.pref[i]);
                     expr.NC_ctr.push_back(expr.NC_ctr[i]);
-                    expr.pref[expr.no_of_terms()-1]*=std::complex<float>(0.,1./2.);
+                    expr.pref[expr.no_of_terms()-1]*=complex<double>(0.,1./2.);
                     expr.asym[expr.no_of_terms()-1].set_indices(j,k,x);
                     expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
                     // second term
@@ -252,7 +252,7 @@ bool replace_fund(colour_term& expr, int NC_order) {
                     expr.kron.push_back(expr.kron[i]);
                     expr.pref.push_back(expr.pref[i]);
                     expr.NC_ctr.push_back(expr.NC_ctr[i]);
-                    expr.pref[expr.no_of_terms()-1]*=std::complex<float>(0.,1./2.);;
+                    expr.pref[expr.no_of_terms()-1]*=complex<double>(0.,1./2.);;
                     expr.asym[expr.no_of_terms()-1].set_indices(j,k,x);
                     expr.fund[expr.no_of_terms()-1].set_indices(x,a,c);
                     // second term
@@ -281,7 +281,7 @@ bool replace_fund(colour_term& expr, int NC_order) {
 }
 
 // check for Tr(T_i)
-void check_fund_trace(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void check_fund_trace(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     size_t it(0);
     while (it<fundamental.len()) {
         if (fundamental.index(it,1)==fundamental.index(it,2))
@@ -291,7 +291,7 @@ void check_fund_trace(std::complex<float>& prefactor, two_ind& kronecker, three_
 }
 
 // contract indices of Kronecker deltas
-void replace_k(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void replace_k(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     size_t it1(0);
     bool evaluated(false);
     while(!evaluated and kronecker.len()>0) {
@@ -322,7 +322,7 @@ void replace_k(std::complex<float>& prefactor, two_ind& kronecker, three_ind& sy
 }
 
 // replace products of 2 or 3 antisymmetric structure constants
-void replace_f(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void replace_f(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     size_t it1(0);
     bool evaluated(false);
     while(!evaluated and antisymmetric.len()>0) {
@@ -331,7 +331,7 @@ void replace_f(std::complex<float>& prefactor, two_ind& kronecker, three_ind& sy
             clear_indices_and_prefactor(prefactor, kronecker, symmetric, antisymmetric, fundamental);
         }
         else if (antisymmetric.len()-it1>=2) {
-            std::pair<size_t,size_t> itf1(it1+1,0), itf2(it1+1,0);
+            pair<size_t,size_t> itf1(it1+1,0), itf2(it1+1,0);
             bool part_evaluated(false);
             int n(0);
             while (!part_evaluated) {
@@ -439,7 +439,7 @@ void replace_f(std::complex<float>& prefactor, two_ind& kronecker, three_ind& sy
 }
 
 // replace products of 2 or 3 symmetric structure constants
-void replace_d(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void replace_d(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     size_t it1(0);
     bool evaluated(false);
     while(!evaluated and symmetric.len()>0) {
@@ -448,7 +448,7 @@ void replace_d(std::complex<float>& prefactor, two_ind& kronecker, three_ind& sy
             clear_indices_and_prefactor(prefactor, kronecker, symmetric, antisymmetric, fundamental);
         }
         else if (symmetric.len()-it1>=2) {
-            std::pair<size_t,size_t> itf1(it1+1,0), itf2(it1+1,0);
+            pair<size_t,size_t> itf1(it1+1,0), itf2(it1+1,0);
             bool part_evaluated(false);
             int n(0);
             while (!part_evaluated) {
@@ -532,11 +532,11 @@ void replace_d(std::complex<float>& prefactor, two_ind& kronecker, three_ind& sy
 }
 
 // replace products of 2 antisymmetric and 1 symmetric structure constant
-void replace_2fd(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void replace_2fd(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     size_t it1(0);
     bool evaluated(false);
     while(!evaluated and antisymmetric.len()>0 and symmetric.len()>0) {
-        std::pair<size_t,size_t> itf0(0,0), itf1(0,0), itf2(0,0);
+        pair<size_t,size_t> itf0(0,0), itf1(0,0), itf2(0,0);
         bool part_evaluated(false);
         int n(0);
         while (!part_evaluated and antisymmetric.len()>0) {
@@ -604,11 +604,11 @@ void replace_2fd(std::complex<float>& prefactor, two_ind& kronecker, three_ind& 
 }
 
 // replace product of 2 symmetric and 1 antisymmetric structure constant
-void replace_2df(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void replace_2df(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     size_t it1(0);
     bool evaluated(false);
     while(!evaluated and antisymmetric.len()>0 and symmetric.len()>0) {
-        std::pair<size_t,size_t> itf0(0,0), itf1(0,0), itf2(0,0);
+        pair<size_t,size_t> itf0(0,0), itf1(0,0), itf2(0,0);
         bool part_evaluated(false);
         int n(0);
         while (!part_evaluated and symmetric.len()>0) {
@@ -682,7 +682,7 @@ int find_free_internal_ind(int internal_ind, two_ind& kronecker, three_ind& symm
 }
 
 // delete all quantities of one product
-void clear_indices_and_prefactor(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+void clear_indices_and_prefactor(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     kronecker.clear_indices();
     symmetric.clear_indices();
     antisymmetric.clear_indices();
@@ -691,7 +691,7 @@ void clear_indices_and_prefactor(std::complex<float>& prefactor, two_ind& kronec
 }
 
 // check if a product vanishes
-bool vanishing_expr(std::complex<float>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
+bool vanishing_expr(complex<double>& prefactor, two_ind& kronecker, three_ind& symmetric, three_ind& antisymmetric, three_ind& fundamental) {
     if (abs(prefactor.real())>eps and abs(prefactor.imag())>eps and kronecker.len()!=0 and symmetric.len()!=0 and antisymmetric.len()!=0 and fundamental.len()!=0 ) return true;
     else return false;
 }

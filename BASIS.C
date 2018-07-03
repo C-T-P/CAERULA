@@ -1,29 +1,22 @@
+#include<fstream>
+#include<iomanip> 
+#include<limits>
 #include "tensortools.h"
 #include "Main.h"
 #include "CONTRACT.h"
 #include "I3NSERT.h"
 #include "BASIS.h"
 
-// construct trace basis for processes with n gluons and up to 1 quark and 1 antiquark
-// std::vector<colour_term> construct_trace_basis(diagram process) {
-//     std::vector<colour_term> trace_basis;
-//     three_ind symmetric;
-//     three_ind antisymmetric;
-//     three_ind fundamental;
-//     two_ind kronecker;
-//     std::complex<float> prefactor(1.);
-//     
-//     
-//     
-//     return trace_basis;
-// }
+
+typedef numeric_limits<double> dbl;
 
 // calculate soft matrix
-std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colour_term> basis, int NC_order) {
-    std::vector<std::vector<std::complex<float>>> soft_matrix(basis.size(), std::vector<std::complex<float>>(basis.size(),0.));
+vector<vector<complex<double>>> calc_soft_matrix(vector<colour_term> basis, int NC_order) {
+    unsigned int DIM=basis.size();
+    vector<vector<complex<double>>> soft_matrix(DIM, vector<complex<double>>(DIM,0.));
     colour_term ct;
-    for (size_t i(0);i<basis.size();i++) {
-        for (size_t j(0);j<basis.size();j++) {
+    for (size_t i(0);i<DIM;i++) {
+        for (size_t j(0);j<DIM;j++) {
             if(i<=j) {
 //                 cout << "\n<b_" << i+1 << ",b_" << j+1 << "> = " << endl;
                 ct.delete_all_terms();;
@@ -38,15 +31,34 @@ std::vector<std::vector<std::complex<float>>> calc_soft_matrix(std::vector<colou
     return soft_matrix;
 } 
 
+// calculate inverse soft matrix
+vector<vector<complex<double>>> calc_inv_soft_matrix(vector<vector<complex<double>>> soft_matrix) {
+    vector<vector<complex<double>>> inv_soft_matrix(soft_matrix.size(), vector<complex<double>>(soft_matrix.size(),0.));
+    
+    gsl_matrix_complex *S=gsl_matrix_complex_alloc(soft_matrix.size(),soft_matrix.size());
+    gsl_matrix_complex *IS=gsl_matrix_complex_alloc(soft_matrix.size(),soft_matrix.size());
+    gsl_permutation *p=gsl_permutation_alloc(soft_matrix.size());
+    int n;
+    for (size_t j(0);j<soft_matrix.size();j++)
+        for (size_t k(0);k<soft_matrix.size();k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(soft_matrix[j][k].real(),soft_matrix[j][k].imag())); 
+    gsl_linalg_complex_LU_decomp(S,p,&n);
+    gsl_linalg_complex_LU_invert(S,p,IS);
+    
+    for (size_t i(0);i<soft_matrix.size();i++)
+        for (size_t j(0);j<soft_matrix.size();j++) inv_soft_matrix[i][j]=complex<double>(GSL_REAL(gsl_matrix_complex_get(IS,i,j)),GSL_IMAG(gsl_matrix_complex_get(IS,i,j)));
+    
+    return inv_soft_matrix;
+} 
+
 // calculate colour change matrix for insertion between leg lno1 and lno2
-std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vector<colour_term> basis, std::vector<std::vector<std::complex<float>>> soft_matrix, diagram process, unsigned int lno1, unsigned int lno2, int NC_order) {
+vector<vector<complex<double>>> calc_colour_change_matrix(vector<colour_term> basis, vector<vector<complex<double>>> soft_matrix, diagram process, unsigned int lno1, unsigned int lno2, int NC_order, bool inv_mult) {
     colour_term insertion_op=construct_insertion_op(process,lno1,lno2);
     colour_term ct;
-    std::vector<std::vector<std::complex<float>>> ccm(basis.size(),std::vector<std::complex<float>>(basis.size(),0.));
-//     std::complex<double> t_ccm[basis.size()][basis.size()];
-    std::vector<std::vector<std::complex<float>>> t_ccm(basis.size(),std::vector<std::complex<float>>(basis.size(),0.));
-    for (size_t i(0);i<basis.size();i++) {
-        for (size_t j(0);j<basis.size();j++) {
+    unsigned int DIM=basis.size();
+    vector<vector<complex<double>>> ccm(DIM,vector<complex<double>>(DIM,0.));
+    complex<double> t_ccm[DIM][DIM];
+    for (size_t i(0);i<DIM;i++) {
+        for (size_t j(0);j<DIM;j++) {
             cout << "\rC_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] being calculated..." << flush;
             ct=basis[i].scprod(insertion_op.multiply(make_internal(process,basis[j])));
             t_ccm[i][j]=evaluate_colour_term_to_order(ct,NC_order);
@@ -55,27 +67,32 @@ std::vector<std::vector<std::complex<float>>> calc_colour_change_matrix(std::vec
     }
     cout << endl;
     
+    if (inv_mult) {
     // multiply with inverse metric
-//     gsl_vector_complex *b=gsl_vector_complex_alloc(basis.size()), *x=gsl_vector_complex_alloc(basis.size());
-//     gsl_matrix_complex *S=gsl_matrix_complex_alloc(basis.size(),basis.size());
-//     gsl_permutation *p=gsl_permutation_alloc(basis.size());
-//     int n;
-//     for (size_t j(0);j<basis.size();j++)
-//         for (size_t k(0);k<basis.size();k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(soft_matrix[j][k].real(),soft_matrix[j][k].imag()));    
-//     for (size_t i(0);i<basis.size();i++) {
-//         for (size_t j(0);j<basis.size();j++) gsl_vector_complex_set(b,j,gsl_complex_rect(t_ccm[i][j].real(),t_ccm[i][j].imag()));
-//             
-//         gsl_linalg_complex_LU_decomp(S, p, &n);
-//         gsl_linalg_complex_LU_solve(S, p, b, x);
-//         for (size_t j(0);j<basis.size();j++) ccm[j][i]=std::complex<float>(GSL_REAL(gsl_vector_complex_get(x,j)),GSL_IMAG(gsl_vector_complex_get(x,j)));
-//     }
-//     
-//     gsl_permutation_free(p);
-//     gsl_vector_complex_free(x);
-//     gsl_vector_complex_free(b);
-//     gsl_matrix_complex_free(S);
-
-    return t_ccm; 
+        gsl_vector_complex *b=gsl_vector_complex_alloc(DIM), *x=gsl_vector_complex_alloc(DIM);
+        gsl_matrix_complex *S=gsl_matrix_complex_alloc(DIM,DIM);
+        gsl_permutation *p=gsl_permutation_alloc(DIM);
+        int n;
+        for (size_t j(0);j<DIM;j++)
+            for (size_t k(0);k<DIM;k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(soft_matrix[j][k].real(),soft_matrix[j][k].imag()));    
+        for (size_t i(0);i<DIM;i++) {
+            for (size_t j(0);j<DIM;j++) gsl_vector_complex_set(b,j,gsl_complex_rect(t_ccm[i][j].real(),t_ccm[i][j].imag()));
+                
+            gsl_linalg_complex_LU_decomp(S, p, &n);
+            gsl_linalg_complex_LU_solve(S, p, b, x);
+            for (size_t j(0);j<DIM;j++) ccm[j][i]=complex<double>(GSL_REAL(gsl_vector_complex_get(x,j)),GSL_IMAG(gsl_vector_complex_get(x,j)));
+        }
+        gsl_permutation_free(p);
+        gsl_vector_complex_free(x);
+        gsl_vector_complex_free(b);
+        gsl_matrix_complex_free(S);
+    }
+    else {
+        for (size_t i(0);i<DIM;i++) 
+            for (size_t j(0);j<DIM;j++) ccm[i][j]=t_ccm[i][j];
+    }
+    
+    return ccm;
 }
 
 // shift external to internal indices
@@ -90,3 +107,40 @@ colour_term make_internal(diagram process, colour_term expr) {
     }
     return expr;
 }
+
+// print soft matrix
+void save_colour_to_file(vector<vector<vector<complex<double>>>> colour_change_matrices, vector<vector<complex<double>>> soft_matrix, diagram process) {
+    // TODO unambiguous filename definition
+    string filename;
+    for (size_t lno(1);lno<=process.no_of_legs();lno++) {
+        if (process.leg(lno).second==21) filename+='g';
+        else if (process.leg(lno).second>=1 and process.leg(lno).second<=6) filename+='q';
+        else if (process.leg(lno).second>=-6 and process.leg(lno).second<=-1) filename+="qb";
+        else {
+            cerr<<"Error saving Soft Matrix: Leg number "<<lno<<" should either be a gluon or (anti-)quark, but has PID "<<process.leg(lno).second<<endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+    // TODO print only real parts?
+    ofstream file;
+    file.open(filename+".dat");
+    file<<colour_change_matrices[0].size()<<"\n\n";
+    for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
+        for (size_t i(0);i<colour_change_matrices[t_it].size();i++)
+            for (size_t j(0);j<colour_change_matrices[t_it][i].size();j++)
+                file<<fixed<<setprecision(17)<<colour_change_matrices[t_it][i][j].real()<<" ";
+        file<<endl;
+    }
+    file.close();
+    file.open(filename+"_met.dat");
+    file<<soft_matrix.size()<<"\n\n";
+    for (size_t i(0);i<soft_matrix.size();i++)
+        for (size_t j(0);j<soft_matrix[i].size();j++)
+            file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
+    file.close();
+}
+
+
+
+
+

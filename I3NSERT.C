@@ -9,11 +9,11 @@ colour_term construct_insertion_op(diagram process, unsigned int lno1, unsigned 
     three_ind antisymmetric;
     three_ind fundamental;
     two_ind kronecker;
-    std::complex<float> prefactor(1.);
+    complex<double> prefactor(1.);
     
     if (process.leg(lno1).second==21) {
         antisymmetric.set_indices(lno1,1001,lno1+2000);
-        prefactor*=std::complex<float>(0.,1.);
+        prefactor*=complex<double>(0.,1.);
     }
     else if ((process.leg(lno1).second>=1 and process.leg(lno1).second<=6 and process.is_in_leg(lno1)) or (process.leg(lno1).second<=-1 and process.leg(lno1).second>=-6 and !process.is_in_leg(lno1))) { 
         fundamental.set_indices(1001,lno1+2000,lno1);
@@ -27,7 +27,7 @@ colour_term construct_insertion_op(diagram process, unsigned int lno1, unsigned 
     
     if (process.leg(lno2).second==21) { 
         antisymmetric.set_indices(lno2,1001,lno2+2000);
-        prefactor*=std::complex<float>(0.,1.);
+        prefactor*=complex<double>(0.,1.);
     }
     else if ((process.leg(lno2).second>=1 and process.leg(lno2).second<=6 and process.is_in_leg(lno2)) or (process.leg(lno2).second<=-1 and process.leg(lno2).second>=-6 and !process.is_in_leg(lno2))) {
         fundamental.set_indices(1001,lno2+2000,lno2);

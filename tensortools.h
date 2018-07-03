@@ -12,14 +12,14 @@
 #include<math.h>
 using namespace std;
 
-static float NC(3.); // number of colours
+static double NC(3.); // number of colours
 
 class diagram {
     /* 
      incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
      */
-    std::vector<std::pair<unsigned int,int>> in_legs;
-    std::vector<std::pair<unsigned int,int>> out_legs;
+    vector<pair<unsigned int,int>> in_legs;
+    vector<pair<unsigned int,int>> out_legs;
     public:
         void add_in_leg(int ptcl_id) {
             int index=in_legs.size()+1;
@@ -28,11 +28,11 @@ class diagram {
                     out_legs.at(i).first+=1;
                 }
             }
-            in_legs.push_back(std::pair<int,int>(index,ptcl_id));
+            in_legs.push_back(pair<int,int>(index,ptcl_id));
         }
         void add_out_leg(int ptcl_id) {
             int index=in_legs.size()+out_legs.size()+1;
-            out_legs.push_back(std::pair<int,int>(index,ptcl_id));
+            out_legs.push_back(pair<int,int>(index,ptcl_id));
         }
         void delete_all_legs() {
             in_legs.clear();
@@ -41,13 +41,13 @@ class diagram {
         unsigned int no_of_legs() {
             return in_legs.size()+out_legs.size();
         }
-        std::pair<unsigned int,int> leg(unsigned int index) {
+        pair<unsigned int,int> leg(unsigned int index) {
             // leg numbering starts at 1 !!!
             if (index<=in_legs.size()) return in_legs.at(index-1);
             else if (index<=out_legs.size()+in_legs.size()) return out_legs.at(index-in_legs.size()-1);
             else {
                 cerr << "Leg " << index << " does not exist in diagram." << endl;
-                return std::pair<int,int>(0,0);
+                return pair<int,int>(0,0);
             }
         }
         bool is_in_leg(unsigned int index) {
@@ -57,16 +57,16 @@ class diagram {
 };
 
 class three_ind {
-    std::vector<std::vector<int>> ind;
+    vector<vector<int>> ind;
     public:
         void set_indices(int i, int j, int k) {
-            std::vector<int> new_ind {i, j, k};
+            vector<int> new_ind {i, j, k};
             ind.push_back(new_ind);
         }
-        void append_by(std::vector<std::vector<int>> ind_v) {
+        void append_by(vector<vector<int>> ind_v) {
             ind.insert(ind.end(),ind_v.begin(),ind_v.end());
         }
-        std::vector<std::vector<int>> get_all_indices() {
+        vector<vector<int>> get_all_indices() {
             return ind;
         }
         void del_indices(size_t it) {
@@ -90,10 +90,10 @@ class three_ind {
             ind[pos][it2]=dummy;
         }
         void rotate_indices_at(size_t it) {
-            std::rotate(ind[it].begin(), ind[it].begin()+1,ind[it].end());
+            rotate(ind[it].begin(), ind[it].begin()+1,ind[it].end());
         }
         void sort_indices_at(size_t it) {
-            std::sort(ind[it].begin(),ind[it].end());
+            sort(ind[it].begin(),ind[it].end());
         }
         int count_index(int index) {
             int cntr(0);
@@ -112,7 +112,7 @@ class three_ind {
             return ind.size();
         }
         void sort_list() {            
-            std::sort(ind.begin(), ind.end(),[](const std::vector<int>& ind1, const std::vector<int>& ind2) {
+            sort(ind.begin(), ind.end(),[](const vector<int>& ind1, const vector<int>& ind2) {
                 if (ind1[0]>ind2[0]) return false;
                 else if (ind1[0]==ind2[0]) {
                     if (ind1[1]>ind2[1]) return false;
@@ -124,16 +124,16 @@ class three_ind {
                 else return true;
             });
         }
-        std::pair<size_t,size_t> find_index(int index, size_t start) {
+        pair<size_t,size_t> find_index(int index, size_t start) {
             if (ind.size()-1>=start) {
                 size_t it(start);
                 size_t f=find(ind[start].begin(), ind[start].end()+1, index)-ind[start].begin();
                 while (it<ind.size() && f>=3) {
                     if ((f=find(ind[it].begin(), ind[it].end()+1, index)-ind[it].begin())>=3) it++;
                 }
-                return std::pair<size_t,size_t>(it,f);
+                return pair<size_t,size_t>(it,f);
             }
-            else return std::pair<size_t,size_t>(ind.size(),3);
+            else return pair<size_t,size_t>(ind.size(),3);
         }
         bool has_index_at(int index, size_t it) {
             if (find(ind[it].begin(), ind[it].end()+1, index)<ind[it].end()) return true;
@@ -142,35 +142,35 @@ class three_ind {
 };
 class two_ind {
     struct flagged_indices {
-        std::vector<int> ind;
+        vector<int> ind;
         bool gluonic_k;
-        flagged_indices(std::vector<int> k_indices, bool is_gluonic) {
+        flagged_indices(vector<int> k_indices, bool is_gluonic) {
             ind=k_indices;
             gluonic_k=is_gluonic;
         }
     };
-    std::vector<flagged_indices> indices;
+    vector<flagged_indices> indices;
     public:
         void set_indices(int i, int j, bool gluonic) {
-            indices.push_back(flagged_indices(std::vector<int> {i, j},gluonic));
+            indices.push_back(flagged_indices(vector<int> {i, j},gluonic));
         }
         bool is_gluonic(size_t it) {
             return indices.at(it).gluonic_k;
         }
         void append_by(two_ind tensor) {
             for (size_t p_it(0); p_it<tensor.len();p_it++) {
-                indices.push_back(flagged_indices(std::vector<int>{tensor.index(p_it,0),tensor.index(p_it,1)},tensor.is_gluonic(p_it)));
+                indices.push_back(flagged_indices(vector<int>{tensor.index(p_it,0),tensor.index(p_it,1)},tensor.is_gluonic(p_it)));
             }
         }
-        std::vector<std::vector<int>> get_all_indices() {
-            std::vector<std::vector<int>> all_indices;
+        vector<vector<int>> get_all_indices() {
+            vector<vector<int>> all_indices;
             for (size_t p_it(0);p_it<indices.size();p_it++) {
                 all_indices.push_back(indices.at(p_it).ind);
             }
             return all_indices;
         }
-        std::vector<bool> get_all_flags() {
-            std::vector<bool> all_flags;
+        vector<bool> get_all_flags() {
+            vector<bool> all_flags;
             for (size_t p_it(0);p_it<indices.size();p_it++) {
                 all_flags.push_back(indices.at(p_it).gluonic_k);
             }
@@ -196,7 +196,7 @@ class two_ind {
             indices[pos].ind[0]=dummy;
         }
         void sort_indices_at(size_t it) {
-            std::sort(indices[it].ind.begin(),indices[it].ind.end());
+            sort(indices[it].ind.begin(),indices[it].ind.end());
         }
         int index(size_t it0, size_t it1) {
             return indices.at(it0).ind.at(it1);
@@ -205,7 +205,7 @@ class two_ind {
             return indices.size();
         }
         void sort_list() {
-            std::sort(indices.begin(), indices.end(),[](const flagged_indices& ind1, const flagged_indices& ind2) {
+            sort(indices.begin(), indices.end(),[](const flagged_indices& ind1, const flagged_indices& ind2) {
                 if (ind1.ind[0]>ind2.ind[0]) return false;
                 else if (ind1.ind[0]==ind2.ind[0]) {
                     if (ind1.ind[1]>ind2.ind[1]) return false;
@@ -215,7 +215,7 @@ class two_ind {
             });
             
         }
-        std::pair<size_t,size_t> find_index(int index, size_t start) {
+        pair<size_t,size_t> find_index(int index, size_t start) {
             if (indices.size()>0) {
                 size_t it(start+1);
                 size_t f=find(indices[start].ind.begin(), indices[start].ind.end(), index)-indices[start].ind.begin();
@@ -223,18 +223,18 @@ class two_ind {
                     f=find(indices[it].ind.begin(), indices[it].ind.end(), index)-indices[it].ind.begin();
                     ++it;
                 }
-                return std::pair<size_t,size_t>(it-1,f);
+                return pair<size_t,size_t>(it-1,f);
             }
-            else return std::pair<size_t,size_t>(1,2);
+            else return pair<size_t,size_t>(1,2);
         }
 };
 struct colour_term {
-    std::vector<three_ind> sym;
-    std::vector<three_ind> asym;
-    std::vector<three_ind> fund;
-    std::vector<two_ind> kron;
-    std::vector<std::complex<float>> pref;
-    std::vector<int> NC_ctr;
+    vector<three_ind> sym;
+    vector<three_ind> asym;
+    vector<three_ind> fund;
+    vector<two_ind> kron;
+    vector<complex<double>> pref;
+    vector<int> NC_ctr;
     size_t no_of_terms() {
         return pref.size();
     };
@@ -252,11 +252,11 @@ struct colour_term {
         three_ind asymmmetric;
         three_ind fundamental;
         two_ind kronecker;
-        std::complex<float> prefactor;
+        complex<double> prefactor;
         
         for (size_t t_it1(0);t_it1<no_of_terms();t_it1++) {
             // check if the terms have common internal indices
-            std::vector<std::vector<std::vector<int>>> all_ind;
+            vector<vector<vector<int>>> all_ind;
             all_ind.push_back(sym[t_it1].get_all_indices());
             all_ind.push_back(asym[t_it1].get_all_indices());
             all_ind.push_back(fund[t_it1].get_all_indices());
@@ -351,10 +351,10 @@ struct colour_term {
         pref.clear();
         NC_ctr.clear();
     }
-    std::string build_string() {
-        std::string return_str;
+    string build_string() {
+        string return_str;
         for (size_t it(0);it<no_of_terms();it++) {
-            std::string str="";
+            string str="";
             if (pref.at(it).real()!=0. || pref.at(it).imag()!=0.) str+="c_["+to_string(pref.at(it).real())+","+to_string(pref.at(it).imag())+"]";
             if (sym.at(it).len()>0) 
                 for (size_t i(0); i<sym.at(it).len(); i++) str+="*d_["+to_string(sym.at(it).index(i,0))+","+to_string(sym.at(it).index(i,1))+","+to_string(sym.at(it).index(i,2))+"]";
@@ -369,15 +369,15 @@ struct colour_term {
         }
         return return_str;
     }
-    std::complex<float> build_complex() {
+    complex<double> build_complex() {
         if (no_of_terms()==0) {
-            return std::complex<float>(0.,0.);
+            return complex<double>(0.,0.);
         }
         else if (no_of_terms()==1) {
             if (sym.at(0).len()==0 and asym.at(0).len()==0 and fund.at(0).len()==0 and kron.at(0).len()==0) return pref.at(0);
-            else return std::complex<float>(NAN,NAN);
+            else return complex<double>(NAN,NAN);
         }
-        else return std::complex<float>(NAN,NAN);
+        else return complex<double>(NAN,NAN);
     }
 };
 

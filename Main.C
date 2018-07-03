@@ -13,8 +13,8 @@ int main(int argc, char **argv) {
     else cout << "Infinity." << endl;
     
     // read in process file and basis vecs as strings and store process specs
-    std::string filename;
-    std::vector<std::string> basis_strs;
+    string filename;
+    vector<string> basis_strs;
     basis_strs.clear();
     diagram process;
     for (int i(1);i<argc;i++) filename+=argv[i];
@@ -24,15 +24,9 @@ int main(int argc, char **argv) {
     cout << "\nProcess:\n" << "leg\t" << "PID" << endl;
     for (size_t i(1);i<=process.no_of_legs();i++) cout << process.leg(i).first << "\t" << process.leg(i).second << endl;
     
-    // debugging
-//     string str="c_[-1.000000,0.000000]*f_[2,1001,2002]*f_[3,1001,2003]*t_[1,102,101]*t_[3,103,102]*t_[2,101,103]*t_[2001,106,104]*t_[2003,104,105]*t_[2002,105,106]*k_[2001,1]";
-//     colour_term ct=decompose_terms(str,process);
-//     cout << ct.build_string() << endl;
-//     cout << "order 1: " << evaluate_colour_term_to_order(ct,INT_MAX) << endl;
-    
     
     // save basis vectors as colour terms
-    std::vector<colour_term> basis;
+    vector<colour_term> basis;
     basis.clear();
     cout << "\nBasis vectors:" << endl;
     for (size_t i(0);i<basis_strs.size();i++) {
@@ -40,52 +34,114 @@ int main(int argc, char **argv) {
         cout << "b_" << i+1 << " = " << basis[i].build_string() << endl;
     }
     
-    // calculate and give out soft matrix
-    std::vector<std::vector<std::complex<float>>> soft_matrix=calc_soft_matrix(basis,NC_order);
+    // calculate and print out soft matrix
+    vector<vector<complex<double>>> soft_matrix=calc_soft_matrix(basis,NC_order);
     cout << "\nSoft Matrix:" << endl;
     for (size_t i(0);i<soft_matrix.size();i++) {
-        for (size_t j(0);j<soft_matrix[i].size();j++) 
-            cout << soft_matrix[i][j] << "\t";
+        for (size_t j(0);j<soft_matrix[i].size();j++) cout << soft_matrix[i][j] << "\t";
+        cout << endl;  
+    }
+
+    // calculate and print out inverse soft matrix
+//     vector<vector<complex<double>>> inv_soft_matrix={{{268823., 268822., 268822., -194174., -194174., -194174.}, {268822., 
+//   268823., 268822., -194174., -194174., -194174.}, {268822., 268822., 
+//   268823., -194174., -194174., -194174.}, {-194174., -194174.,
+// -194174., 140256., 140254., 140254.}, {-194174., -194174., -194174., 
+//   140254., 140256., 140254.}, {-194174., -194174., -194174., 140254., 
+//   140254., 140256.}}};
+//     vector<vector<complex<double>>> inv_soft_matrix={{{851853., 851851., 851851., -615306., -615305., -615306.},{851851., 851853., 851851., -615306., -615306., -615305.},{851851., 851851., 851853., -615305., -615306., -615306.,},{-615306., -615306., -615305., 444446., 444444., 444444.},{-615305., -615306., -615306., 444444., 444446., 444444.,},{-615306., -615305., -615306., 444444., 444444., 444446.}}};
+    vector<vector<complex<double>>> inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
+    cout << "\nInverse Soft Matrix:" << endl;
+    for (size_t i(0);i<inv_soft_matrix.size();i++) {
+        for (size_t j(0);j<inv_soft_matrix[i].size();j++) cout << inv_soft_matrix[i][j] << "\t";
         cout << endl;
     }
     
+    // inverse soft matrix times soft matrix
+    vector<vector<complex<double>>> unit_matrix(soft_matrix.size(), vector<complex<double>>(soft_matrix.size(),0.));
+    cout<<"\nInverse times Soft Matrix"<<endl;
+    for (size_t i(0);i<soft_matrix.size();i++) {
+        for (size_t j(0);j<soft_matrix.size();j++) {
+            for (size_t k(0);k<soft_matrix.size();k++) {
+                unit_matrix[i][j]+=soft_matrix[i][k]*inv_soft_matrix[k][j];
+            }
+            cout<<unit_matrix[i][j]<<"\t";
+        }
+        cout<<endl;
+    }
+    
     // calculate and give out colour change matrices for all possible insertions
-    std::vector<std::vector<std::vector<std::complex<float>>>> colour_change_matrices;
-    cout << "\nColour Change Matrices:" << endl;
+    bool multiply_with_inv_sm=false;
+    vector<vector<vector<complex<double>>>> colour_change_matrices;
+    cout<<"\nColour Change Matrices (";
+    if (!multiply_with_inv_sm) cout<<"not ";
+    cout<<"multiplied with inverse colour metric)"<<endl;
     for (unsigned int lno1(1);lno1<=process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=process.no_of_legs();lno2++) {
-            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order));
+            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order,multiply_with_inv_sm));
             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
             for (size_t i(0);i<colour_change_matrices.back().size();i++) {
-                for (size_t j(0);j<colour_change_matrices.back()[i].size();j++) 
-                    cout << colour_change_matrices.back()[i][j] << "\t";
+                for (size_t j(0);j<colour_change_matrices.back()[i].size();j++) cout << colour_change_matrices.back()[i][j] << "\t";
                 cout << endl;
             }
             cout << endl;
         }
     }
     
+    // Debugging: check accuracy of SoftMatrix*ColourChangeMatrix=TProduct
+//     vector<vector<vector<complex<double>>>> t_prods(colour_change_matrices.size(),vector<vector<complex<double>>>(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.)));
+//     for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
+//         for (size_t i(0);i<soft_matrix.size();i++) {
+//             for (size_t j(0);j<soft_matrix.size();j++) {
+//                 for (size_t k(0);k<soft_matrix.size();k++) {
+//                     t_prods[t_it][i][j]+=soft_matrix[i][k]*colour_change_matrices[t_it][k][j];
+//                 }
+//                 cout<<t_prods[t_it][i][j]<<"\t";
+//             }
+//             cout<<endl;
+//         }
+//         cout<<endl;
+//     }
+    
+    // calculate and print out sum of all colour change matrices
+    vector<vector<complex<double>>> casimir(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.));
+    for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
+        for (size_t i(0);i<colour_change_matrices[t_it].size();i++) {
+            for (size_t j(0);j<colour_change_matrices[t_it][i].size();j++) casimir[i][j]+=colour_change_matrices[t_it][i][j];
+        }
+    }
+    cout<<"Casimir:"<<endl;
+    for (size_t i(0);i<casimir.size();i++) {
+        for (size_t j(0);j<casimir[i].size();j++) cout<<casimir[i][j]<<"\t";
+        cout<<endl;
+    }
+    
+    // save colour change matrices and soft matrix to files
+    cout<<"\nPrinting information to files..."<<endl;
+    save_colour_to_file(colour_change_matrices,soft_matrix,process);
+    cout<<"Done!"<<endl;
+    
     return 0;
 } 
 
 // read in the process file, store process information in process variable and basis vectors as strings
-void read_in_process(std::string filename, diagram& process, std::vector<std::string>& basis_strs) {
-    std::ifstream fin(filename);
+void read_in_process(string filename, diagram& process, vector<string>& basis_strs) {
+    ifstream fin(filename);
     if (!fin) {
         cerr << "Error reading in process: file " << filename << " could not be opened." << endl;
         exit(EXIT_FAILURE);
     }
     else {
-        std::string line;
+        string line;
         while (getline(fin,line)) {
             if (line.at(0)=='l') {
-                std::string direc("");
+                string direc("");
                 direc=line.substr(2,line.find("\t",2)-1);
                 direc.erase(remove_if(direc.begin(),direc.end(),::isspace),direc.end());
                 line.erase(0,line.find("\t",2));
                 line.erase(remove_if(line.begin(),line.end(),::isspace),line.end());
-                if (direc=="in") process.add_in_leg(std::stoi(line));
-                else if (direc=="out") process.add_out_leg(std::stoi(line));
+                if (direc=="in") process.add_in_leg(stoi(line));
+                else if (direc=="out") process.add_out_leg(stoi(line));
                 else { 
                     cerr << "Error saving process specifications: leg needs either direction \"in\" or \"out\" , but was given direction \"" << direc << "\"." << endl;
                     exit(EXIT_FAILURE);
@@ -99,8 +155,8 @@ void read_in_process(std::string filename, diagram& process, std::vector<std::st
     }
 }
 
-//
-colour_term decompose_terms(std::string& input, diagram process) {
+// decompose input into colour term according to the indices given in the process specification
+colour_term decompose_terms(string& input, diagram process) {
     colour_term expr;
     three_ind symmetric;
     three_ind antisymmetric;
@@ -108,12 +164,12 @@ colour_term decompose_terms(std::string& input, diagram process) {
     two_ind kronecker;
     int NC_order_c;
     int NC_order_r;
-    std::complex<float> prefactor = 1.;
-    for (size_t i(0), mpos(input.find('+'));mpos!=std::string::npos || input.length()>0;mpos=input.find('+')) {
+    complex<double> prefactor = 1.;
+    for (size_t i(0), mpos(input.find('+'));mpos!=string::npos || input.length()>0;mpos=input.find('+')) {
         ++i;
         // decompose input into summands
-        std::string summand;
-        if (mpos==std::string::npos) {
+        string summand;
+        if (mpos==string::npos) {
             summand=input;
             input="";
         }
@@ -129,10 +185,10 @@ colour_term decompose_terms(std::string& input, diagram process) {
         prefactor=1.;
         NC_order_c=0;
         NC_order_r=0;
-        for (size_t j(0), mpos(summand.find('*'));mpos!=std::string::npos || summand.length()>0;mpos=summand.find('*')) {
+        for (size_t j(0), mpos(summand.find('*'));mpos!=string::npos || summand.length()>0;mpos=summand.find('*')) {
             ++j;
-            std::string factor;
-            if (mpos==std::string::npos) {
+            string factor;
+            if (mpos==string::npos) {
                 factor=summand;
                 summand="";
             }
@@ -142,28 +198,28 @@ colour_term decompose_terms(std::string& input, diagram process) {
             }
             if (factor.find("c_[")==0 && factor[factor.length()-1]==']') {
                 size_t cpos(factor.find(','));
-                if (cpos==std::string::npos || factor.find(',',cpos+1)!=std::string::npos) {
+                if (cpos==string::npos || factor.find(',',cpos+1)!=string::npos) {
                     cerr << "Invalid prefactor." << endl;
                     exit(EXIT_FAILURE);
                 }
-                std::complex<float> prfct(0.);
+                complex<double> prfct(0.);
                 size_t spos(factor.substr(3,cpos-3).find("1/NC"));
-                if (spos==std::string::npos) prfct+=stof(factor.substr(3,cpos-3));
+                if (spos==string::npos) prfct+=stod(factor.substr(3,cpos-3));
                 else {
                     size_t ppos=factor.substr(3,cpos-3).find('^');
-                    float exponent(1);
-                    if (ppos!=std::string::npos) exponent=stof(factor.substr(3+ppos+1,cpos-ppos-2));
+                    double exponent(1);
+                    if (ppos!=string::npos) exponent=stod(factor.substr(3+ppos+1,cpos-ppos-2));
                     NC_order_r+=exponent;
                     prfct+=1./pow(NC,exponent);
                 }
                 spos=factor.substr(cpos+1,factor.length()-cpos-2).find("1/NC");
-                if (spos==std::string::npos) prfct+=stof(factor.substr(cpos+1,factor.length()-cpos-2))*std::complex<float>(0.,1.);
+                if (spos==string::npos) prfct+=stod(factor.substr(cpos+1,factor.length()-cpos-2))*complex<double>(0.,1.);
                 else {
                     size_t ppos=factor.substr(cpos+1,factor.length()-cpos-2).find('^');
-                    float exponent(1);
-                    if (ppos!=std::string::npos) exponent=stof(factor.substr(cpos+ppos+2,factor.length()-ppos-3));
+                    double exponent(1);
+                    if (ppos!=string::npos) exponent=stod(factor.substr(cpos+ppos+2,factor.length()-ppos-3));
                     NC_order_c+=exponent;
-                    prfct+=(float)1./pow(NC,exponent)*std::complex<float>(0.,1.);
+                    prfct+=(double)1./pow(NC,exponent)*complex<double>(0.,1.);
                 }
                 // only same orders in 1/NC in real and imaginary part are supported
                 if (NC_order_c!=NC_order_r and NC_order_c!=0 and NC_order_r!=0) {
@@ -174,12 +230,12 @@ colour_term decompose_terms(std::string& input, diagram process) {
             }
             else if(factor.find("f_[")==0 && factor[factor.length()-1]==']') {
                 size_t c1pos(factor.find(','));
-                if (c1pos==std::string::npos) {
+                if (c1pos==string::npos) {
                     cerr << "Invalid number of indices for f." << endl;
                     exit(EXIT_FAILURE);
                 }
                 size_t c2pos(factor.find(',',c1pos+1));
-                if (c2pos==std::string::npos || factor.find(',',c2pos+1)!=std::string::npos) {
+                if (c2pos==string::npos || factor.find(',',c2pos+1)!=string::npos) {
                     cerr << "Invalid number of indices for f." << endl;
                     exit(EXIT_FAILURE);
                 }
@@ -187,12 +243,12 @@ colour_term decompose_terms(std::string& input, diagram process) {
             }
             else if(factor.find("d_[")==0 && factor[factor.length()-1]==']') {
                 size_t c1pos(factor.find(','));
-                if (c1pos==std::string::npos) {
+                if (c1pos==string::npos) {
                     cerr << "Invalid number of indices for d." << endl;
                     exit(EXIT_FAILURE);
                 }
                 size_t c2pos(factor.find(',',c1pos+1));
-                if (c2pos==std::string::npos || factor.find(',',c2pos+1)!=std::string::npos) {
+                if (c2pos==string::npos || factor.find(',',c2pos+1)!=string::npos) {
                     cerr << "Invalid number of indices for d." << endl;
                     exit(EXIT_FAILURE);
                 }
@@ -200,12 +256,12 @@ colour_term decompose_terms(std::string& input, diagram process) {
             }
             else if(factor.find("t_[")==0 && factor[factor.length()-1]==']') {
                 size_t c1pos(factor.find(','));
-                if (c1pos==std::string::npos) {
+                if (c1pos==string::npos) {
                     cerr << "Invalid number of indices for t." << endl;
                     exit(EXIT_FAILURE);
                 }
                 size_t c2pos(factor.find(',',c1pos+1));
-                if (c2pos==std::string::npos || factor.find(',',c2pos+1)!=std::string::npos) {
+                if (c2pos==string::npos || factor.find(',',c2pos+1)!=string::npos) {
                     cerr << "Invalid number of indices for t." << endl;
                     exit(EXIT_FAILURE);
                 }
@@ -213,7 +269,7 @@ colour_term decompose_terms(std::string& input, diagram process) {
             }
             else if (factor.find("k_[")==0 && factor[factor.length()-1]==']') {
                 size_t cpos(factor.find(','));
-                if (cpos==std::string::npos || factor.find(',',cpos+1)!=std::string::npos) {
+                if (cpos==string::npos || factor.find(',',cpos+1)!=string::npos) {
                     cerr << "Invalid number of indices for k." << endl;
                     exit(EXIT_FAILURE);
                 }
