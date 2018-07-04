@@ -1,4 +1,5 @@
 #include<fstream>
+#include<iomanip> 
 #include "tensortools.h"
 #include "BASIS.h"
 #include "CONTRACT.h"
@@ -13,17 +14,16 @@ int main(int argc, char **argv) {
     else cout << "Infinity." << endl;
     
     // read in process file and basis vecs as strings and store process specs
-    string filename;
+    string in_filename;
     vector<string> basis_strs;
     basis_strs.clear();
     diagram process;
-    for (int i(1);i<argc;i++) filename+=argv[i];
-    read_in_process(filename, process, basis_strs);
+    for (int i(1);i<argc;i++) in_filename+=argv[i];
+    read_in_process(in_filename, process, basis_strs);
     
     // give out leg indices and particle ids
     cout << "\nProcess:\n" << "leg\t" << "PID" << endl;
     for (size_t i(1);i<=process.no_of_legs();i++) cout << process.leg(i).first << "\t" << process.leg(i).second << endl;
-    
     
     // save basis vectors as colour terms
     vector<colour_term> basis;
@@ -34,22 +34,28 @@ int main(int argc, char **argv) {
         cout << "b_" << i+1 << " = " << basis[i].build_string() << endl;
     }
     
+    // save dimension of square matrices
+    int DIM(basis.size());
+    
     // calculate and print out soft matrix
+    string out_filename(generate_out_filename(process));
+    ofstream file;
+    file.open(out_filename+"_met.dat");
     vector<vector<complex<double>>> soft_matrix=calc_soft_matrix(basis,NC_order);
+    file<<"// Dimension of Square Matrix\n"<<DIM<<"\n"<<endl;
     cout << "\nSoft Matrix:" << endl;
+    file<<"// Soft Matrix / Colour Metric"<<endl;
     for (size_t i(0);i<soft_matrix.size();i++) {
-        for (size_t j(0);j<soft_matrix[i].size();j++) cout << soft_matrix[i][j] << "\t";
-        cout << endl;  
+        for (size_t j(0);j<soft_matrix[i].size();j++) {
+            cout<<soft_matrix[i][j]<<"\t";
+            file<<fixed<<setprecision(17)<<soft_matrix[i][j]<<" ";
+        }
+        cout<<endl;
+        file<<endl;
     }
+    file.close();
 
     // calculate and print out inverse soft matrix
-//     vector<vector<complex<double>>> inv_soft_matrix={{{268823., 268822., 268822., -194174., -194174., -194174.}, {268822., 
-//   268823., 268822., -194174., -194174., -194174.}, {268822., 268822., 
-//   268823., -194174., -194174., -194174.}, {-194174., -194174.,
-// -194174., 140256., 140254., 140254.}, {-194174., -194174., -194174., 
-//   140254., 140256., 140254.}, {-194174., -194174., -194174., 140254., 
-//   140254., 140256.}}};
-//     vector<vector<complex<double>>> inv_soft_matrix={{{851853., 851851., 851851., -615306., -615305., -615306.},{851851., 851853., 851851., -615306., -615306., -615305.},{851851., 851851., 851853., -615305., -615306., -615306.,},{-615306., -615306., -615305., 444446., 444444., 444444.},{-615305., -615306., -615306., 444444., 444446., 444444.,},{-615306., -615305., -615306., 444444., 444444., 444446.}}};
     vector<vector<complex<double>>> inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
     cout << "\nInverse Soft Matrix:" << endl;
     for (size_t i(0);i<inv_soft_matrix.size();i++) {
@@ -73,20 +79,33 @@ int main(int argc, char **argv) {
     // calculate and give out colour change matrices for all possible insertions
     bool multiply_with_inv_sm=false;
     vector<vector<vector<complex<double>>>> colour_change_matrices;
+    file.open(out_filename+".dat");
+    file<<"// Dimension of Square Matrices\n"<<DIM<<"\n"<<endl;
     cout<<"\nColour Change Matrices (";
-    if (!multiply_with_inv_sm) cout<<"not ";
+    file<<"// Colour Change Matrices (";
+    if (!multiply_with_inv_sm) {
+        cout<<"not ";
+        file<<"not ";
+    }
     cout<<"multiplied with inverse colour metric)"<<endl;
+    file<<"multiplied with inverse colour metric)"<<endl;
     for (unsigned int lno1(1);lno1<=process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=process.no_of_legs();lno2++) {
             colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order,multiply_with_inv_sm));
             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
+            file<<"// C_("<<lno1<<","<<lno2<<") with PIDs "<<process.leg(lno1).second<<" and "<<process.leg(lno2).second<<endl;
             for (size_t i(0);i<colour_change_matrices.back().size();i++) {
-                for (size_t j(0);j<colour_change_matrices.back()[i].size();j++) cout << colour_change_matrices.back()[i][j] << "\t";
-                cout << endl;
+                for (size_t j(0);j<colour_change_matrices.back()[i].size();j++) {
+                    cout << colour_change_matrices.back()[i][j] << "\t";
+                    file<<fixed<<setprecision(17)<<colour_change_matrices.back()[i][j].real()<<" ";
+                }
+                cout<<endl;
             }
-            cout << endl;
+            cout<<endl;
+            file<<endl;
         }
     }
+    file.close();
     
     // Debugging: check accuracy of SoftMatrix*ColourChangeMatrix=TProduct
 //     vector<vector<vector<complex<double>>>> t_prods(colour_change_matrices.size(),vector<vector<complex<double>>>(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.)));
@@ -115,11 +134,6 @@ int main(int argc, char **argv) {
         for (size_t j(0);j<casimir[i].size();j++) cout<<casimir[i][j]<<"\t";
         cout<<endl;
     }
-    
-    // save colour change matrices and soft matrix to files
-    cout<<"\nPrinting information to files..."<<endl;
-    save_colour_to_file(colour_change_matrices,soft_matrix,process);
-    cout<<"Done!"<<endl;
     
     return 0;
 } 
@@ -288,4 +302,20 @@ colour_term decompose_terms(string& input, diagram process) {
         expr.NC_ctr.push_back(NC_order_r);
     }
     return expr;
+}
+
+// generate file name
+string generate_out_filename(diagram process) {
+    // TODO unambiguous filename definition
+    string filename;
+    for (size_t lno(1);lno<=process.no_of_legs();lno++) {
+        if (process.leg(lno).second==21) filename+='g';
+        else if ((process.leg(lno).second>=1 and process.leg(lno).second<=6 and process.is_in_leg(lno)) or (process.leg(lno).second>=-6 and process.leg(lno).second<=-1 and !process.is_in_leg(lno))) filename+='q';
+        else if ((process.leg(lno).second>=-6 and process.leg(lno).second<=-1 and process.is_in_leg(lno)) or (process.leg(lno).second>=1 and process.leg(lno).second<=6 and !process.is_in_leg(lno))) filename+="qb";
+        else {
+            cerr<<"Error saving Soft Matrix: Leg number "<<lno<<" should either be a gluon or (anti-)quark, but has PID "<<process.leg(lno).second<<endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+    return filename;
 }
