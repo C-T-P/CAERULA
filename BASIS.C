@@ -1,6 +1,5 @@
 #include<fstream>
 #include<iomanip> 
-#include<limits>
 #include "tensortools.h"
 #include "Main.h"
 #include "CONTRACT.h"
@@ -109,36 +108,27 @@ colour_term make_internal(diagram process, colour_term expr) {
 }
 
 // print soft matrix
-void save_colour_to_file(vector<vector<vector<complex<double>>>> colour_change_matrices, vector<vector<complex<double>>> soft_matrix, diagram process) {
-    // TODO unambiguous filename definition
-    string filename;
-    for (size_t lno(1);lno<=process.no_of_legs();lno++) {
-        if (process.leg(lno).second==21) filename+='g';
-        else if (process.leg(lno).second>=1 and process.leg(lno).second<=6) filename+='q';
-        else if (process.leg(lno).second>=-6 and process.leg(lno).second<=-1) filename+="qb";
-        else {
-            cerr<<"Error saving Soft Matrix: Leg number "<<lno<<" should either be a gluon or (anti-)quark, but has PID "<<process.leg(lno).second<<endl;
-            exit(EXIT_FAILURE);
-        }
-    }
-    // TODO print only real parts?
-    ofstream file;
-    file.open(filename+".dat");
-    file<<colour_change_matrices[0].size()<<"\n\n";
-    for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
-        for (size_t i(0);i<colour_change_matrices[t_it].size();i++)
-            for (size_t j(0);j<colour_change_matrices[t_it][i].size();j++)
-                file<<fixed<<setprecision(17)<<colour_change_matrices[t_it][i][j].real()<<" ";
-        file<<endl;
-    }
-    file.close();
-    file.open(filename+"_met.dat");
-    file<<soft_matrix.size()<<"\n\n";
-    for (size_t i(0);i<soft_matrix.size();i++)
-        for (size_t j(0);j<soft_matrix[i].size();j++)
-            file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
-    file.close();
-}
+// void save_colour_to_file(vector<vector<vector<complex<double>>>> colour_change_matrices, vector<vector<complex<double>>> soft_matrix, diagram process) {
+//     // TODO unambiguous filename definition
+//     string filename;
+//     for (size_t lno(1);lno<=process.no_of_legs();lno++) {
+//         if (process.leg(lno).second==21) filename+='g';
+//         else if ((process.leg(lno).second>=1 and process.leg(lno).second<=6 and process.is_in_leg(lno)) or (process.leg(lno).second>=-6 and process.leg(lno).second<=-1 and !process.is_in_leg(lno))) filename+='q';
+//         else if ((process.leg(lno).second>=-6 and process.leg(lno).second<=-1 and process.is_in_leg(lno)) or (process.leg(lno).second>=1 and process.leg(lno).second<=6 and !process.is_in_leg(lno))) filename+="qb";
+//         else {
+//             cerr<<"Error saving Soft Matrix: Leg number "<<lno<<" should either be a gluon or (anti-)quark, but has PID "<<process.leg(lno).second<<endl;
+//             exit(EXIT_FAILURE);
+//         }
+//     }
+//     // TODO print only real parts?
+//     
+//     file.open(filename+"_met.dat");
+//     file<<soft_matrix.size()<<"\n\n";
+//     for (size_t i(0);i<soft_matrix.size();i++)
+//         for (size_t j(0);j<soft_matrix[i].size();j++)
+//             file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
+//     file.close();
+// }
 
 
 
