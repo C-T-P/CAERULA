@@ -1,6 +1,7 @@
 #include<fstream>
 #include<iomanip> 
 #include "tensortools.h"
+#include "sq_matrix.h"
 #include "BASIS.h"
 #include "CONTRACT.h"
 #include "I3NSERT.h"
@@ -35,50 +36,36 @@ int main(int argc, char **argv) {
     }
     
     // save dimension of square matrices
-    int DIM(basis.size());
+    unsigned int DIM(basis.size());
     
-    // calculate and print out soft matrix
+    // calculate and print soft matrix (to file)
+    sq_matrix soft_matrix=calc_soft_matrix(basis,NC_order);
+    cout << "\nSoft Matrix:" << endl;
+    soft_matrix.print();
     string out_filename(generate_out_filename(process));
     ofstream file;
     file.open(out_filename+"_met.dat");
-    vector<vector<complex<double>>> soft_matrix=calc_soft_matrix(basis,NC_order);
     file<<"// Dimension of Square Matrix\n"<<DIM<<"\n"<<endl;
-    cout << "\nSoft Matrix:" << endl;
     file<<"// Soft Matrix / Colour Metric"<<endl;
-    for (size_t i(0);i<soft_matrix.size();i++) {
-        for (size_t j(0);j<soft_matrix[i].size();j++) {
-            cout<<soft_matrix[i][j]<<"\t";
-            file<<fixed<<setprecision(17)<<soft_matrix[i][j]<<" ";
-        }
-        cout<<endl;
-        file<<endl;
-    }
+    for (size_t i(0);i<DIM;i++)
+        for (size_t j(0);j<DIM;j++)
+            file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
     file.close();
 
-    // calculate and print out inverse soft matrix
-    vector<vector<complex<double>>> inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
+    // calculate and print inverse soft matrix
+    sq_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
     cout << "\nInverse Soft Matrix:" << endl;
-    for (size_t i(0);i<inv_soft_matrix.size();i++) {
-        for (size_t j(0);j<inv_soft_matrix[i].size();j++) cout << inv_soft_matrix[i][j] << "\t";
-        cout << endl;
-    }
+    inv_soft_matrix.print();
     
-    // inverse soft matrix times soft matrix
-    vector<vector<complex<double>>> unit_matrix(soft_matrix.size(), vector<complex<double>>(soft_matrix.size(),0.));
+    // calculate and print inverse soft matrix times soft matrix
+    sq_matrix unit_matrix(DIM);
     cout<<"\nInverse times Soft Matrix"<<endl;
-    for (size_t i(0);i<soft_matrix.size();i++) {
-        for (size_t j(0);j<soft_matrix.size();j++) {
-            for (size_t k(0);k<soft_matrix.size();k++) {
-                unit_matrix[i][j]+=soft_matrix[i][k]*inv_soft_matrix[k][j];
-            }
-            cout<<unit_matrix[i][j]<<"\t";
-        }
-        cout<<endl;
-    }
+    unit_matrix=soft_matrix*inv_soft_matrix;
+    unit_matrix.print();
     
     // calculate and give out colour change matrices for all possible insertions
-    bool multiply_with_inv_sm=false;
-    vector<vector<vector<complex<double>>>> colour_change_matrices;
+    bool multiply_with_inv_sm=true;
+    vector<sq_matrix> colour_change_matrices;
     file.open(out_filename+".dat");
     file<<"// Dimension of Square Matrices\n"<<DIM<<"\n"<<endl;
     cout<<"\nColour Change Matrices (";
@@ -91,18 +78,20 @@ int main(int argc, char **argv) {
     file<<"multiplied with inverse colour metric)"<<endl;
     for (unsigned int lno1(1);lno1<=process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=process.no_of_legs();lno2++) {
-            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order,multiply_with_inv_sm));
+            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order));
+            
+            // multiply with inverse soft matrix if wanted
+            if (multiply_with_inv_sm) colour_change_matrices.back()=inv_soft_matrix*colour_change_matrices.back();
+            
             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
+            colour_change_matrices.back().print();
             file<<"// C_("<<lno1<<","<<lno2<<") with PIDs "<<process.leg(lno1).second<<" and "<<process.leg(lno2).second<<endl;
-            for (size_t i(0);i<colour_change_matrices.back().size();i++) {
-                for (size_t j(0);j<colour_change_matrices.back()[i].size();j++) {
-                    cout << colour_change_matrices.back()[i][j] << "\t";
+            for (size_t i(0);i<DIM;i++) {
+                for (size_t j(0);j<DIM;j++)
                     file<<fixed<<setprecision(17)<<colour_change_matrices.back()[i][j].real()<<" ";
-                }
-                cout<<endl;
+                file<<endl;
             }
             cout<<endl;
-            file<<endl;
         }
     }
     file.close();
@@ -123,17 +112,17 @@ int main(int argc, char **argv) {
 //     }
     
     // calculate and print out sum of all colour change matrices
-    vector<vector<complex<double>>> casimir(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.));
-    for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
-        for (size_t i(0);i<colour_change_matrices[t_it].size();i++) {
-            for (size_t j(0);j<colour_change_matrices[t_it][i].size();j++) casimir[i][j]+=colour_change_matrices[t_it][i][j];
-        }
-    }
-    cout<<"Casimir:"<<endl;
-    for (size_t i(0);i<casimir.size();i++) {
-        for (size_t j(0);j<casimir[i].size();j++) cout<<casimir[i][j]<<"\t";
-        cout<<endl;
-    }
+//     vector<vector<complex<double>>> casimir(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.));
+//     for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
+//         for (size_t i(0);i<colour_change_matrices[t_it].size();i++) {
+//             for (size_t j(0);j<colour_change_matrices[t_it][i].size();j++) casimir[i][j]+=colour_change_matrices[t_it][i][j];
+//         }
+//     }
+//     cout<<"Casimir:"<<endl;
+//     for (size_t i(0);i<casimir.size();i++) {
+//         for (size_t j(0);j<casimir[i].size();j++) cout<<casimir[i][j]<<"\t";
+//         cout<<endl;
+//     }
     
     return 0;
 } 
