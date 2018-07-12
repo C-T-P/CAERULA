@@ -1,19 +1,16 @@
 #include<fstream>
 #include<iomanip> 
 #include "tensortools.h"
-#include "sq_matrix.h"
+#include "c_matrix.h"
 #include "Main.h"
 #include "CONTRACT.h"
 #include "I3NSERT.h"
 #include "BASIS.h"
 
-
-typedef numeric_limits<double> dbl;
-
 // calculate soft matrix
-sq_matrix calc_soft_matrix(vector<colour_term> basis, int NC_order) {
+c_matrix calc_soft_matrix(vector<colour_term> basis, int NC_order) {
     unsigned int DIM=basis.size();
-    sq_matrix soft_matrix(DIM);
+    c_matrix soft_matrix(DIM);
     colour_term ct;
     for (size_t i(0);i<DIM;i++) {
         for (size_t j(0);j<DIM;j++) {
@@ -29,12 +26,9 @@ sq_matrix calc_soft_matrix(vector<colour_term> basis, int NC_order) {
 } 
 
 // calculate inverse soft matrix
-sq_matrix calc_inv_soft_matrix(sq_matrix soft_matrix) {
+c_matrix calc_inv_soft_matrix(c_matrix soft_matrix) {
     unsigned int DIM=soft_matrix.dim();
-    sq_matrix inv_soft_matrix(DIM);
-    
-    // TODO search for precalculated inverse metric, else construct it numerically
-    // Do we really want to do this? Or do we rather want to construct it inside with better accuracy?
+    c_matrix inv_soft_matrix(DIM);
     
     gsl_matrix_complex *S=gsl_matrix_complex_alloc(DIM,DIM);
     gsl_matrix_complex *IS=gsl_matrix_complex_alloc(DIM,DIM);
@@ -52,16 +46,15 @@ sq_matrix calc_inv_soft_matrix(sq_matrix soft_matrix) {
 } 
 
 // calculate colour change matrix for insertion between leg lno1 and lno2
-sq_matrix calc_colour_change_matrix(vector<colour_term> basis, sq_matrix soft_matrix, diagram process, unsigned int lno1, unsigned int lno2, int NC_order) {
-    colour_term insertion_op=construct_insertion_op(process,lno1,lno2);
+c_matrix calc_colour_change_matrix(vector<colour_term> basis, c_matrix soft_matrix, process m_process, unsigned int lno1, unsigned int lno2, int NC_order) {
+    colour_term insertion_op=construct_insertion_op(m_process,lno1,lno2);
     colour_term ct;
     unsigned int DIM=basis.size();
-    sq_matrix ccm(DIM);
-//     complex<double> t_ccm[DIM][DIM];
+    c_matrix ccm(DIM);
     for (size_t i(0);i<DIM;i++) {
         for (size_t j(0);j<DIM;j++) {
             cout << "\rC_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] being calculated..." << flush;
-            ct=basis[i].scprod(insertion_op.multiply(make_internal(process,basis[j])));
+            ct=basis[i].scprod(insertion_op.multiply(make_internal(m_process,basis[j])));
 //             t_ccm[i][j]=evaluate_colour_term_to_order(ct,NC_order);
 //             if (isnan(t_ccm[i][j].real())) cerr << "Error: C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] = " <<ct.build_string() << "\n" << endl;
             ccm[i][j]=evaluate_colour_term_to_order(ct,NC_order);
@@ -99,8 +92,8 @@ sq_matrix calc_colour_change_matrix(vector<colour_term> basis, sq_matrix soft_ma
 }
 
 // shift external to internal indices
-colour_term make_internal(diagram process, colour_term expr) {
-    for (unsigned int lno(1);lno<=process.no_of_legs();lno++) {
+colour_term make_internal(process m_process, colour_term expr) {
+    for (unsigned int lno(1);lno<=m_process.no_of_legs();lno++) {
         for (size_t t_it(0);t_it<expr.no_of_terms();t_it++) {
             expr.sym[t_it].find_and_rep_indices(lno,lno+2000);
             expr.asym[t_it].find_and_rep_indices(lno,lno+2000);

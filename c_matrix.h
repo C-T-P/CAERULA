@@ -1,15 +1,15 @@
-#ifndef SQ_MATRIX_H
-#define SQ_MATRIX_H
+#ifndef C_MATRIX_H
+#define C_MATRIX_H
 
 #include<vector>
 #include<complex>
 #include<math.h>
 using namespace std;
 
-class sq_matrix {
+class c_matrix {
     vector<vector<complex<double>>> m_mat;
     public:
-    sq_matrix(unsigned int dim) {
+    c_matrix(unsigned int dim) {
         for (size_t i(0);i<dim;i++)
             m_mat.push_back(vector<complex<double>>(dim,0.));
     }
@@ -22,9 +22,9 @@ class sq_matrix {
     vector<complex<double>> operator[](size_t i) const {
         return m_mat[i];
     }
-    sq_matrix operator*(sq_matrix m_mat2) {
+    c_matrix operator*(c_matrix m_mat2) {
         size_t dim(m_mat2.dim());
-        sq_matrix m_matr(dim);
+        c_matrix m_matr(dim);
         if (dim==m_mat.size()) {
             for (size_t i(0);i<dim;i++)
                 for (size_t j(0);j<dim;j++)

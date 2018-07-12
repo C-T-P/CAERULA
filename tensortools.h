@@ -14,131 +14,45 @@ using namespace std;
 
 static double NC(3.); // number of colours
 
-class diagram {
+class process {
     /* 
      incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
      */
     vector<pair<unsigned int,int>> in_legs;
     vector<pair<unsigned int,int>> out_legs;
     public:
-        void add_in_leg(int ptcl_id) {
-            int index=in_legs.size()+1;
-            if (out_legs.size()>0) {
-                for (size_t i(0);i<out_legs.size();i++) {
-                    out_legs.at(i).first+=1;
-                }
-            }
-            in_legs.push_back(pair<int,int>(index,ptcl_id));
-        }
-        void add_out_leg(int ptcl_id) {
-            int index=in_legs.size()+out_legs.size()+1;
-            out_legs.push_back(pair<int,int>(index,ptcl_id));
-        }
-        void delete_all_legs() {
-            in_legs.clear();
-            out_legs.clear();
-        }
-        unsigned int no_of_legs() {
-            return in_legs.size()+out_legs.size();
-        }
-        pair<unsigned int,int> leg(unsigned int index) {
-            // leg numbering starts at 1 !!!
-            if (index<=in_legs.size()) return in_legs.at(index-1);
-            else if (index<=out_legs.size()+in_legs.size()) return out_legs.at(index-in_legs.size()-1);
-            else {
-                cerr << "Leg " << index << " does not exist in diagram." << endl;
-                return pair<int,int>(0,0);
-            }
-        }
-        bool is_in_leg(unsigned int index) {
-            if (index<=in_legs.size()) return true;
-            else return false;
-        }
+        process();
+        ~process();
+        void add_in_leg(int ptcl_id);
+        void add_out_leg(int ptcl_id);
+        void delete_all_legs();
+        unsigned int no_of_legs();
+        pair<unsigned int,int> leg(unsigned int index);
+        bool is_in_leg(unsigned int index);
 };
 
 class three_ind {
     vector<vector<int>> ind;
     public:
-        void set_indices(int i, int j, int k) {
-            vector<int> new_ind {i, j, k};
-            ind.push_back(new_ind);
-        }
-        void append_by(vector<vector<int>> ind_v) {
-            ind.insert(ind.end(),ind_v.begin(),ind_v.end());
-        }
-        vector<vector<int>> get_all_indices() {
-            return ind;
-        }
-        void del_indices(size_t it) {
-            ind.erase(ind.begin()+it);
-        }
-        void clear_indices() {
-            ind.clear();
-        }
-        void find_and_rep_indices(int old_ind, int new_ind) {
-            for (size_t it(0); it<ind.size(); ++it) replace(ind[it].begin(), ind[it].end(), old_ind, new_ind);
-        }
-        int matching_indices(size_t it1, size_t it2) {
-            int cntr(0);
-            if (it1<ind.size() && it2<ind.size())
-                for (size_t i(0);i<ind[it2].size();i++) cntr+=count(ind[it1].begin(), ind[it1].end()+1, ind[it2][i]);
-            return cntr;
-        }
-        void swap_indices_at(size_t pos, size_t it1, size_t it2) {
-            int dummy=ind[pos][it1];
-            ind[pos][it1]=ind[pos][it2];
-            ind[pos][it2]=dummy;
-        }
-        void rotate_indices_at(size_t it) {
-            rotate(ind[it].begin(), ind[it].begin()+1,ind[it].end());
-        }
-        void sort_indices_at(size_t it) {
-            sort(ind[it].begin(),ind[it].end());
-        }
-        int count_index(int index) {
-            int cntr(0);
-            for (size_t it(0); it<ind.size(); ++it) cntr+=count(ind[it].begin(), ind[it].end(), index);
-            return cntr;
-        }
-        int count_index_at(int index, size_t pos) {
-            int cntr(0);
-            cntr+=count(ind[pos].begin(), ind[pos].end()+1, index);
-            return cntr;
-        }
-        int index(size_t it0, size_t it1) {
-            return (ind.at(it0)).at(it1);
-        }
-        size_t len() {
-            return ind.size();
-        }
-        void sort_list() {            
-            sort(ind.begin(), ind.end(),[](const vector<int>& ind1, const vector<int>& ind2) {
-                if (ind1[0]>ind2[0]) return false;
-                else if (ind1[0]==ind2[0]) {
-                    if (ind1[1]>ind2[1]) return false;
-                    else if (ind1[1]==ind2[1]) {
-                        return ind1[2]<ind2[2];
-                    }
-                    else return true;
-                }
-                else return true;
-            });
-        }
-        pair<size_t,size_t> find_index(int index, size_t start) {
-            if (ind.size()-1>=start) {
-                size_t it(start);
-                size_t f=find(ind[start].begin(), ind[start].end()+1, index)-ind[start].begin();
-                while (it<ind.size() && f>=3) {
-                    if ((f=find(ind[it].begin(), ind[it].end()+1, index)-ind[it].begin())>=3) it++;
-                }
-                return pair<size_t,size_t>(it,f);
-            }
-            else return pair<size_t,size_t>(ind.size(),3);
-        }
-        bool has_index_at(int index, size_t it) {
-            if (find(ind[it].begin(), ind[it].end()+1, index)<ind[it].end()) return true;
-            else return false;
-        }
+        three_ind();
+        ~three_ind();
+        void set_indices(int i, int j, int k);
+        void append_by(vector<vector<int>> ind_v);
+        vector<vector<int>> get_all_indices();
+        void del_indices(size_t it);
+        void clear_indices();
+        void find_and_rep_indices(int old_ind, int new_ind);
+        int matching_indices(size_t it1, size_t it2);
+        void swap_indices_at(size_t pos, size_t it1, size_t it2);
+        void rotate_indices_at(size_t it);
+        void sort_indices_at(size_t it);
+        int count_index(int index);
+        int count_index_at(int index, size_t pos);
+        int index(size_t it0, size_t it1);
+        size_t len();
+        void sort_list();
+        pair<size_t,size_t> find_index(int index, size_t start);
+        bool has_index_at(int index, size_t it);
 };
 class two_ind {
     struct flagged_indices {
@@ -151,82 +65,23 @@ class two_ind {
     };
     vector<flagged_indices> indices;
     public:
-        void set_indices(int i, int j, bool gluonic) {
-            indices.push_back(flagged_indices(vector<int> {i, j},gluonic));
-        }
-        bool is_gluonic(size_t it) {
-            return indices.at(it).gluonic_k;
-        }
-        void append_by(two_ind tensor) {
-            for (size_t p_it(0); p_it<tensor.len();p_it++) {
-                indices.push_back(flagged_indices(vector<int>{tensor.index(p_it,0),tensor.index(p_it,1)},tensor.is_gluonic(p_it)));
-            }
-        }
-        vector<vector<int>> get_all_indices() {
-            vector<vector<int>> all_indices;
-            for (size_t p_it(0);p_it<indices.size();p_it++) {
-                all_indices.push_back(indices.at(p_it).ind);
-            }
-            return all_indices;
-        }
-        vector<bool> get_all_flags() {
-            vector<bool> all_flags;
-            for (size_t p_it(0);p_it<indices.size();p_it++) {
-                all_flags.push_back(indices.at(p_it).gluonic_k);
-            }
-            return all_flags;
-        }
-        void del_indices(int it) {
-            indices.erase(indices.begin()+it);
-        }
-        void clear_indices() {
-            indices.clear();
-        }
-        void find_and_rep_indices(int old_ind, int new_ind) {
-            for (size_t it(0); it<indices.size(); ++it) replace(indices[it].ind.begin(), indices[it].ind.end(), old_ind, new_ind);
-        }
-        int count_index(int index) {
-            int cntr(0);
-            for (size_t it(0); it<indices.size(); ++it) cntr+=count(indices[it].ind.begin(), indices[it].ind.end(), index);
-            return cntr;
-        }
-        void swap_indices_at(size_t pos) {
-            int dummy=indices[pos].ind[1];
-            indices[pos].ind[1]=indices[pos].ind[0];
-            indices[pos].ind[0]=dummy;
-        }
-        void sort_indices_at(size_t it) {
-            sort(indices[it].ind.begin(),indices[it].ind.end());
-        }
-        int index(size_t it0, size_t it1) {
-            return indices.at(it0).ind.at(it1);
-        }
-        size_t len() {
-            return indices.size();
-        }
-        void sort_list() {
-            sort(indices.begin(), indices.end(),[](const flagged_indices& ind1, const flagged_indices& ind2) {
-                if (ind1.ind[0]>ind2.ind[0]) return false;
-                else if (ind1.ind[0]==ind2.ind[0]) {
-                    if (ind1.ind[1]>ind2.ind[1]) return false;
-                    else return true;
-                }
-                else return true;
-            });
-            
-        }
-        pair<size_t,size_t> find_index(int index, size_t start) {
-            if (indices.size()>0) {
-                size_t it(start+1);
-                size_t f=find(indices[start].ind.begin(), indices[start].ind.end(), index)-indices[start].ind.begin();
-                while (it<indices.size() && f>=2) {
-                    f=find(indices[it].ind.begin(), indices[it].ind.end(), index)-indices[it].ind.begin();
-                    ++it;
-                }
-                return pair<size_t,size_t>(it-1,f);
-            }
-            else return pair<size_t,size_t>(1,2);
-        }
+        two_ind();
+        ~two_ind();
+        void set_indices(int i, int j, bool gluonic);
+        bool is_gluonic(size_t it);
+        void append_by(two_ind tensor);
+        vector<vector<int>> get_all_indices();
+        vector<bool> get_all_flags();
+        void del_indices(int it);
+        void clear_indices();
+        void find_and_rep_indices(int old_ind, int new_ind);
+        int count_index(int index);
+        void swap_indices_at(size_t pos);
+        void sort_indices_at(size_t it);
+        int index(size_t it0, size_t it1);
+        size_t len();
+        void sort_list();
+        pair<size_t,size_t> find_index(int index, size_t start);
 };
 struct colour_term {
     vector<three_ind> sym;

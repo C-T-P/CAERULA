@@ -1,7 +1,7 @@
 #include<fstream>
 #include<iomanip> 
 #include "tensortools.h"
-#include "sq_matrix.h"
+#include "c_matrix.h"
 #include "BASIS.h"
 #include "CONTRACT.h"
 #include "I3NSERT.h"
@@ -18,20 +18,20 @@ int main(int argc, char **argv) {
     string in_filename;
     vector<string> basis_strs;
     basis_strs.clear();
-    diagram process;
+    process m_process;
     for (int i(1);i<argc;i++) in_filename+=argv[i];
-    read_in_process(in_filename, process, basis_strs);
+    read_in_process(in_filename, m_process, basis_strs);
     
     // give out leg indices and particle ids
     cout << "\nProcess:\n" << "leg\t" << "PID" << endl;
-    for (size_t i(1);i<=process.no_of_legs();i++) cout << process.leg(i).first << "\t" << process.leg(i).second << endl;
+    for (size_t i(1);i<=m_process.no_of_legs();i++) cout << m_process.leg(i).first << "\t" << m_process.leg(i).second << endl;
     
     // save basis vectors as colour terms
     vector<colour_term> basis;
     basis.clear();
     cout << "\nBasis vectors:" << endl;
     for (size_t i(0);i<basis_strs.size();i++) {
-        basis.push_back(decompose_terms(basis_strs.at(i),process));
+        basis.push_back(decompose_terms(basis_strs.at(i),m_process));
         cout << "b_" << i+1 << " = " << basis[i].build_string() << endl;
     }
     
@@ -39,10 +39,10 @@ int main(int argc, char **argv) {
     unsigned int DIM(basis.size());
     
     // calculate and print soft matrix (to file)
-    sq_matrix soft_matrix=calc_soft_matrix(basis,NC_order);
+    c_matrix soft_matrix=calc_soft_matrix(basis,NC_order);
     cout << "\nSoft Matrix:" << endl;
     soft_matrix.print();
-    string out_filename(generate_out_filename(process));
+    string out_filename(generate_out_filename(m_process));
     ofstream file;
     file.open(out_filename+"_met.dat");
     file<<"// Dimension of Square Matrix\n"<<DIM<<"\n"<<endl;
@@ -53,19 +53,19 @@ int main(int argc, char **argv) {
     file.close();
 
     // calculate and print inverse soft matrix
-    sq_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
+    c_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
     cout << "\nInverse Soft Matrix:" << endl;
     inv_soft_matrix.print();
     
     // calculate and print inverse soft matrix times soft matrix
-    sq_matrix unit_matrix(DIM);
+    c_matrix unit_matrix(DIM);
     cout<<"\nInverse times Soft Matrix"<<endl;
     unit_matrix=soft_matrix*inv_soft_matrix;
     unit_matrix.print();
     
     // calculate and give out colour change matrices for all possible insertions
     bool multiply_with_inv_sm=true;
-    vector<sq_matrix> colour_change_matrices;
+    vector<c_matrix> colour_change_matrices;
     file.open(out_filename+".dat");
     file<<"// Dimension of Square Matrices\n"<<DIM<<"\n"<<endl;
     cout<<"\nColour Change Matrices (";
@@ -76,16 +76,16 @@ int main(int argc, char **argv) {
     }
     cout<<"multiplied with inverse colour metric)"<<endl;
     file<<"multiplied with inverse colour metric)"<<endl;
-    for (unsigned int lno1(1);lno1<=process.no_of_legs();lno1++) {
-        for (unsigned int lno2(lno1+1);lno2<=process.no_of_legs();lno2++) {
-            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,process,lno1,lno2,NC_order));
+    for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
+        for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
+            colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,m_process,lno1,lno2,NC_order));
             
             // multiply with inverse soft matrix if wanted
             if (multiply_with_inv_sm) colour_change_matrices.back()=inv_soft_matrix*colour_change_matrices.back();
             
             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
             colour_change_matrices.back().print();
-            file<<"// C_("<<lno1<<","<<lno2<<") with PIDs "<<process.leg(lno1).second<<" and "<<process.leg(lno2).second<<endl;
+            file<<"// C_("<<lno1<<","<<lno2<<") with PIDs "<<m_process.leg(lno1).second<<" and "<<m_process.leg(lno2).second<<endl;
             for (size_t i(0);i<DIM;i++) {
                 for (size_t j(0);j<DIM;j++)
                     file<<fixed<<setprecision(17)<<colour_change_matrices.back()[i][j].real()<<" ";
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
 } 
 
 // read in the process file, store process information in process variable and basis vectors as strings
-void read_in_process(string filename, diagram& process, vector<string>& basis_strs) {
+void read_in_process(string filename, process& m_process, vector<string>& basis_strs) {
     ifstream fin(filename);
     if (!fin) {
         cerr << "Error reading in process: file " << filename << " could not be opened." << endl;
@@ -143,8 +143,8 @@ void read_in_process(string filename, diagram& process, vector<string>& basis_st
                 direc.erase(remove_if(direc.begin(),direc.end(),::isspace),direc.end());
                 line.erase(0,line.find("\t",2));
                 line.erase(remove_if(line.begin(),line.end(),::isspace),line.end());
-                if (direc=="in") process.add_in_leg(stoi(line));
-                else if (direc=="out") process.add_out_leg(stoi(line));
+                if (direc=="in") m_process.add_in_leg(stoi(line));
+                else if (direc=="out") m_process.add_out_leg(stoi(line));
                 else { 
                     cerr << "Error saving process specifications: leg needs either direction \"in\" or \"out\" , but was given direction \"" << direc << "\"." << endl;
                     exit(EXIT_FAILURE);
@@ -159,7 +159,7 @@ void read_in_process(string filename, diagram& process, vector<string>& basis_st
 }
 
 // decompose input into colour term according to the indices given in the process specification
-colour_term decompose_terms(string& input, diagram process) {
+colour_term decompose_terms(string& input, process m_process) {
     colour_term expr;
     three_ind symmetric;
     three_ind antisymmetric;
@@ -278,7 +278,7 @@ colour_term decompose_terms(string& input, diagram process) {
                 }
                 int ind_i=stoi(factor.substr(3,cpos-3)), ind_j=stoi(factor.substr(cpos+1,factor.length()-cpos-2));
                 bool gluonic(false);
-                if (process.leg((unsigned int)ind_i).second==21 or process.leg((unsigned int)ind_j).second==21) gluonic=true;
+                if (m_process.leg((unsigned int)ind_i).second==21 or m_process.leg((unsigned int)ind_j).second==21) gluonic=true;
                 kronecker.set_indices(ind_i,ind_j,gluonic);
             }
             else cerr << "Invalid input." << endl;
@@ -294,15 +294,15 @@ colour_term decompose_terms(string& input, diagram process) {
 }
 
 // generate file name
-string generate_out_filename(diagram process) {
+string generate_out_filename(process m_process) {
     // TODO unambiguous filename definition
     string filename;
-    for (size_t lno(1);lno<=process.no_of_legs();lno++) {
-        if (process.leg(lno).second==21) filename+='g';
-        else if ((process.leg(lno).second>=1 and process.leg(lno).second<=6 and process.is_in_leg(lno)) or (process.leg(lno).second>=-6 and process.leg(lno).second<=-1 and !process.is_in_leg(lno))) filename+='q';
-        else if ((process.leg(lno).second>=-6 and process.leg(lno).second<=-1 and process.is_in_leg(lno)) or (process.leg(lno).second>=1 and process.leg(lno).second<=6 and !process.is_in_leg(lno))) filename+="qb";
+    for (size_t lno(1);lno<=m_process.no_of_legs();lno++) {
+        if (m_process.leg(lno).second==21) filename+='g';
+        else if ((m_process.leg(lno).second>=1 and m_process.leg(lno).second<=6 and m_process.is_in_leg(lno)) or (m_process.leg(lno).second>=-6 and m_process.leg(lno).second<=-1 and !m_process.is_in_leg(lno))) filename+='q';
+        else if ((m_process.leg(lno).second>=-6 and m_process.leg(lno).second<=-1 and m_process.is_in_leg(lno)) or (m_process.leg(lno).second>=1 and m_process.leg(lno).second<=6 and !m_process.is_in_leg(lno))) filename+="qb";
         else {
-            cerr<<"Error saving Soft Matrix: Leg number "<<lno<<" should either be a gluon or (anti-)quark, but has PID "<<process.leg(lno).second<<endl;
+            cerr<<"Error saving Soft Matrix: Leg number "<<lno<<" should either be a gluon or (anti-)quark, but has PID "<<m_process.leg(lno).second<<endl;
             exit(EXIT_FAILURE);
         }
     }
