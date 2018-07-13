@@ -9,7 +9,7 @@
 #include<vector>
 #include<algorithm>
 #include<complex>
-#include<math.h>
+#include<cmath>
 using namespace std;
 
 static double NC(3.); // number of colours

@@ -3,7 +3,7 @@
 
 #include<vector>
 #include<complex>
-#include<math.h>
+#include<cmath>
 using namespace std;
 
 class c_matrix {
@@ -15,6 +15,15 @@ class c_matrix {
     }
     size_t dim() {
         return m_mat.size();
+    }
+    complex<double> det() {
+        int DIM(m_mat.size());
+        gsl_matrix_complex *S=gsl_matrix_complex_alloc(DIM,DIM);
+        for (size_t j(0);j<DIM;j++)
+            for (size_t k(0);k<DIM;k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(m_mat[j][k].real(),m_mat[j][k].imag()));
+        int n;
+        gsl_permutation *p=gsl_permutation_alloc(DIM);
+        gsl_linalg_complex_LU_decomp(S, p, &n);
     }
     vector<complex<double>>& operator[](size_t i) {
         return m_mat[i];
