@@ -5,4 +5,4 @@ l	in	-1
 l	out	21
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
-b	c_[0.5,0.]*t_[3,2,1]
+b	t_[3,2,1]

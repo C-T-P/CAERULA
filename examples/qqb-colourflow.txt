@@ -4,4 +4,4 @@ l	in	1
 l	out	1
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
-b	c_[0.5773502691896258,0.]*k_[1,2]
+b	k_[1,2]

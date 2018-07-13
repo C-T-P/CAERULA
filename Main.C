@@ -1,6 +1,6 @@
 #include<fstream>
 #include<iomanip> 
-#include<time.h>
+#include<ctime>
 #include "tensortools.h"
 #include "c_matrix.h"
 #include "BASIS.h"
@@ -9,10 +9,10 @@
 #include "Main.h"
 
 int main(int argc, char **argv) {
-    clock_t t1,t2;
-    t1=clock();
+    clock_t t;
+    t=clock();
     
-    // define order in 1/NC to which the terms shall be evaluated
+    // define order in 1/NC to which all terms shall be evaluated
     const int NC_order=INT_MAX;
     cout << "Order of 1/NC set to ";
     if (NC_order!=INT_MAX) cout << NC_order << "." << endl;
@@ -30,17 +30,17 @@ int main(int argc, char **argv) {
     cout << "\nProcess:\n" << "leg\t" << "PID" << endl;
     for (size_t i(1);i<=m_process.no_of_legs();i++) cout << m_process.leg(i).first << "\t" << m_process.leg(i).second << endl;
     
-    // save basis vectors as colour terms
-    vector<colour_term> basis;
-    basis.clear();
-    cout << "\nBasis vectors:" << endl;
-    for (size_t i(0);i<basis_strs.size();i++) {
-        basis.push_back(decompose_terms(basis_strs.at(i),m_process));
-        cout << "b_" << i+1 << " = " << basis[i].build_string() << endl;
-    }
+    // construct basis as colour terms and normalise it 
+    vector<colour_term> basis(construct_basis(m_process, basis_strs));
+    basis=normalise_basis(basis,NC_order);
     
-    // save dimension of square matrices
+    // save dimension of basis (= dimension of square matrices)
     unsigned int DIM(basis.size());
+    
+    // print normalised basis vectors
+    cout<<"\nNormalised Basis Vectors:"<<endl;
+    for (size_t i(0);i<DIM;i++)
+        cout<<"b_"<<i+1<<" = "<<basis.at(i).build_string()<<endl;
     
     // calculate and print soft matrix (to file)
     c_matrix soft_matrix=calc_soft_matrix(basis,NC_order);
@@ -49,8 +49,8 @@ int main(int argc, char **argv) {
     string out_filename(generate_out_filename(m_process));
     ofstream file;
     file.open(out_filename+"_met.dat");
-    file<<"// Dimension of Square Matrix\n"<<DIM<<"\n"<<endl;
-    file<<"// Soft Matrix / Colour Metric"<<endl;
+    file<<"# Dimension of Square Matrix\n"<<DIM<<"\n"<<endl;
+    file<<"# Soft Matrix / Colour Metric"<<endl;
     for (size_t i(0);i<DIM;i++)
         for (size_t j(0);j<DIM;j++)
             file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
@@ -68,12 +68,12 @@ int main(int argc, char **argv) {
     unit_matrix.print();
     
     // calculate and give out colour change matrices for all possible insertions
-    bool multiply_with_inv_sm=true;
+    bool multiply_with_inv_sm=false;
     vector<c_matrix> colour_change_matrices;
     file.open(out_filename+".dat");
-    file<<"// Dimension of Square Matrices\n"<<DIM<<"\n"<<endl;
+    file<<"# Dimension of Square Matrices\n"<<DIM<<"\n"<<endl;
     cout<<"\nColour Change Matrices (";
-    file<<"// Colour Change Matrices (";
+    file<<"# Colour Change Matrices (";
     if (!multiply_with_inv_sm) {
         cout<<"not ";
         file<<"not ";
@@ -100,21 +100,6 @@ int main(int argc, char **argv) {
     }
     file.close();
     
-    // Debugging: check accuracy of SoftMatrix*ColourChangeMatrix=TProduct
-//     vector<vector<vector<complex<double>>>> t_prods(colour_change_matrices.size(),vector<vector<complex<double>>>(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.)));
-//     for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
-//         for (size_t i(0);i<soft_matrix.size();i++) {
-//             for (size_t j(0);j<soft_matrix.size();j++) {
-//                 for (size_t k(0);k<soft_matrix.size();k++) {
-//                     t_prods[t_it][i][j]+=soft_matrix[i][k]*colour_change_matrices[t_it][k][j];
-//                 }
-//                 cout<<t_prods[t_it][i][j]<<"\t";
-//             }
-//             cout<<endl;
-//         }
-//         cout<<endl;
-//     }
-    
     // calculate and print out sum of all colour change matrices
 //     vector<vector<complex<double>>> casimir(colour_change_matrices[0].size(),vector<complex<double>>(colour_change_matrices[0][0].size(),0.));
 //     for (size_t t_it(0);t_it<colour_change_matrices.size();t_it++) {
@@ -129,8 +114,9 @@ int main(int argc, char **argv) {
 //     }
     
     
-    t2=clock();
-    cout << "run time: " << ((float)t2-(float)t1) / CLOCKS_PER_SEC << endl;
+    t=clock()-t;
+    float runtime=(float)t/CLOCKS_PER_SEC;
+    cout << "run time: " << (int)runtime/3600 << " h, " << (int)runtime%60/60 << " m, " << (int)runtime%60+runtime-(int)runtime << " s"<< endl;
     return 0;
 } 
 
