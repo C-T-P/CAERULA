@@ -1,5 +1,6 @@
 #include<fstream>
 #include<iomanip> 
+#include<time.h>
 #include "tensortools.h"
 #include "c_matrix.h"
 #include "BASIS.h"
@@ -8,6 +9,9 @@
 #include "Main.h"
 
 int main(int argc, char **argv) {
+    clock_t t1,t2;
+    t1=clock();
+    
     // define order in 1/NC to which the terms shall be evaluated
     const int NC_order=INT_MAX;
     cout << "Order of 1/NC set to ";
@@ -124,6 +128,9 @@ int main(int argc, char **argv) {
 //         cout<<endl;
 //     }
     
+    
+    t2=clock();
+    cout << "run time: " << ((float)t2-(float)t1) / CLOCKS_PER_SEC << endl;
     return 0;
 } 
 
