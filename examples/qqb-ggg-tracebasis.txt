@@ -1,9 +1,9 @@
 # legs will be numbered from 1 to n in the order given here
-l	in	1
-l	in	-1
-l	out	21
-l	out	21
-l	out	21
+l	in	q
+l	in	qb
+l	out	g
+l	out	g
+l	out	g
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
 b	t_[5,2,101]*t_[4,101,102]*t_[3,102,1]

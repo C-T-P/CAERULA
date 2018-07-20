@@ -18,16 +18,16 @@ class process {
     /* 
      incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
      */
-    vector<pair<unsigned int,int>> in_legs;
-    vector<pair<unsigned int,int>> out_legs;
+    vector<pair<unsigned int,string>> in_legs;
+    vector<pair<unsigned int,string>> out_legs;
     public:
         process();
         ~process();
-        void add_in_leg(int ptcl_id);
-        void add_out_leg(int ptcl_id);
+        void add_in_leg(string ptcl);
+        void add_out_leg(string ptcl);
         void delete_all_legs();
         unsigned int no_of_legs();
-        pair<unsigned int,int> leg(unsigned int index);
+        pair<unsigned int,string> leg(unsigned int index);
         bool is_in_leg(unsigned int index);
 };
 
@@ -102,6 +102,8 @@ struct colour_term {
     // NOTE: Returns colour term, which has to be evaluated !!!
     colour_term scprod(colour_term ct2);
     colour_term term(size_t termno);
+    void add_term(three_ind symmetric, three_ind antisymmetric, three_ind fundamental, two_ind kronecker, complex<double> prefactor, int NC_order);
+    void add_colour_term(colour_term term);
     void delete_term(size_t j);
     void delete_all_terms();
     string build_string();

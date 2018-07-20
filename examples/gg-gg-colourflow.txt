@@ -1,13 +1,13 @@
 # legs will be numbered from 1 to n in the order given here
 #	in/out	PID
-l	in	1
-l	in	-1
-l	in	1
-l	in	-1
-l	out	1
-l	out	-1
-l	out	1
-l	out	-1
+l	in	q
+l	in	qb
+l	in	q
+l	in	qb
+l	out	q
+l	out	qb
+l	out	q
+l	out	qb
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
 b	k_[8,1]*k_[2,3]*k_[4,5]*k_[6,7]

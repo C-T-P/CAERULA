@@ -1,8 +1,8 @@
 # legs will be numbered from 1 to n in the order given here
 #	in/out	PID
-l	in	21
-l	in	21
-l	out	21
+l	in	g
+l	in	g
+l	out	g
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
 b	t_[1,101,102]*t_[2,102,103]*t_[3,103,101]+c_[-1.,0.]*t_[1,101,102]*t_[3,102,103]*t_[2,103,101]

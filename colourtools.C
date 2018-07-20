@@ -1,4 +1,4 @@
-#include "tensortools.h"
+#include "colourtools.h"
 
 // member functions of class process
 process::process(void) {
@@ -7,18 +7,18 @@ process::process(void) {
 process::~process(void) {
     
 }
-void process::add_in_leg(int ptcl_id) {
+void process::add_in_leg(string ptcl) {
     int index=in_legs.size()+1;
     if (out_legs.size()>0) {
         for (size_t i(0);i<out_legs.size();i++) {
             out_legs.at(i).first+=1;
         }
     }
-    in_legs.push_back(pair<int,int>(index,ptcl_id));
+    in_legs.push_back(pair<int,string>(index,ptcl));
 }
-void process::add_out_leg(int ptcl_id) {
+void process::add_out_leg(string ptcl) {
     int index=in_legs.size()+out_legs.size()+1;
-    out_legs.push_back(pair<int,int>(index,ptcl_id));
+    out_legs.push_back(pair<int,string>(index,ptcl));
 }
 void process::delete_all_legs() {
     in_legs.clear();
@@ -27,13 +27,13 @@ void process::delete_all_legs() {
 unsigned int process::no_of_legs() {
     return in_legs.size()+out_legs.size();
 }
-pair<unsigned int,int> process::leg(unsigned int index) {
+pair<unsigned int,string> process::leg(unsigned int index) {
     // leg numbering starts at 1 !!!
     if (index<=in_legs.size()) return in_legs.at(index-1);
     else if (index<=out_legs.size()+in_legs.size()) return out_legs.at(index-in_legs.size()-1);
     else {
         cerr << "Leg " << index << " does not exist in diagram." << endl;
-        return pair<int,int>(0,0);
+        return pair<int,string>(0,"");
     }
 }
 bool process::is_in_leg(unsigned int index) {
@@ -328,6 +328,17 @@ colour_term colour_term::term(size_t termno) {
     ct.pref.push_back(pref[termno]);
     ct.NC_ctr.push_back(NC_ctr[termno]);
     return ct;
+}
+void colour_term::add_term(three_ind symmetric, three_ind antisymmetric, three_ind fundamental, two_ind kronecker, complex<double> prefactor, int NC_order) {
+    sym.push_back(symmetric);
+    asym.push_back(antisymmetric);
+    fund.push_back(fundamental);
+    kron.push_back(kronecker);
+    pref.push_back(prefactor);
+    NC_ctr.push_back(NC_order);
+}
+void colour_term::add_colour_term(colour_term ct) {
+    for (size_t it(0);it<ct.no_of_terms();it++)(*this).add_term(ct.sym[it],ct.asym[it],ct.fund[it],ct.kron[it],ct.pref[it],ct.NC_ctr[it]);
 }
 void colour_term::delete_term(size_t j) {
     sym.erase(sym.begin()+j);

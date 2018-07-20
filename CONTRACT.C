@@ -1,4 +1,4 @@
-#include "tensortools.h"
+#include "colourtools.h"
 #include "Main.h"
 #include "CONTRACT.h"
 

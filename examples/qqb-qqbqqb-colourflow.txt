@@ -1,10 +1,10 @@
 # legs will be numbered from 1 to n in the order given here
-l	in	1
-l	in	1
-l	out	1
-l	out	1
-l	out	1
-l	out	-1
+l	in	q
+l	in	q
+l	out	q
+l	out	q
+l	out	q
+l	out	qb
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
 b	k_[3,1]*k_[4,2]*k_[5,6]

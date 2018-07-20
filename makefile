@@ -1,4 +1,4 @@
-objects = Main.o BASIS.o CONTRACT.o I3NSERT.o tensortools.o
+objects = Main.o BASIS.o CONTRACT.o I3NSERT.o colourtools.o
 path-to-gsl = /usr/include/gsl
 
 CXX = g++ -g -std=c++11
@@ -25,5 +25,5 @@ clean:
 	rm -f $(objects)
 
 force:
-	touch Main.C BASIS.C CONTRACT.C I3NSERT.C tensortools.C
+	touch Main.C BASIS.C CONTRACT.C I3NSERT.C colourtools.C
 	make

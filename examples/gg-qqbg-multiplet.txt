@@ -1,10 +1,10 @@
 # legs will be numbered from 1 to n in the order given here
 #	in/out	PID
-l	in	21
-l	in	21
-l	out	1
-l	out	-1
-l	out	21
+l	in	g
+l	in	g
+l	out	q
+l	out	qb
+l	out	g
 # basis vectors will be numbered from 1 to n in the order given here
 # IMPORTANT: indices have to match the leg number !
 #	basis vector string
