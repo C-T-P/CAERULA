@@ -353,38 +353,29 @@ vector<colour_term> build_g_basis(int n_g) {
     // get gluon partitions
     vector<vector<int>> g_partitions(get_g_partitions(n_g));
 
-    // get arranged gluon indices
-    vector<vector<int>> g_ind_grps;
     
+    vector<vector<int>> g_ind_grps, ind_sub_grp_perms, sorted_ind;
+    vector<int> tmp;
     for (size_t i(0);i<g_partitions.size();i++) {
         g_ind_grps=arrange_g_ind(indices,g_partitions[i],0);
-        for (const auto& g_i : g_ind_grps[i]) cout<<g_i<<" ";
-        cout<<endl;
+        
+        for (const auto& p_size : g_partitions[i]) {
+            tmp.clear();
+            int place(0);
+            for (int it(0);it<p_size;it++) {
+                tmp.push_back(g_ind_grps[j][place+it]);
+                place+=p_size;
+            }
+        }
+        
+        // TODO get all (n-1) permutations
+        
+        
+        // TODO construct ONE trace basis vector at a time
+        
         if (i==0) {
             basis_els=trace_connected_g(g_ind_grps[i]);
             basis.insert(basis.begin(),basis_els.begin(),basis_els.end());
-        }
-        
-        for (const auto& g_ind : g_ind_grps) {
-            int place(0);
-            vector<int> sub_ind;
-            for (size_t part_no(0);part_no<g_partitions.size();part_no++) {
-                sub_ind.clear();
-                tmp.clear();
-                for (int it(place);it<g_partitions[i][part_no]+place;it++) sub_ind.push_back(g_ind[it]);
-                tmp=trace_connected_g(sub_ind);
-                
-                size_t basis_els_size(basis_els.size());
-                for (size_t b_it(0);b_it<basis_els_size;b_it++) {
-                    for (const auto& ct : tmp) {
-                        basis_els.push_back(basis_els[0].multiply(ct));
-                    }
-                    basis_els.erase(basis_els.begin());
-                }
-                
-                place+=g_partitions[i][part_no];
-            }
-            
         }
         
         // print groupings
@@ -443,6 +434,10 @@ vector<vector<int>> arrange_g_ind(vector<int> ind, vector<int> g_partition, size
         }
     }
     return g_comb;
+}
+
+vector<colour_term> trace_g(vector<int> ind) {
+    
 }
 
 vector<colour_term> trace_connected_g(vector<int> indices) {
