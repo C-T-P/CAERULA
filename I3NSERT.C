@@ -49,12 +49,6 @@ colour_term construct_insertion_op(process m_process, unsigned int lno1, unsigne
     }
 
     colour_term insertion_op;
-    insertion_op.sym.push_back(symmetric);
-    insertion_op.asym.push_back(antisymmetric);
-    insertion_op.fund.push_back(fundamental);
-    insertion_op.kron.push_back(kronecker);
-    insertion_op.pref.push_back(prefactor);
-    insertion_op.NC_ctr.push_back(0);
-    
+    insertion_op.add_term(symmetric,antisymmetric,fundamental,kronecker,prefactor,0);
     return insertion_op;
 }

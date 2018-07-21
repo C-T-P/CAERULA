@@ -18,7 +18,7 @@ complex<double> evaluate_colour_term_to_order(colour_term& expr, unsigned int NC
             }
         }
         replace_d_and_f_by_t(expr);
-        sort_colour_term(expr);
+//        sort_colour_term(expr);
         replace_fund(expr,INT_MAX);
     }
     else {
@@ -45,7 +45,7 @@ void simplify_colour_term(colour_term& expr) {
             i--;
         }
     }
-    sort_colour_term(expr);
+//    sort_colour_term(expr);
     if(replace_fund(expr,INT_MAX)) simplify_colour_term(expr);
 }
 

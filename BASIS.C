@@ -346,49 +346,112 @@ vector<colour_term> colourflow_q(vector<vector<int>> qqb_ind_combos) {
 
 vector<colour_term> build_g_basis(int n_g) {
     vector<colour_term> basis;
-    vector<colour_term> basis_els, tmp;
+    colour_term basis_el;
     vector<int> indices;
     for (int i(1);i<=n_g;i++) indices.push_back(i);
 
     // get gluon partitions
     vector<vector<int>> g_partitions(get_g_partitions(n_g));
 
-    
-    vector<vector<int>> g_ind_grps, ind_sub_grp_perms, sorted_ind;
-    vector<int> tmp;
+    vector<vector<int>> arr_g_ind;
     for (size_t i(0);i<g_partitions.size();i++) {
-        g_ind_grps=arrange_g_ind(indices,g_partitions[i],0);
+        arr_g_ind=get_arranged_g_ind_for_part(indices,g_partitions[i]);
         
-        for (const auto& p_size : g_partitions[i]) {
-            tmp.clear();
-            int place(0);
-            for (int it(0);it<p_size;it++) {
-                tmp.push_back(g_ind_grps[j][place+it]);
-                place+=p_size;
+        // print permutations of connected amplitudes to file
+        if (i==0) {
+            string perm_filename;
+            for (int n(0);n<n_g;n++) perm_filename+="g";
+            perm_filename+="_perms.dat";
+            ofstream perm_file;
+            perm_file.open(perm_filename);
+            perm_file<<arr_g_ind.size()<<endl;
+            for (const auto& perm : arr_g_ind) {
+                for (const auto& p : perm) perm_file<<p-1<<" ";
+                perm_file<<endl;
             }
         }
         
-        // TODO get all (n-1) permutations
-        
-        
-        // TODO construct ONE trace basis vector at a time
-        
-        if (i==0) {
-            basis_els=trace_connected_g(g_ind_grps[i]);
-            basis.insert(basis.begin(),basis_els.begin(),basis_els.end());
+        for (const auto& inds : arr_g_ind) {
+            basis_el.delete_all_terms();
+            int place(0);
+            for (const auto& p_size : g_partitions[i]) {
+                vector<int> sub_ind(inds.begin()+place,inds.begin()+place+p_size);
+                colour_term ct_factor(trace_connected_g(sub_ind));
+                if (basis_el.no_of_terms()==0) basis_el.add_colour_term(ct_factor);
+                else basis_el=basis_el.multiply(ct_factor);
+                place+=p_size;
+            }
+            basis.push_back(basis_el);
         }
         
         // print groupings
         cout<<"\n( ";
         for (const auto& g : g_partitions[i]) cout<<g<<" ";
         cout<<"):"<<endl;
-        for (const auto& s : g_ind_grps) {
-            for (const auto& i : s) cout<<i<<" ";
+        for (const auto& s : arr_g_ind) {
+            for (const auto& el : s) cout<<el<<" ";
             cout<<endl;
         }
     }
     
     return basis;
+}
+
+vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_partition) {
+    vector<vector<int>> ind_combos, ind_combo_perms, tmp, arr_g_ind;
+    ind_combos=arrange_g_ind(ind,g_partition,0);
+    
+    // TODO: Review this part!!! Should be doable in an easier way
+    for (const auto& inds : ind_combos) {
+        int place(0);
+        ind_combo_perms.clear();
+        for (const auto& p_size : g_partition) {
+            vector<int> sub_ind(inds.begin()+place,inds.begin()+place+p_size);
+            if (p_size>3) {
+                vector<vector<int>> permutations;
+                permutations.push_back(sub_ind);
+                while (next_permutation(sub_ind.begin()+1,sub_ind.end())) permutations.push_back(sub_ind);
+                
+                // get physical permutations only: remove reflections
+                for (size_t p_it(0);p_it<permutations.size();p_it++) {
+                    vector<int> ind_refl({1}), p_ind(permutations[p_it]);
+                    for (size_t it(p_ind.size()-1);it>0;it--) ind_refl.push_back(p_ind[it]);
+                    vector<vector<int>>::iterator it(find(permutations.begin(),permutations.end(),ind_refl));
+                    if (it!=permutations.end()) {
+                        permutations.erase(it);
+                        p_it--;
+                    }
+                }
+
+                tmp=ind_combo_perms;
+                ind_combo_perms.clear();
+                for (const auto& perm_ind : permutations) {
+                    if (tmp.size()!=0) {
+                        for (auto& tmp_ind : tmp) {
+                            vector<int> t_ind=tmp_ind;
+                            t_ind.insert(t_ind.end(),perm_ind.begin(),perm_ind.end());
+                            ind_combo_perms.push_back(t_ind);
+                        }
+                    }
+                    else ind_combo_perms.push_back(perm_ind);
+                }
+            }
+            else {
+                tmp=ind_combo_perms;
+                ind_combo_perms.clear();
+                if (tmp.size()!=0) {
+                    for (auto& tmp_ind : tmp) {
+                        tmp_ind.insert(tmp_ind.end(),sub_ind.begin(),sub_ind.end());
+                        ind_combo_perms.push_back(tmp_ind);
+                    }
+                }
+                else ind_combo_perms.push_back(sub_ind);
+            }
+            place+=p_size;
+        }
+        arr_g_ind.insert(arr_g_ind.end(),ind_combo_perms.begin(),ind_combo_perms.end());
+    }
+    return arr_g_ind;
 }
 
 vector<vector<int>> get_g_ind_combinations(int N, int K, vector<int> inds) {
@@ -436,13 +499,8 @@ vector<vector<int>> arrange_g_ind(vector<int> ind, vector<int> g_partition, size
     return g_comb;
 }
 
-vector<colour_term> trace_g(vector<int> ind) {
-    
-}
-
-vector<colour_term> trace_connected_g(vector<int> indices) {
-    vector<colour_term> basis;
-    colour_term basis_el;
+colour_term trace_connected_g(vector<int> indices) {
+    colour_term ct;
     three_ind symmetric;
     three_ind antisymmetric;
     three_ind fundamental;
@@ -452,37 +510,25 @@ vector<colour_term> trace_connected_g(vector<int> indices) {
     
     if (n_g==2) {
         kronecker.set_indices(indices[0],indices[1],true);
-        basis_el.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
-        basis.push_back(basis_el);
+        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
     }
     else {
-        vector<vector<int>> permutations;
-        permutations.push_back(indices);
-        while (next_permutation(indices.begin()+1,indices.end()))
-            permutations.push_back(indices);
-        // get physical permutations only
-        permutations.resize(permutations.size()/2);
-        
         vector<int> ind_refl;
         double sign(1.);
         if (n_g%2!=0) sign=-1.;
-        for (const auto& ind : permutations) {
-            basis_el.delete_all_terms();
-            ind_refl.clear();
-            basis_el.add_colour_term(write_tr_basis_el(ind));
-            ind_refl.push_back(ind[0]);
-            for (size_t it(1);it<ind.size();it++) ind_refl.push_back(ind[ind.size()-it]);
-            basis_el.add_colour_term(write_tr_basis_el(ind_refl));
-            basis_el.pref[1]*=sign;
-            basis.push_back(basis_el);
-        }
+        ct.delete_all_terms();
+        ind_refl.clear();
+        ct.add_colour_term(write_tr_basis_el(indices));
+        ind_refl.push_back(indices[0]);
+        for (size_t it(1);it<indices.size();it++) ind_refl.push_back(indices[indices.size()-it]);
+        ct.add_colour_term(write_tr_basis_el(ind_refl));
+        ct.pref[1]*=sign;
     }
-    
-    return basis;
+    return ct;
 }
 
 colour_term write_tr_basis_el(vector<int> ind) {
-    colour_term basis_el;
+    colour_term ct;
     three_ind symmetric;
     three_ind antisymmetric;
     three_ind fundamental;
@@ -496,8 +542,8 @@ colour_term write_tr_basis_el(vector<int> ind) {
         fundamental.set_indices(ind[i],start_ind+incr,c_ind);
         incr++;
     }
-    basis_el.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
-    return basis_el;
+    ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+    return ct;
 }
 
 vector<vector<int>> get_g_partitions(int n) {

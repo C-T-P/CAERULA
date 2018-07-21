@@ -13,9 +13,10 @@ vector<vector<int>> get_q_ind_combinations(vector<int> q_inds, vector<int> qb_in
 vector<colour_term> colourflow_q(vector<vector<int>> qqb_ind_combos);
 
 vector<colour_term> build_g_basis(int n_g);
+vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_partition);
 vector<vector<int>> get_g_ind_combinations(int N, int K, vector<int> inds);
 vector<vector<int>> arrange_g_ind(vector<int> ind, vector<int> g_partition, size_t level);
-vector<colour_term> trace_connected_g(vector<int> indices);
+colour_term trace_connected_g(vector<int> indices);
 colour_term write_tr_basis_el(vector<int> ind);
 vector<vector<int>> get_g_partitions(int n);
 void int_partitions(int n, vector<int>& v, vector<vector<int>>& r_v, int level);

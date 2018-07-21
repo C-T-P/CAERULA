@@ -19,6 +19,7 @@ int main(int argc, char **argv) {
     if (NC_order!=INT_MAX) cout << NC_order << "." << endl;
     else cout << "Infinity.\n" << endl;
     
+    // TODO better read in routine for runt parameters
     // read run parameters
     string runpar;
     vector<colour_term> basis;
