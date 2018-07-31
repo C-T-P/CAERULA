@@ -4,6 +4,7 @@
 #include "c_matrix.h"
 #include "Main.h"
 #include "CONTRACT.h"
+#include "FCONTRACT.h"
 #include "I3NSERT.h"
 #include "BASIS.h"
 
@@ -58,6 +59,12 @@ void read_in_process(string filename, process& m_process, vector<string>& basis_
 
 // decompose input into colour term according to the indices given in the process specification
 colour_term decompose_terms(string& input, process m_process) {
+    // create mock process in case none was given
+    if (m_process.no_of_legs()==0) {
+        cout<<"\nNOTE: all Kronecker deltas k_[.,.] will be treated as having quark indices. Use c_[2.,0.]*t_[.,101,102]*t_[.,102,101] for gluonic deltas.\n"<<endl;
+        for (int i(0);i<200;i++) m_process.add_out_leg("q");
+    }
+    
     colour_term expr;
     three_ind symmetric;
     three_ind antisymmetric;
@@ -231,6 +238,8 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process) {
     return basis;
 }
 
+// TODO construct trace basis for mixed processes
+
 // vector<colour_term> build_qqbg_basis(int n_qp, int n_g) {
 //     vector<colour_term> basis;
 //     vector<int> q_indices;
@@ -288,12 +297,6 @@ vector<colour_term> build_q_basis(int n_qp) {
     // everything defined as outgoing particles 
     for (int ind(1);ind<=n_qp;ind++) q_indices.push_back(ind);
     for (int ind(n_qp+1);ind<=2*n_qp;ind++) qb_indices.push_back(ind);
-    
-    cout<<"q indices:"<<endl;
-    for (const auto& i : q_indices) cout<<i<<" ";
-    cout<<"\nqb indices:"<<endl;
-    for (const auto& i : qb_indices) cout<<i<<" ";
-    cout<<endl;
     
     // get arranged quark indices
     vector<vector<int>> qqb_ind_combos(get_q_ind_combinations(q_indices,qb_indices));
@@ -371,6 +374,7 @@ vector<colour_term> build_g_basis(int n_g) {
             }
         }
         
+        // construct trace basis elements for all arranged index combinations
         for (const auto& inds : arr_g_ind) {
             basis_el.delete_all_terms();
             int place(0);
@@ -383,6 +387,8 @@ vector<colour_term> build_g_basis(int n_g) {
             }
             basis.push_back(basis_el);
         }
+        
+        // TODO implement adjoint basis construction e.g. via switch
         
         // print groupings
         cout<<"\n( ";
@@ -586,7 +592,8 @@ vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order) {
     for (size_t i(0);i<DIM;i++) {
         ct.delete_all_terms();
         ct=basis[i].scprod(basis[i]);
-        norm=evaluate_colour_term_to_order(ct,NC_order);
+//        norm=evaluate_colour_term_to_order(ct,NC_order);
+        norm=fast_evaluate_colour_term_to_order(ct,NC_order);
         ct=basis[i];
         for (size_t t_it(0);t_it<ct.no_of_terms();t_it++) ct.pref[t_it]*=1./sqrt(norm);
         n_basis.push_back(ct);
@@ -612,7 +619,8 @@ c_matrix calc_soft_matrix(vector<colour_term> basis, int NC_order) {
             if(i<=j) {
                 ct.delete_all_terms();
                 ct=basis[i].scprod(basis[j]);
-                soft_matrix[i][j]=evaluate_colour_term_to_order(ct,NC_order);
+//                soft_matrix[i][j]=evaluate_colour_term_to_order(ct,NC_order);
+                soft_matrix[i][j]=fast_evaluate_colour_term_to_order(ct,NC_order);
             }
             else soft_matrix[i][j]=conj(soft_matrix[j][i]);
         }
@@ -655,7 +663,8 @@ c_matrix calc_colour_change_matrix(vector<colour_term> basis, c_matrix soft_matr
         for (size_t j(0);j<DIM;j++) {
             cout << "\rC_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] being calculated..." << flush;
             ct=basis[i].scprod(insertion_op.multiply(make_internal(m_process,basis[j])));
-            ccm[i][j]=evaluate_colour_term_to_order(ct,NC_order);
+//            ccm[i][j]=evaluate_colour_term_to_order(ct,NC_order);
+            ccm[i][j]=fast_evaluate_colour_term_to_order(ct,NC_order);
             if (isnan(ccm[i][j].real())) cerr << "Error: C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "] = " <<ct.build_string() << "\n" << endl;
         }
     }

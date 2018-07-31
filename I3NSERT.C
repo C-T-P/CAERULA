@@ -52,3 +52,5 @@ colour_term construct_insertion_op(process m_process, unsigned int lno1, unsigne
     insertion_op.add_term(symmetric,antisymmetric,fundamental,kronecker,prefactor,0);
     return insertion_op;
 }
+
+// TODO find algorithm to determine which insertions are equivalent

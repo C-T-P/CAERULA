@@ -4,58 +4,132 @@
 #include "colourtools.h"
 #include "c_matrix.h"
 #include "BASIS.h"
-#include "CONTRACT.h"
 #include "I3NSERT.h"
+#include "CONTRACT.h"
+#include "FCONTRACT.h"
 #include "Main.h"
 
 int main(int argc, char **argv) {
-    clock_t t1, t2;
+    int NC_order(INT_MAX), n_g(0), n_qp(0);
+    vector<colour_term> basis;
+    colour_term ct;
+    process m_process;
+    string filename, out_filename;
     
-    t1=clock();
+    // read in run parameters
+    int runopt(0);
+    for(int i(1); i<argc; ++i) {
+        if (strcmp(argv[i], "-help")==0 or strcmp(argv[i], "-h")==0) {
+            cout<<"\nOptions:"<<endl;
+            cout<<"\t-h, -help:\t\tPrint this message and exit."<<endl;
+            cout<<"\t-s, -simplify:\t\tSimplify colour term with open indices."<<endl;
+            cout<<"\t\t\t\tReturns colour term."<<endl;
+            cout<<"\t-e, -evaluate:\t\tEvaluate colour term in which all indices must be contracted."<<endl;
+            cout<<"\t\t\t\tReturns complex number or NAN if not all indices are contracted."<<endl;
+            cout<<"\t-f, -file:\t\tRead process and colour basis from file and compute the soft matrix and all colour change matrices."<<endl;
+            cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
+            cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
+            cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
+            cout<<endl;
+            exit(EXIT_SUCCESS);
+        }
+        else if (strcmp(argv[i], "-simplify")==0 or strcmp(argv[i], "-s")==0) {
+            if (runopt==0) runopt=1;
+            else run_error();
+            
+            string expr=argv[i+1];
+            ct=decompose_terms(expr,m_process);
+            
+            i++;
+        }
+        else if (strcmp(argv[i], "-evaluate")==0 or strcmp(argv[i], "-e")==0) {
+            if (runopt==0) runopt=2;
+            else run_error();
+            
+            string expr=argv[i+1];
+            ct=decompose_terms(expr,m_process);
+            
+            i++;
+        }
+        else if (strcmp(argv[i], "-f")==0 or strcmp(argv[i], "-file")==0) {
+            if (runopt==0) runopt=3;
+            else run_error();
+            
+            filename=argv[i+1];
+            
+            i++;
+        }
+        else if (strcmp(argv[i],"-ng")==0) {
+            if (runopt==0 or runopt==4) runopt=4;
+            else run_error();
+            
+            n_g=stoi(argv[i+1]);
+            
+            i++;
+        }
+        else if (strcmp(argv[i],"-nqp")==0) {
+            if (runopt==0 or runopt==4) runopt=4;
+            else run_error();
+            
+            n_qp=stoi(argv[i+1]);
+            
+            i++;
+        }
+        else if (strcmp(argv[i],"-NC")==0) {
+            NC_order=stoi(argv[i+1]);
+            i++;
+        }
+    }
     
-    // define order in 1/NC to which all terms shall be evaluated
-    const int NC_order=INT_MAX;
-    cout<<"\nOrder of 1/NC set to ";
+    // print order in 1/NC to which all terms are evaluated
+    cout<<"Order of 1/NC set to ";
     if (NC_order!=INT_MAX) cout << NC_order << "." << endl;
     else cout << "Infinity.\n" << endl;
     
-    // TODO better read in routine for runt parameters
-    // read run parameters
-    string runpar;
-    vector<colour_term> basis;
-    process m_process;
-    string out_filename;
-    for (int i(1);i<argc;i++) runpar+=argv[i];
-    size_t f_pos(runpar.find("-f")), nqp_pos(runpar.find("-nqp")), ng_pos(runpar.find("-ng"));
-    if (f_pos!=string::npos and nqp_pos==string::npos and ng_pos==string::npos) {
-        string filename(runpar.substr(f_pos+2));
-        cout<<"Will construct basis from file "<<filename<<"."<<endl;
-        
-        basis=read_basis(filename, m_process);
-        for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
-    }
-    else if (nqp_pos!=string::npos or ng_pos!=string::npos) {
-        string qp_str, g_str;
-        if (nqp_pos>ng_pos) {
-            g_str=runpar.substr(ng_pos+3,nqp_pos-ng_pos-3);
-            qp_str=runpar.substr(nqp_pos+4);
+    
+    // perform colour calculations depending on the given input
+    switch (runopt) {
+        case 1: {
+            cout<<ct.build_string()<<endl;
+            simplify_colour_term(ct);
+            cout<<"= "<<ct.build_string()<<endl;
+            break;
         }
-        else {
-            qp_str=runpar.substr(nqp_pos+4,ng_pos-nqp_pos-4);
-            g_str=runpar.substr(ng_pos+3);
+        case 2: {
+            cout<<ct.build_string()<<endl;
+            complex<double> d=fast_evaluate_colour_term_to_order(ct, NC_order);
+            cout<<"= "<<d<<endl;
+            break;
         }
-        
-        int n_qp(stoi(qp_str)), n_g(stoi(g_str));
-        cout<<"Will construct basis for "<<n_qp<<" quark pairs and "<<n_g<<" gluons."<<endl;
-        basis=construct_basis(n_qp, n_g, m_process);
-        for (int n(0);n<n_qp;n++) out_filename+="qqb";
-        for (int n(0);n<n_g;n++) out_filename+="g";
-    }
-    else {
-        cerr<<"Error: specify basis either by filename ( -f ) OR by number of quark pairs and gluons ( -nqp / -ng )."<<endl;
-        exit(EXIT_FAILURE);
+        case 3: {
+            cout<<"Will construct colour basis from file "<<filename<<"."<<endl;
+            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
+            basis=read_basis(filename, m_process);
+            colour_calc(basis, m_process, NC_order, out_filename);
+            break;
+        }
+        case 4: {
+            if (n_g==0) cout<<"Will construct colour flow basis for "<<n_qp<<" quark pairs."<<endl;
+            else cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
+            for (int n(0);n<n_qp;n++) out_filename+="qqb";
+            for (int n(0);n<n_g;n++) out_filename+="g";
+            basis=construct_basis(n_qp, n_g, m_process);
+            colour_calc(basis, m_process, NC_order, out_filename);
+            break;
+        }
+        default: {
+            run_error();
+            break;
+        }
     }
     
+    return 0;
+}
+
+void colour_calc(vector<colour_term> basis, process m_process, const int NC_order, string out_filename) {
+    clock_t t1, t2;
+    
+    t1=clock();
     // normalise basis
     basis=normalise_basis(basis,NC_order);
     unsigned int DIM(basis.size());
@@ -88,7 +162,7 @@ int main(int argc, char **argv) {
         for (size_t j(0);j<DIM;j++)
             file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
     file.close();
-
+    
     // calculate and print inverse soft matrix
     c_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
     cout << "\nInverse Soft Matrix:" << endl;
@@ -136,6 +210,10 @@ int main(int argc, char **argv) {
     // print computation time for colour insertions
     t2=clock()-t2;
     runtime=(float)t2/CLOCKS_PER_SEC;
-    cout << "computation time for colour insertions: " << (int)runtime/3600 << " h, " << (int)runtime%60/60 << " m, " << (int)runtime%60+runtime-(int)runtime << " s"<< endl;
-    return 0;
-} 
+    cout << "computation time for colour insertions: " << runtime << " s"<< endl;
+}
+
+void run_error() {
+    cerr<<"Error: competing input given. Please specify EITHER a colour term to be simplified (-s)/evaluated (-e) OR perform a colour space calculation by specifying a basis through a file name (-f) OR the process by the number of quark pairs (-nqp) and number of gluons (-ng). See also the help menu for more information (-h)."<<endl;
+    exit(EXIT_FAILURE);
+}

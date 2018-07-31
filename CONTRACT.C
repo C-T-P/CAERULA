@@ -26,11 +26,12 @@ complex<double> evaluate_colour_term_to_order(colour_term& expr, unsigned int NC
         replace_d_and_f_by_t(expr);
         replace_fund(expr,NC_order);
     }
-    while (expr.no_of_terms()>0) {
-        contract_product(expr.pref[0],expr.kron[0],expr.sym[0],expr.asym[0],expr.fund[0]);
-        cf+=expr.term(0).build_complex();
-        expr.delete_term(0);
+    size_t no_ot(expr.no_of_terms());
+    for (size_t tno(0);tno<no_ot;tno++) {
+        replace_k(expr.pref[tno],expr.kron[tno],expr.sym[tno],expr.asym[tno],expr.fund[tno]);
+        cf+=expr.term(tno).build_complex();
     }
+    expr.delete_all_terms();
     if (abs(cf.real())<eps and abs(cf.imag())<eps) cf=0.;
     return cf;
 }
@@ -114,22 +115,20 @@ void replace_d_and_f_by_t(colour_term& expr){
             expr.sym[t_it].del_indices(0);
     
             // second term
-            expr.sym.push_back(expr.sym[t_it]);
-            expr.asym.push_back(expr.asym[t_it]);
-            expr.fund.push_back(expr.fund[t_it]);
-            expr.kron.push_back(expr.kron[t_it]);
-            expr.pref.push_back(expr.pref[t_it]);
-            expr.NC_ctr.push_back(expr.NC_ctr[t_it]);
-            expr.pref[expr.no_of_terms()-1]*=complex<double>(2.,0.);
-            expr.fund[expr.no_of_terms()-1].set_indices(ind_j, int_ind_a, int_ind_b);
-            expr.fund[expr.no_of_terms()-1].set_indices(ind_i, int_ind_b, int_ind_c);
-            expr.fund[expr.no_of_terms()-1].set_indices(ind_k, int_ind_c, int_ind_a);
+            expr.add_term(expr.sym[t_it],expr.asym[t_it],expr.fund[t_it],expr.kron[t_it],expr.pref[t_it],expr.NC_ctr[t_it]);
+            size_t no_ot(expr.no_of_terms());
+            expr.pref[no_ot-1]*=complex<double>(2.,0.);
+            expr.fund[no_ot-1].set_indices(ind_j, int_ind_a, int_ind_b);
+            expr.fund[no_ot-1].set_indices(ind_i, int_ind_b, int_ind_c);
+            expr.fund[no_ot-1].set_indices(ind_k, int_ind_c, int_ind_a);
+//           contract_product(expr.pref.back(),expr.kron.back(),expr.sym.back(),expr.asym.back(),expr.fund.back());
             
             // first term
             expr.pref[t_it]*=complex<double>(2.,0.);
             expr.fund[t_it].set_indices(ind_i, int_ind_a, int_ind_b);
             expr.fund[t_it].set_indices(ind_j, int_ind_b, int_ind_c);
             expr.fund[t_it].set_indices(ind_k, int_ind_c, int_ind_a);
+//           contract_product(expr.pref[t_it],expr.kron[t_it],expr.sym[t_it],expr.asym[t_it],expr.fund[t_it]);
         }
     }
     
@@ -141,12 +140,7 @@ void replace_d_and_f_by_t(colour_term& expr){
             expr.asym[t_it].del_indices(0);
     
             // second term
-            expr.sym.push_back(expr.sym[t_it]);
-            expr.asym.push_back(expr.asym[t_it]);
-            expr.fund.push_back(expr.fund[t_it]);
-            expr.kron.push_back(expr.kron[t_it]);
-            expr.pref.push_back(expr.pref[t_it]);
-            expr.NC_ctr.push_back(expr.NC_ctr[t_it]);
+            expr.add_term(expr.sym[t_it],expr.asym[t_it],expr.fund[t_it],expr.kron[t_it],expr.pref[t_it],expr.NC_ctr[t_it]);
             expr.pref[expr.no_of_terms()-1]*=complex<double>(0.,2.);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_j, int_ind_a, int_ind_b);
             expr.fund[expr.no_of_terms()-1].set_indices(ind_i, int_ind_b, int_ind_c);
