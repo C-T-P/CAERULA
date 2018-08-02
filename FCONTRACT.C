@@ -52,7 +52,7 @@ void replace_fund_by_fierz(colour_term& expr, int NC_order) {
             else if (expr.fund[i].count_index(expr.fund[i].index(it1,0))>1) {
                 itf1=expr.fund[i].find_index(expr.fund[i].index(it1,0),itf1.first);
                 if (itf1.second==0) {
-                    clock_t t0(clock());
+//                     clock_t t0(clock());
                     int a=expr.fund[i].index(it1,1), b=expr.fund[i].index(it1,2),
                     c=expr.fund[i].index(itf1.first,1), d=expr.fund[i].index(itf1.first,2);
                     expr.fund[i].del_indices(itf1.first);
@@ -70,8 +70,8 @@ void replace_fund_by_fierz(colour_term& expr, int NC_order) {
                     expr.kron[i].set_indices(a,d,false);
                     expr.kron[i].set_indices(c,b,false);
                     expr.pref[i]*=0.5;
-                    t0=clock()-t0;
-                    if ((float)t0/CLOCKS_PER_SEC>0.1) cout<<(float)t0/CLOCKS_PER_SEC<<endl;
+//                     t0=clock()-t0;
+//                     if ((float)t0/CLOCKS_PER_SEC>0.1) cout<<(float)t0/CLOCKS_PER_SEC<<endl;
                 }
                 else it1++;
             }

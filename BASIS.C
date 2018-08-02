@@ -205,7 +205,7 @@ colour_term decompose_terms(string& input, process m_process) {
 ===========================================================================
 */
 
-vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process) {
+vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process, vector<vector<int>>& amp_perms) {
     vector<colour_term> basis;
     
     // setup process with ordering q...qqb...qbg...g and all legs outgoing
@@ -227,11 +227,11 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process) {
         cerr<<"No basis to build out of 0 gluons and 0 quark pairs."<<endl;
         exit(EXIT_FAILURE);
     }
-    else if (n_qp==0) basis=build_g_basis(n_g);
-    else if (n_g==0) basis=build_q_basis(n_qp);
+    else if (n_qp==0) basis=build_g_basis(n_g, amp_perms);
+    else if (n_g==0) basis=build_q_basis(n_qp, amp_perms);
     else {
 //         basis=build_qqbg_basis(n_qp, n_g);
-        cerr<<"Basis for mixed processes not yet supported."<<endl;
+        cerr<<"Automatic basis construction for mixed processes not yet supported."<<endl;
         exit(EXIT_FAILURE);
     }
     
@@ -246,16 +246,16 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process) {
 //     vector<int> qb_indices;
 //     vector<int> g_indices;
 //     
-//     // everything defined as outgoing particles 
-//     // means: qb is an initial state q and vice versa
-//     for (int ind(1);ind<=n_qp;ind++) qb_indices.push_back(ind);
-//     for (int ind(n_qp+1);ind<=2*n_qp;ind++) q_indices.push_back(ind);
+//     everything defined as outgoing particles 
+//     means: qb is an initial state q and vice versa
+//     for (int ind(1);ind<=n_qp;ind++) q_indices.push_back(ind);
+//     for (int ind(n_qp+1);ind<=2*n_qp;ind++) qb_indices.push_back(ind);
 //     for (int ind(2*n_qp+1);ind<=2*n_qp+n_g;ind++) g_indices.push_back(ind);
 //     
-//     cout<<"qb indices"<<endl;
-//     for (const auto& i : qb_indices) cout<<i<<" ";
-//     cout<<"\nq indices"<<endl;
+//     cout<<"q indices"<<endl;
 //     for (const auto& i : q_indices) cout<<i<<" ";
+//     cout<<"\nqb indices"<<endl;
+//     for (const auto& i : qb_indices) cout<<i<<" ";
 //     cout<<"\ng indices"<<endl;
 //     for (const auto& i : g_indices) cout<<i<<" ";
 //     cout<<endl;
@@ -264,7 +264,21 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process) {
 //     vector<vector<int>> qqb_ind_combos(get_q_ind_combinations(q_indices, qb_indices));
 //     vector<int> qp_ind;
 //     for (int con_g(n_g);con_g>0;con_g--) {
+//         vector<vector<int>> g_ind_combos(get_g_ind_combinations(g_indices.size(),con_g, g_indices));
+//         for (const auto& g_ind : g_ind_combos) {
+//             vector<int> g_res_ind;
+//             for (const auto& ind : g_indices) if (find(g_ind.begin(),g_ind.end(),ind)==g_ind.end()) g_res_ind.push_back(ind);
+//             
+//             for (const auto& i : g_ind) cout<<i<<" ";
+//             cout<<endl;
+//             for (const auto& i : g_res_ind) cout<<i<<" ";
+//             cout<<endl;
+//         }
+//         
 //         for (const auto& qqb_i : qqb_ind_combos) {
+//             
+//             
+//             go through quark pairs
 //             for (size_t qp_no(0);qp_no<qqb_i.size();qp_no+=2) {
 //                 qp_ind.clear();
 //                 qp_ind.push_back(qqb_i[qp_no]);
@@ -282,15 +296,25 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process) {
 //         cerr<<"Error: Wrong number of quark indices. n gluons can only be connected to exactly 1 quark pair."<<endl;
 //         return;
 //     }
-//     vector<vector<int>> g_ind_combos(get_g_ind_combinations(g_ind.size(),con_g, g_ind));
+//     vector<vector<int>> g_ind_combos(get_g_ind_combinations(g_ind.size(),con_g, g_ind)), arr_qgqb_ind;
 //     for (const auto& g_i : g_ind_combos) {
-//         cout<<qqb_ind[0]<<" ";
-//         for (const auto& ind : g_i) cout<<ind<<" ";
-//         cout<<qqb_ind[1]<<endl;
+//         arr_qgqb_ind.push_back(connect_qngqb_ind(qqb_ind, g_i));
+//         
+//     }
+// }
+// 
+// vector<int> connect_qngqb_ind(vector<int> qqb_ind, vector<int> g_ind) {
+//     if (g_ind.size()==0) return qqb_ind;
+//     else if (qqb_ind.size()==0) return g_ind;
+//     else {
+//         vector<int> con_qngqb_ind(qqb_ind[0]);
+//         for (const auto& ind : g_ind) con_qngqb_ind.push_back(ind);
+//         con_qngqb_ind.push_back(qqb_ind[0]);
+//         return con_qngqb_ind;
 //     }
 // }
 
-vector<colour_term> build_q_basis(int n_qp) {
+vector<colour_term> build_q_basis(int n_qp, vector<vector<int>>& amp_perms) {
     vector<int> q_indices;
     vector<int> qb_indices;
     
@@ -300,6 +324,7 @@ vector<colour_term> build_q_basis(int n_qp) {
     
     // get arranged quark indices
     vector<vector<int>> qqb_ind_combos(get_q_ind_combinations(q_indices,qb_indices));
+    amp_perms=qqb_ind_combos;
     
     return colourflow_q(qqb_ind_combos);
 }
@@ -347,7 +372,7 @@ vector<colour_term> colourflow_q(vector<vector<int>> qqb_ind_combos) {
     return basis;
 }
 
-vector<colour_term> build_g_basis(int n_g) {
+vector<colour_term> build_g_basis(int n_g, vector<vector<int>>& amp_perms) {
     vector<colour_term> basis;
     colour_term basis_el;
     vector<int> indices;
@@ -360,19 +385,8 @@ vector<colour_term> build_g_basis(int n_g) {
     for (size_t i(0);i<g_partitions.size();i++) {
         arr_g_ind=get_arranged_g_ind_for_part(indices,g_partitions[i]);
         
-        // print permutations of connected amplitudes to file
-        if (i==0) {
-            string perm_filename;
-            for (int n(0);n<n_g;n++) perm_filename+="g";
-            perm_filename+="_perms.dat";
-            ofstream perm_file;
-            perm_file.open(perm_filename);
-            perm_file<<arr_g_ind.size()<<endl;
-            for (const auto& perm : arr_g_ind) {
-                for (const auto& p : perm) perm_file<<p-1<<" ";
-                perm_file<<endl;
-            }
-        }
+        // save permutations of connected amplitudes to file
+        if (i==0) amp_perms=arr_g_ind;
         
         // construct trace basis elements for all arranged index combinations
         for (const auto& inds : arr_g_ind) {
@@ -391,15 +405,15 @@ vector<colour_term> build_g_basis(int n_g) {
         // TODO implement adjoint basis construction e.g. via switch
         
         // print groupings
-        cout<<"\n( ";
-        for (const auto& g : g_partitions[i]) cout<<g<<" ";
-        cout<<"):"<<endl;
-        for (const auto& s : arr_g_ind) {
-            for (const auto& el : s) cout<<el<<" ";
-            cout<<endl;
-        }
+//         cout<<"\n( ";
+//         for (const auto& g : g_partitions[i]) cout<<g<<" ";
+//         cout<<"):"<<endl;
+//         for (const auto& s : arr_g_ind) {
+//             for (const auto& el : s) cout<<el<<" ";
+//             cout<<endl;
+//         }
+//         cout<<"DIM = "<<arr_g_ind.size()<<endl;
     }
-    
     return basis;
 }
 
@@ -420,8 +434,10 @@ vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_p
                 
                 // get physical permutations only: remove reflections
                 for (size_t p_it(0);p_it<permutations.size();p_it++) {
-                    vector<int> ind_refl({1}), p_ind(permutations[p_it]);
+                    vector<int> p_ind(permutations[p_it]);
+                    vector<int> ind_refl({p_ind[0]});
                     for (size_t it(p_ind.size()-1);it>0;it--) ind_refl.push_back(p_ind[it]);
+                    
                     vector<vector<int>>::iterator it(find(permutations.begin(),permutations.end(),ind_refl));
                     if (it!=permutations.end()) {
                         permutations.erase(it);
@@ -584,18 +600,16 @@ void int_partitions(int n, vector<int>& v, vector<vector<int>>& r_v, int level) 
 }
 
 // normalise Basis
-vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order) {
+vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order, vector<complex<double>>& normalisations) {
     unsigned int DIM(basis.size());
     vector<colour_term> n_basis;
     colour_term ct;
-    complex<double> norm;
     for (size_t i(0);i<DIM;i++) {
         ct.delete_all_terms();
         ct=basis[i].scprod(basis[i]);
-//        norm=evaluate_colour_term_to_order(ct,NC_order);
-        norm=fast_evaluate_colour_term_to_order(ct,NC_order);
+        normalisations.at(i)=sqrt(fast_evaluate_colour_term_to_order(ct,NC_order));
         ct=basis[i];
-        for (size_t t_it(0);t_it<ct.no_of_terms();t_it++) ct.pref[t_it]*=1./sqrt(norm);
+        for (size_t t_it(0);t_it<ct.no_of_terms();t_it++) ct.pref[t_it]*=1./normalisations.at(i);
         n_basis.push_back(ct);
     }
     return n_basis;

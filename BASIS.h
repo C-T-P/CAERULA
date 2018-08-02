@@ -5,14 +5,17 @@ vector<colour_term> read_basis(string filename, process& m_process);
 void read_in_process(string filename, process& m_process, vector<string>& basis_strs);
 colour_term decompose_terms(string& input, process m_process);
 
-vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process);
-vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order);
+vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process, vector<vector<int>>& amp_perms);
+vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order, vector<complex<double>>& normalisations);
 
-vector<colour_term> build_q_basis(int n_qp);
+// vector<colour_term> build_qqbg_basis(int n_qp, int n_g);
+// void trace_qngqb(vector<int> qqb_ind, vector<int> g_ind, int con_g);
+
+vector<colour_term> build_q_basis(int n_qp, vector<vector<int>>& amp_perms);
 vector<vector<int>> get_q_ind_combinations(vector<int> q_inds, vector<int> qb_inds);
 vector<colour_term> colourflow_q(vector<vector<int>> qqb_ind_combos);
 
-vector<colour_term> build_g_basis(int n_g);
+vector<colour_term> build_g_basis(int n_g, vector<vector<int>>& amp_perms);
 vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_partition);
 vector<vector<int>> get_g_ind_combinations(int N, int K, vector<int> inds);
 vector<vector<int>> arrange_g_ind(vector<int> ind, vector<int> g_partition, size_t level);

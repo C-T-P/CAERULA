@@ -14,7 +14,9 @@ int main(int argc, char **argv) {
     vector<colour_term> basis;
     colour_term ct;
     process m_process;
+    vector<vector<int>> amp_perms;
     string filename, out_filename;
+    bool multiply_with_inv_sm(false), norm_b(true);
     
     // read in run parameters
     int runopt(0);
@@ -30,6 +32,8 @@ int main(int argc, char **argv) {
             cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
             cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
             cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
+            cout<<"\t-inv:\t\t\tSets option to multiply colour change matrices with inverse soft matrix."<<endl;
+            cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
             cout<<endl;
             exit(EXIT_SUCCESS);
         }
@@ -79,6 +83,12 @@ int main(int argc, char **argv) {
             NC_order=stoi(argv[i+1]);
             i++;
         }
+        else if (strcmp(argv[i],"-dnorm")==0) {
+            norm_b=false;
+        }
+        else if (strcmp(argv[i],"-inv")==0) {
+            multiply_with_inv_sm=true;
+        }
     }
     
     // print order in 1/NC to which all terms are evaluated
@@ -103,9 +113,10 @@ int main(int argc, char **argv) {
         }
         case 3: {
             cout<<"Will construct colour basis from file "<<filename<<"."<<endl;
-            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
             basis=read_basis(filename, m_process);
-            colour_calc(basis, m_process, NC_order, out_filename);
+            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
+            cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
+            colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_b);
             break;
         }
         case 4: {
@@ -113,8 +124,8 @@ int main(int argc, char **argv) {
             else cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
             for (int n(0);n<n_qp;n++) out_filename+="qqb";
             for (int n(0);n<n_g;n++) out_filename+="g";
-            basis=construct_basis(n_qp, n_g, m_process);
-            colour_calc(basis, m_process, NC_order, out_filename);
+            basis=construct_basis(n_qp, n_g, m_process, amp_perms);
+            colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_b);
             break;
         }
         default: {
@@ -126,20 +137,45 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void colour_calc(vector<colour_term> basis, process m_process, const int NC_order, string out_filename) {
+void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<int>>& amp_perms, const int& NC_order, string& out_filename, bool& multiply_with_inv_sm, bool& norm_b) {
     clock_t t1, t2;
     
     t1=clock();
-    // normalise basis
-    basis=normalise_basis(basis,NC_order);
+    // normalise basis if needed
     unsigned int DIM(basis.size());
+    vector<complex<double>> normalisations(DIM, 1.0);
+    if (norm_b) basis=normalise_basis(basis,NC_order,normalisations);
+    
+    // save everything to file
+    ofstream file;
+    file.open(out_filename+".dat");
+    if (amp_perms.size()>0) {
+        int n_g(0);
+        for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="g") n_g++;
+        file<<"% number of basis vectors with non-zero coefficient"<<endl;
+        file<<"SIZE_CONNECTED = "<<amp_perms.size()<<";\n"<<endl;
+        file<<"% prefactors of the partial amplitude in total amplitude"<<endl;
+        for (size_t i(0);i<amp_perms.size();i++) {
+            file<<"a_"<<i<<" = "<<fixed<<setprecision(17)<<normalisations.at(i).real()*pow(sqrt(2.),n_g)<<";"<<endl;
+        }
+        file<<"\n% permutations defining the partial amplitudes"<<endl;
+        for (size_t i(0);i<amp_perms.size();i++) {
+            file<<"A_"<<i<<" =";
+            for (const auto& ind : amp_perms[i]) file<<" "<<ind-1;
+            file<<";"<<endl;
+        }
+    }
+    file<<"\n\n% dimension of the colour space"<<endl;
+    file<<"DIM = "<<DIM<<endl;
     
     // print leg indices and particles
     cout << "\nProcess:\n" << "leg\t" << "particle\t" << "in/out (1/0)" << endl;
     for (size_t i(1);i<=m_process.no_of_legs();i++) cout << m_process.leg(i).first << "\t" << m_process.leg(i).second << "\t\t" << m_process.is_in_leg(i) <<endl;
     
     // print normalised basis vectors
-    cout<<"\nNormalised Basis Vectors:"<<endl;
+    if (norm_b) cout<<"\nNormalised";
+    else cout<<"\nUnnormalised";
+    cout<<" Basis Vectors:"<<endl;
     for (size_t i(0);i<DIM;i++)
         cout<<"b_"<<i+1<<" = "<<basis.at(i).build_string()<<endl;
     
@@ -149,19 +185,15 @@ void colour_calc(vector<colour_term> basis, process m_process, const int NC_orde
     cout << "\ncomputation time for basis construction: " << (int)runtime/3600 << " h, " << (int)runtime%60/60 << " m, " << (int)runtime%60+runtime-(int)runtime << " s"<< endl;
     
     t2=clock();
-    
     // calculate and print soft matrix (to file)
     c_matrix soft_matrix=calc_soft_matrix(basis,NC_order);
     cout << "\nSoft Matrix:" << endl;
     soft_matrix.print();
-    ofstream file;
-    file.open(out_filename+"_met.dat");
-    file<<"# Dimension of Square Matrix\n"<<DIM<<"\n"<<endl;
-    file<<"# Soft Matrix / Colour Metric"<<endl;
-    for (size_t i(0);i<DIM;i++)
-        for (size_t j(0);j<DIM;j++)
-            file<<fixed<<setprecision(17)<<soft_matrix[i][j].real()<<" ";
-    file.close();
+    file<<"\n% colour metric aka soft matrix"<<endl;
+    file<<"METRIC =";
+    for (size_t m(0);m<DIM;m++)
+        for (size_t n(0);n<DIM;n++) file<<fixed<<setprecision(17)<<" "<<soft_matrix[m][n].real();
+    file<<";\n"<<endl;
     
     // calculate and print inverse soft matrix
     c_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
@@ -175,12 +207,9 @@ void colour_calc(vector<colour_term> basis, process m_process, const int NC_orde
     unit_matrix.print();
     
     // calculate and give out colour change matrices for all possible insertions
-    bool multiply_with_inv_sm=false;
     vector<c_matrix> colour_change_matrices;
-    file.open(out_filename+".dat");
-    file<<"# Dimension of Square Matrices\n"<<DIM<<"\n"<<endl;
     cout<<"\nColour Change Matrices (";
-    file<<"# Colour Change Matrices (";
+    file<<"% colour change matrices (";
     if (!multiply_with_inv_sm) {
         cout<<"not ";
         file<<"not ";
@@ -196,21 +225,21 @@ void colour_calc(vector<colour_term> basis, process m_process, const int NC_orde
             
             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
             colour_change_matrices.back().print();
-            file<<"// C_("<<lno1<<","<<lno2<<") with PIDs "<<m_process.leg(lno1).second<<" and "<<m_process.leg(lno2).second<<endl;
-            for (size_t i(0);i<DIM;i++) {
-                for (size_t j(0);j<DIM;j++)
-                    file<<fixed<<setprecision(17)<<colour_change_matrices.back()[i][j].real()<<" ";
-                file<<endl;
-            }
+            file<<"C_"<<lno1-1<<lno2-1<<" =";
+            for (size_t m(0);m<DIM;m++)
+                for (size_t n(0);n<DIM;n++)
+                    file<<fixed<<setprecision(17)<<" "<<colour_change_matrices.back()[m][n].real();
+            file<<";"<<endl;
             cout<<endl;
         }
     }
-    file.close();
     
     // print computation time for colour insertions
     t2=clock()-t2;
     runtime=(float)t2/CLOCKS_PER_SEC;
     cout << "computation time for colour insertions: " << runtime << " s"<< endl;
+    
+    file.close();
 }
 
 void run_error() {

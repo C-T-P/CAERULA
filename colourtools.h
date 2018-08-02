@@ -4,7 +4,7 @@
 #include<gsl/gsl_linalg.h>
 #include<gsl/gsl_complex.h>
 #include<gsl/gsl_complex_math.h>
-#include<string>
+#include<cstring>
 #include<iostream>
 #include<vector>
 #include<algorithm>
