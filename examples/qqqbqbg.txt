@@ -1,0 +1,11 @@
+# process
+l	out	q
+l	out	q
+l	out	qb
+l	out	qb
+l	out	g
+# basis vectors
+b	t_[5,3,1]*k_[2,4]
+b	t_[5,4,1]*k_[2,3]
+b	t_[5,3,2]*k_[1,4]
+b	t_[5,4,2]*k_[1,3]
