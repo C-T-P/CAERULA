@@ -8,8 +8,10 @@ colour_term decompose_terms(string& input, process m_process);
 vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process, vector<vector<int>>& amp_perms);
 vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order, vector<complex<double>>& normalisations);
 
-// vector<colour_term> build_qqbg_basis(int n_qp, int n_g);
-// void trace_qngqb(vector<int> qqb_ind, vector<int> g_ind, int con_g);
+vector<colour_term> build_qqbg_basis(int n_qp, int n_g, vector<vector<int>>& amp_perms);
+vector<colour_term> arrange_qngqb_ind (vector<vector<int>>& qqb_ind_combos, vector<int>& g_indices, vector<int>& g_part, vector<vector<int>>& amp_perms);
+vector<colour_term> connect_qngqb (vector<int> qqb_inds, vector<int> g_inds, vector<int> g_part, vector<vector<int>>& amp_perms);
+colour_term trace_connected_qngqb (int q_ind, vector<int> g_inds, int qb_ind);
 
 vector<colour_term> build_q_basis(int n_qp, vector<vector<int>>& amp_perms);
 vector<vector<int>> get_q_ind_combinations(vector<int> q_inds, vector<int> qb_inds);

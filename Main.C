@@ -186,9 +186,11 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     
     t2=clock();
     // calculate and print soft matrix (to file)
+    cout << "\nComputing the Soft Matrix...";
     c_matrix soft_matrix=calc_soft_matrix(basis,NC_order);
-    cout << "\nSoft Matrix:" << endl;
-    soft_matrix.print();
+    cout<<" done!"<<endl;
+//     cout << "\nSoft Matrix:" << endl;
+//     soft_matrix.print();
     file<<"\n% colour metric aka soft matrix"<<endl;
     file<<"METRIC =";
     for (size_t m(0);m<DIM;m++)
@@ -197,24 +199,24 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     
     // calculate and print inverse soft matrix
     c_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
-    cout << "\nInverse Soft Matrix:" << endl;
-    inv_soft_matrix.print();
+//     cout << "\nInverse Soft Matrix:" << endl;
+//     inv_soft_matrix.print();
     
     // calculate and print inverse soft matrix times soft matrix
     c_matrix unit_matrix(DIM);
-    cout<<"\nInverse times Soft Matrix"<<endl;
+//     cout<<"\nInverse times Soft Matrix"<<endl;
     unit_matrix=soft_matrix*inv_soft_matrix;
-    unit_matrix.print();
+//     unit_matrix.print();
     
     // calculate and give out colour change matrices for all possible insertions
     vector<c_matrix> colour_change_matrices;
-    cout<<"\nColour Change Matrices (";
+//     cout<<"\nColour Change Matrices (";
     file<<"% colour change matrices (";
     if (!multiply_with_inv_sm) {
-        cout<<"not ";
+//         cout<<"not ";
         file<<"not ";
     }
-    cout<<"multiplied with inverse colour metric)"<<endl;
+//     cout<<"multiplied with inverse colour metric)"<<endl;
     file<<"multiplied with inverse colour metric)"<<endl;
     for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
@@ -223,14 +225,14 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
             // multiply with inverse soft matrix if wanted
             if (multiply_with_inv_sm) colour_change_matrices.back()=inv_soft_matrix*colour_change_matrices.back();
             
-            cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
-            colour_change_matrices.back().print();
+//             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
+//             colour_change_matrices.back().print();
             file<<"C_"<<lno1-1<<lno2-1<<" =";
             for (size_t m(0);m<DIM;m++)
                 for (size_t n(0);n<DIM;n++)
                     file<<fixed<<setprecision(17)<<" "<<colour_change_matrices.back()[m][n].real();
             file<<";"<<endl;
-            cout<<endl;
+//             cout<<endl;
         }
     }
     
