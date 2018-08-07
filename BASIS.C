@@ -229,118 +229,240 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process, vecto
     }
     else if (n_qp==0) basis=build_g_basis(n_g, amp_perms);
     else if (n_g==0) basis=build_q_basis(n_qp, amp_perms);
-    else {
-        if (n_g==1) basis=build_qqbg_basis(n_qp, n_g, amp_perms);
-        else {
-            cerr<<"Automatic basis construction for mixed processes only supported for 1 gluon yet."<<endl;
-            exit(EXIT_FAILURE);
-        }
-    }
+    else basis=build_qqbg_basis(n_qp, n_g, amp_perms);
     
     return basis;
 }
 
-// TODO construct trace basis for mixed processes
+vector<vector<int>> connect_qngqb (vector<int> q_line, vector<int> gluons) {
+    size_t n_g(gluons.size());
+    
+    for (size_t con_g(n_g);con_g>0;con_g--) {
+        
+    }
+}
 
 vector<colour_term> build_qqbg_basis(int n_qp, int n_g, vector<vector<int>>& amp_perms) {
-    vector<colour_term> basis;
-    
     vector<int> q_indices;
     vector<int> qb_indices;
     vector<int> g_indices;
     
-    // everything defined as outgoing particles 
+    vector<colour_term> basis;
+    
+    // everything defined as outgoing particles
     // means: qb is an initial state q and vice versa
     for (int ind(1);ind<=n_qp;ind++) q_indices.push_back(ind);
     for (int ind(n_qp+1);ind<=2*n_qp;ind++) qb_indices.push_back(ind);
     for (int ind(2*n_qp+1);ind<=2*n_qp+n_g;ind++) g_indices.push_back(ind);
     
-    vector<vector<int>> g_partitions(get_g_partitions(g_indices.size()));
-    vector<vector<int>> qqb_ind_combos(get_q_ind_combinations(q_indices, qb_indices));
-    for (auto& g_part : g_partitions) {
-        vector<colour_term> b_tmp=arrange_qngqb_ind(qqb_ind_combos, g_indices, g_part, amp_perms);
-        basis.insert(basis.end(),b_tmp.begin(),b_tmp.end());
+    // quark lines connected to gluons - try 6598
+    vector< vector<int> > qqb_ind_combos(get_q_ind_combinations(q_indices, qb_indices));
+    for (auto& qp_comb : qqb_ind_combos) {
+        vector<vector<int>> q_lines;
+        for (vector<int>::iterator qp_it(qp_comb.begin());qp_it<qp_comb.end();qp_it+=2)
+            q_lines.push_back(vector<int>(qp_it,qp_it+2));
+        
+        do {
+            
+            cout<<"{ ";
+            for (const auto& i : q_lines) cout<<i<<" ";
+            cout<<"}";
+            
+            vector<vector<int>> gluon_combos(get_g_ind_combinations(n_g,con_g,g_indices));
+            for (const auto & gluons : gluon_combos) {
+                for (const auto& g : gluons) cout<<g<<" ";
+                cout<<endl;
+            }
+            
+        } while (next_permutation(q_lines.begin(),q_lines.end()));
     }
+    
+    
+    for (size_t con_g(n_g);con_g>0;con_g--) {
+        for (auto& qp_comb : qqb_ind_combos) {
+            vector<vector<int>> q_lines;
+            for (vector<int>::iterator qp_it(qp_comb.begin());qp_it<qp_comb.end();qp_it+=2)
+                q_lines.push_back(vector<int>(qp_it,qp_it+2));
+            
+//             for (const auto& ql : q_lines) {
+//                 cout<<"{ ";
+//                 for (const auto& i : ql) cout<<i<<" ";
+//                 cout<<"}";
+//             }
+//             cout<<endl;
+            
+//             do {
+//                 
+//                 for (vector<vector<int>>::iterator ql_it(q_lines.begin());ql_it<q_lines.end();ql_it++) {
+//                     
+//                 }
+//                 
+//             } while (next_permutation(q_lines.begin(),q_lines.end());
+//             
+            
+            
+            vector<vector<int>> gluon_combos(get_g_ind_combinations(n_g,con_g,g_indices));
+            for (const auto & gluons : gluon_combos) {
+                for (const auto& g : gluons) cout<<g<<" ";
+                cout<<endl;
+            }
+            
+//             while (gluon_combos.size()>0) {
+//                 vector<int> gluons(gluon_combos.at(0));
+//                 
+//                 for (const auto& i : gluons) cout<<i<<" ";
+//                 cout<<endl;
+// //                 for (int ind(1);ind<n_g;ind++) 
+// //                     if (find(gluons.begin(),gluons.end(),ind)==gluons.end()) 
+// //                         gluons.push_back(ind);
+// //                     
+// //                 for (vector<int>::iterator qp_it(qp_comb.begin());qp_it<qp_comb.end();qp_it+=2) {
+// //                     vector<int> q_line(qp_it,qp_it+1);
+// //                     
+// //                     cout<<q_line.at(0)<<" ";
+// //                     for (size_t n(0);n<con_g;n++) cout<<gluons.at(n)<<" ";
+// //                     cout<<q_line.at(1)<<" ";
+// //                     gluons.erase(gluons.begin(),gluons.begin()+con_g);
+// //                 }
+//                 gluon_combos.erase(gluon_combos.begin());
+//             }
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//     // quark lines connected to gluons
+//     vector< vector<int> > qqb_ind_combos(get_q_ind_combinations(q_indices, qb_indices));
+//     vector< vector<int> > g_partitions(get_g_partitions(n_g));
+//     for (const auto& g_part : g_partitions) {
+//         size_t n_part(g_part.size()), n_sg(0);
+//         for (const auto & g : g_part) if (g==1) n_sg++;
+//         
+//         // print groupings
+// //         cout<<"\n( ";
+// //         for (const auto& g : g_part) cout<<g<<" ";
+// //         cout<<"):"<<endl;
+//        
+//         vector< vector<int> > g_ind_combos(arrange_g_ind(g_indices,g_part,0));
+//         
+//         for (const auto & qp_comb : qqb_ind_combos) {
+//             for (const auto & g_comb : g_ind_combos) {
+//                 
+//                 // TODO implement all permutations of gluon indices
+//                 if (n_part>=(unsigned)n_qp) {
+//                     vector< vector<int> > part_ind;
+//                     size_t place(0);
+//                     for (const auto & p : g_part) {
+//                         vector<int> tmp;
+//                         for (size_t i(place);i<place+p;i++) tmp.push_back(g_comb.at(i));
+//                         part_ind.push_back(tmp);
+//                         place+=p;
+//                     }
+//                     
+//                     do {
+//                         size_t qp_no(0), g_no(0);
+//                         bool vanishes(false);
+//                         colour_term b_el;
+//                         
+//                         while (g_no<n_part) {
+//                             if (qp_no<(unsigned)n_qp or part_ind.at(g_no).size()>1) {
+//                                 int q_ind(0), qb_ind(0);
+//                                 if (qp_no<(unsigned)n_qp) {
+//                                     q_ind=qp_comb.at(2*qp_no);
+//                                     qb_ind=qp_comb.at(2*qp_no+1);
+//                                 }
+//                                 
+//                                 colour_term b_tmp=trace_connected_qngqb(q_ind,part_ind.at(g_no),qb_ind);
+//                                 if (b_el.no_of_terms()==0) b_el=b_tmp;
+//                                 else b_el=b_el.multiply(b_tmp);
+//                             }
+//                             else {
+//                                 vanishes=true;
+//                                 break;
+//                             }
+//                             qp_no++;
+//                             g_no++;
+//                         }
+//                         if (!vanishes) basis.push_back(b_el); 
+//                     } while (next_permutation(part_ind.begin(),part_ind.end()));
+//                 }
+//                 else {
+//                     vector<size_t> qps(n_qp,0);
+//                     for (size_t i(0);i<(unsigned)n_qp;i++) qps.at(i)=i;
+//                     
+//                     do {
+//                         size_t qp_no(0), g_no(0), p_pos(0);
+//                         colour_term b_el;
+//                         vector<int> perm;
+//                         
+//                         while (qp_no<(unsigned)n_qp) {
+//                             if (n_part==1) perm.push_back(qp_comb.at(2*qps.at(qp_no)+1));
+//                             vector<int> g_sub_inds;
+//                             if (g_no<n_part) {
+//                                 for (size_t n(p_pos);n<p_pos+g_part.at(g_no);n++) {
+//                                     g_sub_inds.push_back(g_comb.at(n));
+//                                     if (n_part==1) perm.push_back(g_comb.at(n)); 
+//                                 }
+//                                 p_pos+=g_part.at(g_no);
+//                             }
+//                             if (n_part==1) perm.push_back(qp_comb.at(2*qps.at(qp_no)));
+// 
+//                             colour_term b_tmp;
+//                             b_tmp=trace_connected_qngqb(qp_comb.at(2*qps.at(qp_no)),g_sub_inds,qp_comb.at(2*qps.at(qp_no)+1));
+//                             if (b_el.no_of_terms()==0) b_el=b_tmp;
+//                             else b_el=b_el.multiply(b_tmp);
+//                                 
+//                             qp_no++;
+//                             g_no++;
+//                         }
+//                         
+//                         basis.push_back(b_el);
+//                         if (perm.size()!=0) amp_perms.push_back(perm);
+//                     } while (next_permutation(qps.begin(),qps.end()));
+//                 }
+//             }
+//         }
+//     }
+    
+    // quark lines not connected to gluons  
+//     for (const auto& g_part : g_partitions) {
+//         size_t n_part(g_part.size()), n_sg(0);
+//         for (const auto & g : g_part) if (g==1) n_sg++;
+//         
+//         vector< vector<int> > g_ind_combos(get_arranged_g_ind_for_part(g_indices,g_part));
+//          
+//         for (const auto & qp_comb : qqb_ind_combos) {
+//             for (const auto & g_comb : g_ind_combos) {
+//                 if (n_sg==0) {        
+//                     colour_term b_el;
+//                     for (size_t n(0);n<(unsigned)n_qp;n++) {
+//                         colour_term b_tmp=trace_connected_qngqb(qp_comb.at(2*n),vector<int>(),qp_comb.at(2*n+1));
+//                         if (b_el.no_of_terms()==0) b_el=b_tmp;
+//                         else b_el=b_el.multiply(b_tmp);
+//                     }
+//                     size_t pos(0);
+//                     for (size_t n(0);n<n_part;n++) {
+//                         vector<int> g_sub_inds(g_comb.begin()+pos,g_comb.begin()+pos+g_part.at(n));                      
+//                         colour_term b_tmp=trace_connected_g(g_sub_inds);
+//                         b_el=b_el.multiply(b_tmp);
+//                         pos+=g_part.at(n);
+//                     }
+//                     basis.push_back(b_el);
+//                 }
+//             }
+//         }
+//     }
+    
     return basis;
 }
 
-vector<colour_term> arrange_qngqb_ind (vector<vector<int>>& qqb_ind_combos, vector<int>& g_indices, vector<int>& g_part, vector<vector<int>>& amp_perms) {
-    vector<vector<int>> g_ind_grps=arrange_g_ind(g_indices,g_part,0);
-    vector<colour_term> basis_els;        
-    
-    // print groupings
-//     cout<<"\n( ";
-//     for (const auto& g : g_part) cout<<g<<" ";
-//     cout<<"):"<<endl;
-    
-    for (const auto& g_i : g_ind_grps) {
-        for (const auto& qqb_i : qqb_ind_combos) {
-            vector<vector<int>> amp_perms_tmp;
-            vector<colour_term> b_tmp(connect_qngqb(qqb_i, g_i, g_part, amp_perms_tmp));
-            basis_els.insert(basis_els.begin(),b_tmp.begin(),b_tmp.end());
-            amp_perms.insert(amp_perms.begin(),amp_perms_tmp.begin(),amp_perms_tmp.end());
-        }
-    }
-    return basis_els;
-}
-
-vector<colour_term> connect_qngqb (vector<int> qqb_inds, vector<int> g_inds, vector<int> g_part, vector<vector<int>>& amp_perms) {
-    vector<colour_term> basis_els;
-    size_t n_q(qqb_inds.size());
-    size_t n_gp(g_part.size());
-    size_t n_g(g_inds.size());
-    size_t n_sg(0);
-    for (const auto& p : g_part) if (p==1) n_sg++;
-    
-    // basis vector does not vanish only if there are at least equally many quark pairs as single gluons
-    if (n_q/2>=n_sg) {
-        vector<vector<size_t>> n_perms;
-        vector<size_t> tmp;
-        for (size_t i(0);i<(unsigned)n_q;i+=2) tmp.push_back(i);
-        n_perms.push_back(tmp);
-        while (next_permutation(tmp.begin(),tmp.end())) n_perms.push_back(tmp);
-           
-        for (size_t p(0);p<n_perms.size();p++) {
-            vector<size_t> perm(n_perms[p]);
-            size_t q_pos(0), g_pos(0), g_p_no(0);
-            colour_term ct;
-            vector<int> amplitude_perm;
-            while (q_pos<perm.size() or g_p_no<n_gp) {
-                if (p==0 or n_q/2<=n_gp+1 or perm[0]!=n_perms[p-1][0]) {
-                    int q_ind(0), qb_ind(0);
-                    vector<int> g_sub_inds;
-                    if (q_pos<n_q/2 and qqb_inds[perm[q_pos]]!=0) {
-                        qb_ind=qqb_inds[perm[q_pos]+1];
-                        if (n_gp==1) amplitude_perm.push_back(qb_ind);
-                    }
-                    if (g_pos<n_g) {
-                        for (size_t n(g_pos);n<g_pos+g_part[g_p_no];n++) {
-                            g_sub_inds.push_back(g_inds[n]);
-                            if (n_gp==1) amplitude_perm.push_back(g_sub_inds.back());
-                        }
-                    }
-                    if (q_pos<n_q/2 and qqb_inds[perm[q_pos]]!=0) {
-                        q_ind=qqb_inds[perm[q_pos]];
-                        if (n_gp==1) amplitude_perm.push_back(q_ind);
-                    }
-                    colour_term new_ct(trace_connected_qngqb(q_ind,g_sub_inds,qb_ind));
-                    // multiply existing colour term with the new one
-                    if (ct.no_of_terms()!=0) ct=ct.multiply(new_ct);
-                    else ct=new_ct;
-                }
-                q_pos++;
-                g_pos+=g_part[g_p_no];
-                g_p_no++;
-            }
-            // add colour term to basis
-            if (ct.no_of_terms()>0) {
-                basis_els.push_back(ct);
-                if (amplitude_perm.size()>0) amp_perms.push_back(amplitude_perm);
-            }
-        }
-    }
-    return basis_els;
-}
 
 colour_term trace_connected_qngqb (int q_ind, vector<int> g_inds, int qb_ind) {
     colour_term ct;
@@ -438,12 +560,6 @@ vector<colour_term> build_g_basis(int n_g, vector<vector<int>>& amp_perms) {
 
     // get gluon partitions
     vector<vector<int>> g_partitions(get_g_partitions(n_g));
-    cout<<"before:"<<endl;
-    for (const auto& g_p : g_partitions) {
-        for (const auto& i : g_p) cout<<i<<" ";
-        cout<<endl;
-    }
-    
     
     // get physical partitions only
     for (size_t i(0);i<g_partitions.size();i++) {
@@ -455,15 +571,9 @@ vector<colour_term> build_g_basis(int n_g, vector<vector<int>>& amp_perms) {
             i--;
         } 
     }
-    cout<<"after:"<<endl;
-    for (const auto& g_p : g_partitions) {
-        for (const auto& i : g_p) cout<<i<<" ";
-        cout<<endl;
-    }
 
-    vector<vector<int>> arr_g_ind;
     for (size_t i(0);i<g_partitions.size();i++) {
-        arr_g_ind=get_arranged_g_ind_for_part(indices,g_partitions[i]);
+        vector<vector<int>> arr_g_ind=get_arranged_g_ind_for_part(indices,g_partitions[i]);
         
         // save permutations of connected amplitudes to file
         if (i==0) amp_perms=arr_g_ind;
@@ -483,16 +593,6 @@ vector<colour_term> build_g_basis(int n_g, vector<vector<int>>& amp_perms) {
         }
         
         // TODO implement adjoint basis construction e.g. via switch
-        
-        // print groupings
-//         cout<<"\n( ";
-//         for (const auto& g : g_partitions[i]) cout<<g<<" ";
-//         cout<<"):"<<endl;
-//         for (const auto& s : arr_g_ind) {
-//             for (const auto& el : s) cout<<el<<" ";
-//             cout<<endl;
-//         }
-//         cout<<"DIM = "<<arr_g_ind.size()<<endl;
     }
     return basis;
 }
@@ -513,17 +613,7 @@ vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_p
                 while (next_permutation(sub_ind.begin()+1,sub_ind.end())) permutations.push_back(sub_ind);
                 
                 // get physical permutations only: remove reflections
-                for (size_t p_it(0);p_it<permutations.size();p_it++) {
-                    vector<int> p_ind(permutations[p_it]);
-                    vector<int> ind_refl({p_ind[0]});
-                    for (size_t it(p_ind.size()-1);it>0;it--) ind_refl.push_back(p_ind[it]);
-                    
-                    vector<vector<int>>::iterator it(find(permutations.begin(),permutations.end(),ind_refl));
-                    if (it!=permutations.end()) {
-                        permutations.erase(it);
-                        p_it--;
-                    }
-                }
+                remove_reflections(permutations);
 
                 tmp=ind_combo_perms;
                 ind_combo_perms.clear();
@@ -554,6 +644,20 @@ vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_p
         arr_g_ind.insert(arr_g_ind.end(),ind_combo_perms.begin(),ind_combo_perms.end());
     }
     return arr_g_ind;
+}
+
+void remove_reflections(vector<vector<int>>& permutations) {
+    for (size_t p_it(0);p_it<permutations.size();p_it++) {
+        vector<int> p_ind(permutations[p_it]);
+        vector<int> ind_refl({p_ind[0]});
+        for (size_t it(p_ind.size()-1);it>0;it--) ind_refl.push_back(p_ind[it]);
+        
+        vector<vector<int>>::iterator it(find(permutations.begin(),permutations.end(),ind_refl));
+        if (it!=permutations.end()) {
+            permutations.erase(it);
+            p_it--;
+        }
+    }
 }
 
 vector<vector<int>> get_g_ind_combinations(int N, int K, vector<int> inds) {
@@ -724,29 +828,29 @@ c_matrix calc_soft_matrix(vector<colour_term> basis, int NC_order) {
 } 
 
 // calculate inverse soft matrix
-c_matrix calc_inv_soft_matrix(c_matrix soft_matrix) {
-    unsigned int DIM(soft_matrix.dim());
-    c_matrix inv_soft_matrix(DIM);
-    
-    gsl_matrix_complex *S=gsl_matrix_complex_alloc(DIM,DIM);
-    gsl_matrix_complex *IS=gsl_matrix_complex_alloc(DIM,DIM);
-    gsl_permutation *p=gsl_permutation_alloc(DIM);
-    int n;
-    for (size_t j(0);j<DIM;j++)
-        for (size_t k(0);k<DIM;k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(soft_matrix[j][k].real(),soft_matrix[j][k].imag())); 
-    gsl_linalg_complex_LU_decomp(S,p,&n);
-    
-    gsl_complex gsl_det(gsl_linalg_complex_LU_det(S,n));
-    complex<double> det(complex<double>(GSL_REAL(gsl_det),GSL_IMAG(gsl_det)));
-    cout<<"\ndet(S) = "<<det<<endl;
-    
-    gsl_linalg_complex_LU_invert(S,p,IS);
-    
-    for (size_t i(0);i<DIM;i++)
-        for (size_t j(0);j<DIM;j++) inv_soft_matrix[i][j]=complex<double>(GSL_REAL(gsl_matrix_complex_get(IS,i,j)),GSL_IMAG(gsl_matrix_complex_get(IS,i,j)));
-    
-    return inv_soft_matrix;
-} 
+// c_matrix calc_inv_soft_matrix(c_matrix soft_matrix) {
+//     unsigned int DIM(soft_matrix.dim());
+//     c_matrix inv_soft_matrix(DIM);
+//     
+//     gsl_matrix_complex *S=gsl_matrix_complex_alloc(DIM,DIM);
+//     gsl_matrix_complex *IS=gsl_matrix_complex_alloc(DIM,DIM);
+//     gsl_permutation *p=gsl_permutation_alloc(DIM);
+//     int n;
+//     for (size_t j(0);j<DIM;j++)
+//         for (size_t k(0);k<DIM;k++) gsl_matrix_complex_set(S,j,k,gsl_complex_rect(soft_matrix[j][k].real(),soft_matrix[j][k].imag())); 
+//     gsl_linalg_complex_LU_decomp(S,p,&n);
+//     
+//     gsl_complex gsl_det(gsl_linalg_complex_LU_det(S,n));
+//     complex<double> det(complex<double>(GSL_REAL(gsl_det),GSL_IMAG(gsl_det)));
+//     cout<<"\ndet(S) = "<<det<<endl;
+//     
+//     gsl_linalg_complex_LU_invert(S,p,IS);
+//     
+//     for (size_t i(0);i<DIM;i++)
+//         for (size_t j(0);j<DIM;j++) inv_soft_matrix[i][j]=complex<double>(GSL_REAL(gsl_matrix_complex_get(IS,i,j)),GSL_IMAG(gsl_matrix_complex_get(IS,i,j)));
+//     
+//     return inv_soft_matrix;
+// } 
 
 // calculate colour change matrix for insertion between leg lno1 and lno2
 c_matrix calc_colour_change_matrix(vector<colour_term> basis, c_matrix soft_matrix, process m_process, unsigned int lno1, unsigned int lno2, int NC_order) {

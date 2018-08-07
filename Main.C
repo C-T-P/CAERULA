@@ -87,7 +87,11 @@ int main(int argc, char **argv) {
             norm_b=false;
         }
         else if (strcmp(argv[i],"-inv")==0) {
+            cerr<<"Error: Multiplication with inverse Soft Matrix not supported anymore!\n Will continue anyways without multiplication."<<endl;
             multiply_with_inv_sm=true;
+        }
+        else if (strcmp(argv[i],"-bcm")==0) {
+            runopt=5;
         }
     }
     
@@ -127,6 +131,14 @@ int main(int argc, char **argv) {
             basis=construct_basis(n_qp, n_g, m_process, amp_perms);
             colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_b);
             break;
+        }
+        case 5: {
+            basis=read_basis(filename, m_process);
+            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="g") n_g++;
+            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="q" or m_process.leg(lno).second=="qb") n_qp++;
+            n_qp=n_qp/2;
+            construct_bcm(basis, n_qp, n_g, NC_order);
+            return 0;
         }
         default: {
             run_error();
@@ -182,7 +194,7 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     // print computation time for basis construction
     t1=clock()-t1;
     float runtime=(float)t1/CLOCKS_PER_SEC;
-    cout << "\ncomputation time for basis construction: " << (int)runtime/3600 << " h, " << (int)runtime%60/60 << " m, " << (int)runtime%60+runtime-(int)runtime << " s"<< endl;
+    cout << "\ncomputation time for basis construction: "<<runtime << " s"<< endl;
     
     t2=clock();
     // calculate and print soft matrix (to file)
@@ -198,14 +210,14 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     file<<";\n"<<endl;
     
     // calculate and print inverse soft matrix
-    c_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
+//     c_matrix inv_soft_matrix=calc_inv_soft_matrix(soft_matrix);
 //     cout << "\nInverse Soft Matrix:" << endl;
 //     inv_soft_matrix.print();
     
     // calculate and print inverse soft matrix times soft matrix
-    c_matrix unit_matrix(DIM);
+//     c_matrix unit_matrix(DIM);
 //     cout<<"\nInverse times Soft Matrix"<<endl;
-    unit_matrix=soft_matrix*inv_soft_matrix;
+//     unit_matrix=soft_matrix*inv_soft_matrix;
 //     unit_matrix.print();
     
     // calculate and give out colour change matrices for all possible insertions
@@ -217,13 +229,13 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
         file<<"not ";
     }
 //     cout<<"multiplied with inverse colour metric)"<<endl;
-    file<<"multiplied with inverse colour metric)"<<endl;
+    file<<"not multiplied with inverse colour metric)"<<endl;
     for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
             colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,m_process,lno1,lno2,NC_order));
             
             // multiply with inverse soft matrix if wanted
-            if (multiply_with_inv_sm) colour_change_matrices.back()=inv_soft_matrix*colour_change_matrices.back();
+//             if (multiply_with_inv_sm) colour_change_matrices.back()=inv_soft_matrix*colour_change_matrices.back();
             
 //             cout << "C_(" << lno1 << "," << lno2 << ") = " << endl;
 //             colour_change_matrices.back().print();
@@ -242,6 +254,40 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     cout << "computation time for colour insertions: " << runtime << " s"<< endl;
     
     file.close();
+}
+
+void construct_bcm(vector<colour_term> multiplet_basis, int n_qp, int n_g, int NC_order) {
+    vector<colour_term> trace_basis;
+    process m_proc;
+    vector<vector<int>> amp_perms;
+    trace_basis=construct_basis(n_qp, n_g, m_proc, amp_perms);
+    
+    vector<complex<double>> dummy1(multiplet_basis.size(),0.), dummy2(trace_basis.size(),0.);
+    multiplet_basis=normalise_basis(multiplet_basis,NC_order,dummy1);
+    trace_basis=normalise_basis(trace_basis,NC_order,dummy2);
+//     
+    vector<vector<complex<double>>> bcm(multiplet_basis.size(), vector<complex<double>>(trace_basis.size(),0.));
+    
+    for (size_t i(0);i<multiplet_basis.size();i++) {
+        for (size_t j(0);j<trace_basis.size();j++) {
+            colour_term ct(multiplet_basis[i].scprod(trace_basis[j]));
+            bcm.at(i).at(j) = fast_evaluate_colour_term_to_order(ct, NC_order);
+            cout<<bcm.at(i).at(j).real()<<" ";
+//             cout<<fast_evaluate_colour_term_to_order(ct, NC_order).real()<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+    for (size_t i(0);i<trace_basis.size();i++) {
+        for (size_t j(0);j<trace_basis.size();j++) {
+            complex<double> c(0);
+            for (size_t k(0);k<multiplet_basis.size();k++) {
+                c+=bcm.at(k).at(i)*bcm.at(k).at(j);
+            }
+            cout<<c<<" ";
+        }
+        cout<<endl;
+    }
 }
 
 void run_error() {

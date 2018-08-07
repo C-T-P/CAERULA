@@ -9,8 +9,6 @@ vector<colour_term> construct_basis(int n_qp, int n_g, process& m_process, vecto
 vector<colour_term> normalise_basis(vector<colour_term> basis, int NC_order, vector<complex<double>>& normalisations);
 
 vector<colour_term> build_qqbg_basis(int n_qp, int n_g, vector<vector<int>>& amp_perms);
-vector<colour_term> arrange_qngqb_ind (vector<vector<int>>& qqb_ind_combos, vector<int>& g_indices, vector<int>& g_part, vector<vector<int>>& amp_perms);
-vector<colour_term> connect_qngqb (vector<int> qqb_inds, vector<int> g_inds, vector<int> g_part, vector<vector<int>>& amp_perms);
 colour_term trace_connected_qngqb (int q_ind, vector<int> g_inds, int qb_ind);
 
 vector<colour_term> build_q_basis(int n_qp, vector<vector<int>>& amp_perms);
@@ -19,6 +17,7 @@ vector<colour_term> colourflow_q(vector<vector<int>> qqb_ind_combos);
 
 vector<colour_term> build_g_basis(int n_g, vector<vector<int>>& amp_perms);
 vector<vector<int>> get_arranged_g_ind_for_part(vector<int> ind, vector<int> g_partition);
+void remove_reflections(vector<vector<int>>& permutations);
 vector<vector<int>> get_g_ind_combinations(int N, int K, vector<int> inds);
 vector<vector<int>> arrange_g_ind(vector<int> ind, vector<int> g_partition, size_t level);
 colour_term trace_connected_g(vector<int> indices);
