@@ -2,29 +2,6 @@
 
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds);
 
-int main(int argc, char **argv) {
-    size_t n_g, n_qp;
-    
-    cout<<"Enter number of gluons:"<<endl;
-    cin>>n_g;
-    
-    cout<<"Enter number of quark pairs:"<<endl;
-    cin>>n_qp;
-    
-    trace_basis t_basis(n_g, n_qp);
-    t_basis.print();
-    
-    cout<<"Dimension: "<<t_basis.dim()<<endl;
-    
-    cout<<"Permutations:"<<endl;
-    vector<vector<size_t>> amp_perms(t_basis.get_perms());
-    for (const auto& p : amp_perms) {
-        for (const auto& i : p) cout<<i<<" ";
-        cout<<endl;
-    }
-}
-
-
 // member functions of trace_t class
 trace_t::trace_t(vector<size_t> g_inds, size_t qb_ind, size_t q_ind) {
     m_q=q_ind;
@@ -60,6 +37,15 @@ vector<size_t> trace_t::get_indices() {
     
     return indices;
 }
+trace_t trace_t::conj() {
+    if (m_qb==0 and m_q==0 and m_g.size()>2) {
+        size_t n_g(m_g.size());
+        vector<size_t> new_m_g(n_g,m_g.at(0));
+        reverse_copy(m_g.begin()+1,m_g.end(),new_m_g.begin()+1);
+        return trace_t(new_m_g);
+    }
+    return trace_t(0,0);
+}
 size_t trace_t::no_g() {
     return m_g.size();
 }
@@ -75,6 +61,91 @@ bool trace_t::vanishes() {
     if (m_qb==0 and m_q==0 and m_g.size()<=1) return true;
     else return false;
 }
+bool trace_t::comp(trace_t& tr_t) {
+    vector<size_t> indices1((*this).get_indices()), indices2(tr_t.get_indices());
+    size_t s_1(indices1.size()), s_2(indices2.size());
+    
+    if (s_1>s_2) return true;
+    else if (s_1==s_2) {
+        size_t i(0);
+        while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
+        if (i<s_1 and indices1.at(i)>indices2.at(i)) return true;
+        return false;
+    }
+    else return false;
+}
+bool trace_t::operator==(trace_t& rhs) {
+    vector<size_t> indices1((*this).get_indices()), indices2(rhs.get_indices());
+    size_t s_1(indices1.size()), s_2(indices2.size());
+    if (s_1!=s_2) return false;
+    size_t i(0);
+    while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
+    if (i==s_1) return true;
+    return false;
+}
+colour_term trace_t::build_ct() {
+    colour_term ct;
+    three_ind symmetric;
+    three_ind antisymmetric;
+    three_ind fundamental;
+    two_ind kronecker;
+    size_t n_g(m_g.size());
+    
+    if (n_g==0) {
+        kronecker.set_indices(m_qb, m_q, false);
+        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+        return ct;
+    }
+    if (m_qb==0 and m_q==0) {
+        if (n_g==2) {
+            kronecker.set_indices(m_g.at(0), m_g.at(1), true);
+            ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+            return ct;
+        }
+        
+        size_t start_ind(101), incr(0);
+        for (size_t i(0);i<n_g;i++) {
+            int c_ind;
+            if (i==n_g-1) c_ind=start_ind;
+            else c_ind=start_ind+incr+1;
+            fundamental.set_indices(m_g.at(i),start_ind+incr,c_ind);
+            incr++;
+        }
+        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+        
+        fundamental.clear_indices();
+        vector<size_t> refl_ind(n_g,m_g.at(0));
+        reverse_copy(m_g.begin()+1,m_g.end(),refl_ind.begin()+1);
+        
+        start_ind=101, incr=0;
+        for (size_t i(0);i<n_g;i++) {
+            int c_ind;
+            if (i==n_g-1) c_ind=start_ind;
+            else c_ind=start_ind+incr+1;
+            fundamental.set_indices(refl_ind.at(i),start_ind+incr,c_ind);
+            incr++;
+        }
+        double pref(1.);
+        if (n_g%2!=0) pref=-1;
+        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(pref,0.),0);
+        
+        return ct;
+    }
+    if (n_g==1) {
+        fundamental.set_indices(m_g.at(0),m_qb,m_q);
+        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+        return ct;
+    }
+    size_t start_ind(101), incr(0);
+    fundamental.set_indices(m_g.at(0),m_qb,start_ind);
+    while (incr<n_g-2) {
+        fundamental.set_indices(m_g.at(incr+1),start_ind+incr,start_ind+incr+1);
+        incr++;
+    }
+    fundamental.set_indices(m_g.back(),start_ind+incr,m_q);
+    ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+    return ct;
+}
 void trace_t::print() {
     if (m_qb!=0) cout<<"{"<<m_qb;
     else cout<<"(";
@@ -85,20 +156,6 @@ void trace_t::print() {
     if (m_q!=0) cout<<","<<m_q<<"}";
     else cout<<")";
 }
-bool trace_t::comp(trace_t& tr_t) {
-    vector<size_t> indices1((*this).get_indices()), indices2(tr_t.get_indices());
-    size_t s_1(indices1.size()), s_2(indices2.size());
-    
-    if (s_1>s_2) return false;
-    else if (s_1==s_2) {
-        size_t i(0);
-        while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
-        if (i<s_1 and indices1.at(i)>indices2.at(i)) return true;
-        return false;
-    }
-    else return true;
-}
-
 
 
 // member functions of trace_vec class
@@ -144,6 +201,24 @@ vector<trace_vec> trace_vec::add_one_gluon(size_t g_ind) {
     
     return new_tr_vecs;
 }
+vector<trace_vec> trace_vec::conjugates() {
+    vector<trace_vec> conjugate_tr_vecs({*this});
+    
+    for (size_t i(0);i<m_tr_vec.size();i++) {
+        trace_t refl(m_tr_vec.at(i).conj());
+        if (refl.is_non_zero()) {
+            size_t curr_s(conjugate_tr_vecs.size());
+            for (size_t j(0);j<curr_s;j++) {
+                trace_vec tmp_tr_vec(conjugate_tr_vecs.at(j));
+                tmp_tr_vec.at(i)=refl;
+                conjugate_tr_vecs.push_back(tmp_tr_vec);
+            }
+        }
+    }
+    
+    conjugate_tr_vecs.erase(conjugate_tr_vecs.begin());
+    return conjugate_tr_vecs;
+}
 vector<size_t> trace_vec::get_indices() {
     vector<size_t> indices;
     
@@ -153,6 +228,9 @@ vector<size_t> trace_vec::get_indices() {
     }
     
     return indices;
+}
+size_t trace_vec::no_groups() {
+    return m_tr_vec.size();
 }
 bool trace_vec::is_connected() {
     size_t n_ql(0), n_con_g(0), n_qlg(0);
@@ -182,7 +260,29 @@ bool trace_vec::comp(trace_vec& tr_v) {
     (*this).order();
     tr_v.order();
     
-    return (*this).at(0).comp(tr_v.at(0));
+    size_t s_1((*this).no_groups()), s_2(tr_v.no_groups());
+    if (s_1>s_2) return !true;
+    if (s_1<s_2) return !false;
+    
+    size_t i(0);
+    while (i<s_1 and (*this).at(i)==tr_v.at(i)) i++;
+    if (i==s_1) return false;
+    return !(*this).at(i).comp(tr_v.at(i));
+}
+bool trace_vec::operator==(trace_vec& rhs) {
+    size_t i(0), s_1(m_tr_vec.size()), s_2(rhs.no_groups());
+    if (s_1!=s_2) return false;
+    while (i<s_1 and (*this).at(i)==rhs.at(i)) i++;
+    if (i==s_1) return true;
+    return false;
+}
+colour_term trace_vec::build_ct() {
+    colour_term ct;
+    for (auto& tr_t : m_tr_vec) {
+        if (ct.no_of_terms()==0) ct=tr_t.build_ct();
+        else ct=ct.multiply(tr_t.build_ct());
+    }
+    return ct;
 }
 void trace_vec::print() {
     cout<<"[";
@@ -194,13 +294,15 @@ void trace_vec::print() {
 
 // member functions of trace_basis class
 trace_basis::trace_basis(size_t n_g, size_t n_qp) {
+    m_ng=n_g;
+    m_nqp=n_qp;
     
     // initialise quark, anti quark and gluon indices 
     // the process is ordered as q,...,q,qb,...,qb,g,...,g
-    vector<size_t> g_indices, q_indices, qb_indices;
-    for (size_t n(1);n<=n_qp;n++) q_indices.push_back(n);
-    for (size_t n(n_qp+1);n<=2*n_qp;n++) qb_indices.push_back(n);
-    for (size_t n(2*n_qp+1);n<=2*n_qp+n_g;n++) g_indices.push_back(n);
+    for (size_t n(1);n<=m_nqp;n++) m_q_indices.push_back(n);
+    for (size_t n(m_nqp+1);n<=2*m_nqp;n++) m_qb_indices.push_back(n);
+    for (size_t n(2*m_nqp+1);n<=2*m_nqp+m_ng;n++) m_g_indices.push_back(n);
+    size_t g_start(0);
     
 //     cout<<"q indices:"<<endl;
 //     for (const auto& i : q_indices) cout<<i<<" ";
@@ -213,31 +315,32 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
 //     cout<<endl;
     
     // build all possible quark lines
-    if (n_qp!=0) {
-        vector<vector<size_t>> qqb_ind_combos(get_q_ind_combinations(q_indices,qb_indices));
+    if (m_nqp!=0) {
+        vector<vector<size_t>> qqb_ind_combos(get_q_ind_combinations(m_q_indices,m_qb_indices));
         
         for (const auto& qqb_inds : qqb_ind_combos) {
             trace_vec tmp_trv;
-            for (size_t qp_no(0);qp_no<2*n_qp;qp_no+=2)
+            for (size_t qp_no(0);qp_no<2*m_nqp;qp_no+=2)
                 tmp_trv.push_back(trace_t(qqb_inds.at(qp_no+1),qqb_inds.at(qp_no)));
             m_tr_basis.push_back(tmp_trv);
         }
     }
     // if there are no quarks
     else {
-        if (n_g==1) {
+        if (m_ng==1) {
             cerr<<"Error: no trace basis to build out of 0 quark pairs and 1 gluon."<<endl;
             exit(EXIT_FAILURE);
         }
         
-        trace_vec tmp_trv(trace_t(vector<size_t>(g_indices.begin(),g_indices.begin()+1)));
+        trace_vec tmp_trv(trace_t(vector<size_t>(m_g_indices.begin(),m_g_indices.begin()+1)));
         m_tr_basis.push_back(tmp_trv);
-        g_indices=vector<size_t>(g_indices.begin()+1,g_indices.end());
+        g_start++;
     }
     
     
     // successively add all n_g gluons
-    for (const auto& g : g_indices) {
+    for (size_t i(g_start);i<m_ng;i++) {
+        size_t g(m_g_indices.at(i));
         vector<trace_vec> trb_cpy;
         
         for (auto& bv : m_tr_basis) {
@@ -249,6 +352,7 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     
     (*this).remove_sg();
     (*this).normal_order();
+    (*this).remove_conj();
 }
 trace_basis::~trace_basis() {
     
@@ -261,22 +365,51 @@ void trace_basis::remove_sg() {
         }
     }
 }
-size_t trace_basis::dim() {
-    return m_tr_basis.size();
+void trace_basis::remove_conj() {
+    for (size_t i(0);i<m_tr_basis.size();i++) {
+        vector<trace_vec> conjugate_tvs(m_tr_basis.at(i).conjugates());
+        
+        for (auto& con : conjugate_tvs) {
+            for (size_t j(0);j<m_tr_basis.size();j++) {
+                if (m_tr_basis.at(j)==con) {
+                    m_tr_basis.erase(m_tr_basis.begin()+j);
+                    break;
+                }
+            }
+        }
+    }
 }
 void trace_basis::normal_order() {
     sort(m_tr_basis.begin(), m_tr_basis.end(), [ ]( trace_vec& lhs, trace_vec& rhs )
     {
-        return !lhs.comp(rhs);
+        return lhs.comp(rhs);
     });
 }
-vector<vector<size_t>> trace_basis::get_perms() {
+size_t trace_basis::dim() {
+    return m_tr_basis.size();
+}
+process trace_basis::proc() {
+    process proc;
+    for (size_t n(0);n<m_nqp;n++) proc.add_out_leg("q");
+    for (size_t n(0);n<m_nqp;n++) proc.add_out_leg("qb");
+    for (size_t n(0);n<m_ng;n++) proc.add_out_leg("g");
+    return proc;
+}
+vector<vector<size_t>> trace_basis::perms() {
     vector<vector<size_t>> perms;
     
     for (auto& v : m_tr_basis)
         if (v.is_connected()) perms.push_back(v.get_indices());
     
     return perms;
+}
+vector<colour_term> trace_basis::ct_basis() {
+    vector<colour_term> ct_basis;
+    
+    for (auto& bv : m_tr_basis)
+        ct_basis.push_back(bv.build_ct());
+    
+    return ct_basis;
 }
 void trace_basis::print() {
     for (auto& bv : m_tr_basis) bv.print();
@@ -302,9 +435,6 @@ vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size
     }
     return qqb_ind_combos;
 }
-
-
-
 
 
 

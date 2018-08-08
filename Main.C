@@ -3,6 +3,8 @@
 #include<ctime>
 #include "colourtools.h"
 #include "c_matrix.h"
+#include "trace_basis.h"
+#include "f_basis.h"
 #include "BASIS.h"
 #include "I3NSERT.h"
 #include "CONTRACT.h"
@@ -10,13 +12,14 @@
 #include "Main.h"
 
 int main(int argc, char **argv) {
-    int NC_order(INT_MAX), n_g(0), n_qp(0);
+    int NC_order(INT_MAX);
+    size_t n_g(0), n_qp(0);
     vector<colour_term> basis;
     colour_term ct;
     process m_process;
-    vector<vector<int>> amp_perms;
+    vector<vector<size_t>> amp_perms;
     string filename, out_filename;
-    bool multiply_with_inv_sm(false), norm_b(true);
+    bool multiply_with_inv_sm(false), norm_basis(true), adjoint_basis(false);
     
     // read in run parameters
     int runopt(0);
@@ -31,8 +34,8 @@ int main(int argc, char **argv) {
             cout<<"\t-f, -file:\t\tRead process and colour basis from file and compute the soft matrix and all colour change matrices."<<endl;
             cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
             cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
+            cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\nWorks only for pure gluon processes with ng>=3."<<endl;
             cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
-            cout<<"\t-inv:\t\t\tSets option to multiply colour change matrices with inverse soft matrix."<<endl;
             cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
             cout<<endl;
             exit(EXIT_SUCCESS);
@@ -79,16 +82,15 @@ int main(int argc, char **argv) {
             
             i++;
         }
+        else if (strcmp(argv[i],"-adj")==0) {
+            adjoint_basis=true;
+        }
         else if (strcmp(argv[i],"-NC")==0) {
             NC_order=stoi(argv[i+1]);
             i++;
         }
         else if (strcmp(argv[i],"-dnorm")==0) {
-            norm_b=false;
-        }
-        else if (strcmp(argv[i],"-inv")==0) {
-            cerr<<"Error: Multiplication with inverse Soft Matrix not supported anymore!\n Will continue anyways without multiplication."<<endl;
-            multiply_with_inv_sm=true;
+            norm_basis=false;
         }
         else if (strcmp(argv[i],"-bcm")==0) {
             runopt=5;
@@ -120,16 +122,34 @@ int main(int argc, char **argv) {
             basis=read_basis(filename, m_process);
             for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
             cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
-            colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_b);
+            colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_basis);
             break;
         }
         case 4: {
-            if (n_g==0) cout<<"Will construct colour flow basis for "<<n_qp<<" quark pairs."<<endl;
-            else cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
-            for (int n(0);n<n_qp;n++) out_filename+="qqb";
-            for (int n(0);n<n_g;n++) out_filename+="g";
-            basis=construct_basis(n_qp, n_g, m_process, amp_perms);
-            colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_b);
+            for (size_t n(0);n<n_qp;n++) out_filename+="qqb";
+            for (size_t n(0);n<n_g;n++) out_filename+="g";
+            
+            if (adjoint_basis) {
+                if (n_qp>0) {
+                    cerr<<"Error: Adjoint basis only valid for pure gluon processes. Cannot build an adjoint basis for processes involving quarks."<<endl;
+                    exit(EXIT_FAILURE);
+                }
+                cout<<"Will construct adjoint basis for "<<n_g<<" gluons."<<endl;
+                f_basis adj_basis(n_g);
+                basis=adj_basis.ct_basis();
+                m_process=adj_basis.proc();
+                amp_perms=adj_basis.perms();
+            }
+            else {
+                if (n_g==0) cout<<"Will construct colour flow basis for "<<n_qp<<" quark pairs."<<endl;
+                else cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
+                trace_basis tr_basis(n_g, n_qp);
+                basis=tr_basis.ct_basis();
+                m_process=tr_basis.proc();
+                amp_perms=tr_basis.perms();
+            }
+            
+            colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_basis);
             break;
         }
         case 5: {
@@ -137,7 +157,7 @@ int main(int argc, char **argv) {
             for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="g") n_g++;
             for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="q" or m_process.leg(lno).second=="qb") n_qp++;
             n_qp=n_qp/2;
-            construct_bcm(basis, n_qp, n_g, NC_order);
+//            construct_bcm(basis, n_qp, n_g, NC_order);
             return 0;
         }
         default: {
@@ -149,14 +169,14 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<int>>& amp_perms, const int& NC_order, string& out_filename, bool& multiply_with_inv_sm, bool& norm_b) {
+void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<size_t>>& amp_perms, const int& NC_order, string& out_filename, bool& multiply_with_inv_sm, bool& norm_basis) {
     clock_t t1, t2;
     
     t1=clock();
     // normalise basis if needed
     unsigned int DIM(basis.size());
     vector<complex<double>> normalisations(DIM, 1.0);
-    if (norm_b) basis=normalise_basis(basis,NC_order,normalisations);
+    if (norm_basis) basis=normalise_basis(basis,NC_order,normalisations);
     
     // save everything to file
     ofstream file;
@@ -185,7 +205,7 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     for (size_t i(1);i<=m_process.no_of_legs();i++) cout << m_process.leg(i).first << "\t" << m_process.leg(i).second << "\t\t" << m_process.is_in_leg(i) <<endl;
     
     // print normalised basis vectors
-    if (norm_b) cout<<"\nNormalised";
+    if (norm_basis) cout<<"\nNormalised";
     else cout<<"\nUnnormalised";
     cout<<" Basis Vectors:"<<endl;
     for (size_t i(0);i<DIM;i++)
@@ -229,7 +249,7 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
         file<<"not ";
     }
 //     cout<<"multiplied with inverse colour metric)"<<endl;
-    file<<"not multiplied with inverse colour metric)"<<endl;
+    file<<"multiplied with inverse colour metric)"<<endl;
     for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
             colour_change_matrices.push_back(calc_colour_change_matrix(basis,soft_matrix,m_process,lno1,lno2,NC_order));
@@ -256,39 +276,39 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<i
     file.close();
 }
 
-void construct_bcm(vector<colour_term> multiplet_basis, int n_qp, int n_g, int NC_order) {
-    vector<colour_term> trace_basis;
-    process m_proc;
-    vector<vector<int>> amp_perms;
-    trace_basis=construct_basis(n_qp, n_g, m_proc, amp_perms);
-    
-    vector<complex<double>> dummy1(multiplet_basis.size(),0.), dummy2(trace_basis.size(),0.);
-    multiplet_basis=normalise_basis(multiplet_basis,NC_order,dummy1);
-    trace_basis=normalise_basis(trace_basis,NC_order,dummy2);
-//     
-    vector<vector<complex<double>>> bcm(multiplet_basis.size(), vector<complex<double>>(trace_basis.size(),0.));
-    
-    for (size_t i(0);i<multiplet_basis.size();i++) {
-        for (size_t j(0);j<trace_basis.size();j++) {
-            colour_term ct(multiplet_basis[i].scprod(trace_basis[j]));
-            bcm.at(i).at(j) = fast_evaluate_colour_term_to_order(ct, NC_order);
-            cout<<bcm.at(i).at(j).real()<<" ";
-//             cout<<fast_evaluate_colour_term_to_order(ct, NC_order).real()<<" ";
-        }
-        cout<<endl;
-    }
-    cout<<endl;
-    for (size_t i(0);i<trace_basis.size();i++) {
-        for (size_t j(0);j<trace_basis.size();j++) {
-            complex<double> c(0);
-            for (size_t k(0);k<multiplet_basis.size();k++) {
-                c+=bcm.at(k).at(i)*bcm.at(k).at(j);
-            }
-            cout<<c<<" ";
-        }
-        cout<<endl;
-    }
-}
+//void construct_bcm(vector<colour_term> multiplet_basis, int n_qp, int n_g, int NC_order) {
+//    vector<colour_term> trace_basis;
+//    process m_proc;
+//    vector<vector<int>> amp_perms;
+//    trace_basis=construct_basis(n_qp, n_g, m_proc, amp_perms);
+//
+//    vector<complex<double>> dummy1(multiplet_basis.size(),0.), dummy2(trace_basis.size(),0.);
+//    multiplet_basis=normalise_basis(multiplet_basis,NC_order,dummy1);
+//    trace_basis=normalise_basis(trace_basis,NC_order,dummy2);
+////
+//    vector<vector<complex<double>>> bcm(multiplet_basis.size(), vector<complex<double>>(trace_basis.size(),0.));
+//
+//    for (size_t i(0);i<multiplet_basis.size();i++) {
+//        for (size_t j(0);j<trace_basis.size();j++) {
+//            colour_term ct(multiplet_basis[i].scprod(trace_basis[j]));
+//            bcm.at(i).at(j) = fast_evaluate_colour_term_to_order(ct, NC_order);
+//            cout<<bcm.at(i).at(j).real()<<" ";
+////             cout<<fast_evaluate_colour_term_to_order(ct, NC_order).real()<<" ";
+//        }
+//        cout<<endl;
+//    }
+//    cout<<endl;
+//    for (size_t i(0);i<trace_basis.size();i++) {
+//        for (size_t j(0);j<trace_basis.size();j++) {
+//            complex<double> c(0);
+//            for (size_t k(0);k<multiplet_basis.size();k++) {
+//                c+=bcm.at(k).at(i)*bcm.at(k).at(j);
+//            }
+//            cout<<c<<" ";
+//        }
+//        cout<<endl;
+//    }
+//}
 
 void run_error() {
     cerr<<"Error: competing input given. Please specify EITHER a colour term to be simplified (-s)/evaluated (-e) OR perform a colour space calculation by specifying a basis through a file name (-f) OR the process by the number of quark pairs (-nqp) and number of gluons (-ng). See also the help menu for more information (-h)."<<endl;
