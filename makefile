@@ -1,5 +1,5 @@
-o_objects = Main.o BASIS.o CONTRACT.o FCONTRACT.o I3NSERT.o colourtools.o trace_basis.o f_basis.o
-c_objects = Main.C BASIS.C CONTRACT.C FCONTRACT.C I3NSERT.C colourtools.C trace_basis.C f_basis.C
+o_objects = Main.o BASIS.o CONTRACT.o FCONTRACT.o I3NSERT.o colourtools.o trace_basis.o f_basis.o gen_basis.o
+c_objects = Main.C BASIS.C CONTRACT.C FCONTRACT.C I3NSERT.C colourtools.C trace_basis.C f_basis.C gen_basis.C
 
 CXX = g++ -g -std=c++11
 
@@ -29,6 +29,9 @@ trace_basis.o: trace_basis.C
 
 f_basis.o: f_basis.C
 	$(CXX) -c -Wall f_basis.C
+
+gen_basis.o: gen_basis.C
+	$(CXX) -c -Wall gen_basis.C
 
 clean:
 	rm -f $(o_objects)

@@ -5,6 +5,7 @@
 #include "c_matrix.h"
 #include "trace_basis.h"
 #include "f_basis.h"
+#include "gen_basis.h"
 #include "BASIS.h"
 #include "I3NSERT.h"
 #include "CONTRACT.h"
@@ -45,7 +46,7 @@ int main(int argc, char **argv) {
             else run_error();
             
             string expr=argv[i+1];
-            ct=decompose_terms(expr,m_process);
+//            ct=decompose_terms(expr,m_process);
             
             i++;
         }
@@ -54,7 +55,7 @@ int main(int argc, char **argv) {
             else run_error();
             
             string expr=argv[i+1];
-            ct=decompose_terms(expr,m_process);
+//            ct=decompose_terms(expr,m_process);
             
             i++;
         }
@@ -119,9 +120,14 @@ int main(int argc, char **argv) {
         }
         case 3: {
             cout<<"Will construct colour basis from file "<<filename<<"."<<endl;
-            basis=read_basis(filename, m_process);
-            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
             cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
+            
+            gen_basis g_basis(filename);
+            m_process=g_basis.proc();
+            basis=g_basis.ct_basis();
+            
+            for (size_t lno(1);lno<=m_process.no_of_legs();lno++) out_filename+=m_process.leg(lno).second;
+            
             colour_calc(basis, m_process, amp_perms, NC_order, out_filename, multiply_with_inv_sm, norm_basis);
             break;
         }
@@ -153,7 +159,8 @@ int main(int argc, char **argv) {
             break;
         }
         case 5: {
-            basis=read_basis(filename, m_process);
+            
+            gen_basis g_basis(filename);
             for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="g") n_g++;
             for (size_t lno(1);lno<=m_process.no_of_legs();lno++) if (m_process.leg(lno).second=="q" or m_process.leg(lno).second=="qb") n_qp++;
             n_qp=n_qp/2;
@@ -170,9 +177,8 @@ int main(int argc, char **argv) {
 }
 
 void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<size_t>>& amp_perms, const int& NC_order, string& out_filename, bool& multiply_with_inv_sm, bool& norm_basis) {
-    clock_t t1, t2;
+    clock_t t2;
     
-    t1=clock();
     // normalise basis if needed
     unsigned int DIM(basis.size());
     vector<complex<double>> normalisations(DIM, 1.0);
@@ -210,11 +216,6 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<s
     cout<<" Basis Vectors:"<<endl;
     for (size_t i(0);i<DIM;i++)
         cout<<"b_"<<i+1<<" = "<<basis.at(i).build_string()<<endl;
-    
-    // print computation time for basis construction
-    t1=clock()-t1;
-    float runtime=(float)t1/CLOCKS_PER_SEC;
-    cout << "\ncomputation time for basis construction: "<<runtime << " s"<< endl;
     
     t2=clock();
     // calculate and print soft matrix (to file)
@@ -270,7 +271,7 @@ void colour_calc(vector<colour_term>& basis, process& m_process, vector<vector<s
     
     // print computation time for colour insertions
     t2=clock()-t2;
-    runtime=(float)t2/CLOCKS_PER_SEC;
+    float runtime=(float)t2/CLOCKS_PER_SEC;
     cout << "computation time for colour insertions: " << runtime << " s"<< endl;
     
     file.close();

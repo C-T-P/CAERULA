@@ -242,7 +242,7 @@ bool trace_vec::is_connected() {
     }
     if (n_ql>0 and n_con_g==0 and n_qlg==0) return true;
     if (n_ql==0 and n_con_g==1 and n_qlg==0) return true;
-    if (n_ql>0 and n_con_g==0 and n_qlg==1) return true;
+    if (n_con_g==0 and n_qlg==1) return true;
     return false;
 }
 bool trace_vec::has_sg() {
@@ -253,7 +253,7 @@ bool trace_vec::has_sg() {
 void trace_vec::order() {
     sort(m_tr_vec.begin(), m_tr_vec.end(), [ ]( trace_t& lhs, trace_t& rhs )
     {
-        return !lhs.comp(rhs);
+        return lhs.comp(rhs);
     });
 }
 bool trace_vec::comp(trace_vec& tr_v) {

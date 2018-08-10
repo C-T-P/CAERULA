@@ -45,8 +45,8 @@ bool f_type::comp(f_type& tr_t) {
     else if (s_1==s_2) {
         size_t i(0);
         while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
-        if (i<s_1 and indices1.at(i)>indices2.at(i)) return true;
-        return false;
+        if (i<s_1 and indices1.at(i)>indices2.at(i)) return false;
+        return true;
     }
     else return false;
 }
@@ -174,7 +174,7 @@ bool f_vec::has_sg() {
 void f_vec::order() {
     sort(m_f_vec.begin(), m_f_vec.end(), [ ]( f_type& lhs, f_type& rhs )
     {
-        return !lhs.comp(rhs);
+        return lhs.comp(rhs);
     });
 }
 bool f_vec::comp(f_vec& f_v) {

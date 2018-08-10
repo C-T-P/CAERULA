@@ -367,8 +367,14 @@ string colour_term::build_string() {
             for (size_t i(0); i<asym.at(it).len(); i++) str+="*f_["+to_string(asym.at(it).index(i,0))+","+to_string(asym.at(it).index(i,1))+","+to_string(asym.at(it).index(i,2))+"]"; 
         if (fund.at(it).len()>0)
             for (size_t i(0); i<fund.at(it).len(); i++) str+="*t_["+to_string(fund.at(it).index(i,0))+","+to_string(fund.at(it).index(i,1))+","+to_string(fund.at(it).index(i,2))+"]"; 
-        if (kron.at(it).len()>0)
-            for (size_t i(0); i<kron.at(it).len(); i++) str+="*k_["+to_string(kron.at(it).index(i,0))+","+to_string(kron.at(it).index(i,1))+"]";
+        if (kron.at(it).len()>0) {
+            for (size_t i(0); i<kron.at(it).len(); i++) {
+                if (kron.at(it).is_gluonic(i))
+                    str+="*K_["+to_string(kron.at(it).index(i,0))+","+to_string(kron.at(it).index(i,1))+"]";
+                else
+                    str+="*k_["+to_string(kron.at(it).index(i,0))+","+to_string(kron.at(it).index(i,1))+"]";
+            }
+        }
         if (str!="" && return_str!="") return_str+="+";
         if (str!="") return_str+=str;
     }
