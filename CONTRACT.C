@@ -116,19 +116,16 @@ void replace_d_and_f_by_t(colour_term& expr){
     
             // second term
             expr.add_term(expr.sym[t_it],expr.asym[t_it],expr.fund[t_it],expr.kron[t_it],expr.pref[t_it],expr.NC_ctr[t_it]);
-            size_t no_ot(expr.no_of_terms());
-            expr.pref[no_ot-1]*=complex<double>(2.,0.);
-            expr.fund[no_ot-1].set_indices(ind_j, int_ind_a, int_ind_b);
-            expr.fund[no_ot-1].set_indices(ind_i, int_ind_b, int_ind_c);
-            expr.fund[no_ot-1].set_indices(ind_k, int_ind_c, int_ind_a);
-//           contract_product(expr.pref.back(),expr.kron.back(),expr.sym.back(),expr.asym.back(),expr.fund.back());
+            expr.pref.back()*=complex<double>(2.,0.);
+            expr.fund.back().set_indices(ind_j, int_ind_a, int_ind_b);
+            expr.fund.back().set_indices(ind_i, int_ind_b, int_ind_c);
+            expr.fund.back().set_indices(ind_k, int_ind_c, int_ind_a);
             
             // first term
             expr.pref[t_it]*=complex<double>(2.,0.);
             expr.fund[t_it].set_indices(ind_i, int_ind_a, int_ind_b);
             expr.fund[t_it].set_indices(ind_j, int_ind_b, int_ind_c);
             expr.fund[t_it].set_indices(ind_k, int_ind_c, int_ind_a);
-//           contract_product(expr.pref[t_it],expr.kron[t_it],expr.sym[t_it],expr.asym[t_it],expr.fund[t_it]);
         }
     }
     
@@ -141,10 +138,10 @@ void replace_d_and_f_by_t(colour_term& expr){
     
             // second term
             expr.add_term(expr.sym[t_it],expr.asym[t_it],expr.fund[t_it],expr.kron[t_it],expr.pref[t_it],expr.NC_ctr[t_it]);
-            expr.pref[expr.no_of_terms()-1]*=complex<double>(0.,2.);
-            expr.fund[expr.no_of_terms()-1].set_indices(ind_j, int_ind_a, int_ind_b);
-            expr.fund[expr.no_of_terms()-1].set_indices(ind_i, int_ind_b, int_ind_c);
-            expr.fund[expr.no_of_terms()-1].set_indices(ind_k, int_ind_c, int_ind_a);
+            expr.pref.back()*=complex<double>(0.,2.);
+            expr.fund.back().set_indices(ind_j, int_ind_a, int_ind_b);
+            expr.fund.back().set_indices(ind_i, int_ind_b, int_ind_c);
+            expr.fund.back().set_indices(ind_k, int_ind_c, int_ind_a);
             
             // first term
             expr.pref[t_it]*=complex<double>(0.,-2.);
