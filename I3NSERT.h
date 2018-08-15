@@ -1,6 +1,8 @@
 #ifndef I3NSERT_H
 #define I3NSERT_H
 
-colour_term construct_insertion_op(process m_process, unsigned int lno1, unsigned int lno2);
+#include "colourtools.h"
+
+c_amplitude construct_insertion_op(process proc, size_t lno1, size_t lno2);
 
 #endif

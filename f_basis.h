@@ -1,11 +1,5 @@
-#include<string>
-#include<iostream>
-#include<vector>
-#include<algorithm>
-#include<complex>
-#include<cmath>
 #include "colourtools.h"
-
+#include "c_basis.h"
 
 using namespace std;
 
@@ -23,7 +17,7 @@ class f_type {
         bool vanishes();
         bool comp(f_type& f_t);
         bool operator==(f_type rhs);
-        colour_term build_ct();
+        c_term build_ct(size_t start_ind);
         void print();
 };
 
@@ -44,26 +38,23 @@ class f_vec {
         bool has_sg();
         void order();
         bool comp(f_vec& tr_v);
-        colour_term build_ct();
+        c_amplitude build_ca();
         void print();
 };
 
-class f_basis {
+class f_basis : public c_basis {
 
     vector<f_vec> m_f_basis;
     vector<size_t> m_g_indices;
     size_t m_ng;
+    
+    void make_perms();
+    void make_ca_basis();
+    
+    void remove_sg();
+    void normal_order();
 
     public:
         f_basis(size_t n_g);
         ~f_basis();
-
-        void remove_sg();
-        void normal_order();
-
-        size_t dim();
-        process proc();
-        vector<vector<size_t>> perms();
-        vector<colour_term> ct_basis();
-        void print();
 };

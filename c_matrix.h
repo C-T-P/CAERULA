@@ -4,12 +4,14 @@
 #include<vector>
 #include<complex>
 #include<cmath>
+#include "colourtools.h"
+
 using namespace std;
 
 class c_matrix {
     vector<vector<complex<double>>> m_mat;
     public:
-    c_matrix(unsigned int dim) {
+    c_matrix(size_t dim) {
         for (size_t i(0);i<dim;i++)
             m_mat.push_back(vector<complex<double>>(dim,0.));
     }

@@ -83,68 +83,63 @@ bool trace_t::operator==(trace_t& rhs) {
     if (i==s_1) return true;
     return false;
 }
-colour_term trace_t::build_ct() {
-    colour_term ct;
-    three_ind symmetric;
-    three_ind antisymmetric;
-    three_ind fundamental;
-    two_ind kronecker;
+c_amplitude trace_t::build_ca(size_t start_ind) {
+    c_term ct;
     size_t n_g(m_g.size());
     
     if (n_g==0) {
-        kronecker.set_indices(m_qb, m_q, false);
-        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
-        return ct;
+        ct.push_back(delta(m_qb, m_q, false));
+        return c_amplitude(ct);
     }
     if (m_qb==0 and m_q==0) {
         if (n_g==2) {
-            kronecker.set_indices(m_g.at(0), m_g.at(1), true);
-            ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
-            return ct;
+            ct.push_back(delta(m_g.at(0), m_g.at(1), true));
+            return c_amplitude(ct);
         }
         
-        size_t start_ind(101), incr(0);
+        size_t incr(0);
         for (size_t i(0);i<n_g;i++) {
             int c_ind;
             if (i==n_g-1) c_ind=start_ind;
             else c_ind=start_ind+incr+1;
-            fundamental.set_indices(m_g.at(i),start_ind+incr,c_ind);
+            ct.push_back(fundamental(m_g.at(i),start_ind+incr,c_ind));
             incr++;
         }
-        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
         
-        fundamental.clear_indices();
+        c_amplitude ca(ct);
+        ct.clear();
+    
         vector<size_t> refl_ind(n_g,m_g.at(0));
         reverse_copy(m_g.begin()+1,m_g.end(),refl_ind.begin()+1);
         
-        start_ind=101, incr=0;
+        incr=0;
         for (size_t i(0);i<n_g;i++) {
             int c_ind;
             if (i==n_g-1) c_ind=start_ind;
             else c_ind=start_ind+incr+1;
-            fundamental.set_indices(refl_ind.at(i),start_ind+incr,c_ind);
+            ct.push_back(fundamental(refl_ind.at(i),start_ind+incr,c_ind));
             incr++;
         }
-        double pref(1.);
-        if (n_g%2!=0) pref=-1;
-        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(pref,0.),0);
+        if (n_g%2!=0) ct.cnumber(-1.);
+        else ct.cnumber(1.);
         
-        return ct;
+        ca.add(ct);
+        
+        return ca;
     }
     if (n_g==1) {
-        fundamental.set_indices(m_g.at(0),m_qb,m_q);
-        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
-        return ct;
+        ct.push_back(fundamental(m_g.at(0),m_qb,m_q));
+        return c_amplitude(ct);
     }
-    size_t start_ind(101), incr(0);
-    fundamental.set_indices(m_g.at(0),m_qb,start_ind);
+    
+    size_t incr(0);
+    ct.push_back(fundamental(m_g.at(0),m_qb,start_ind));
     while (incr<n_g-2) {
-        fundamental.set_indices(m_g.at(incr+1),start_ind+incr,start_ind+incr+1);
+        ct.push_back(fundamental(m_g.at(incr+1),start_ind+incr,start_ind+incr+1));
         incr++;
     }
-    fundamental.set_indices(m_g.back(),start_ind+incr,m_q);
-    ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
-    return ct;
+    ct.push_back(fundamental(m_g.back(),start_ind+incr,m_q));
+    return c_amplitude(ct);
 }
 void trace_t::print() {
     if (m_qb!=0) cout<<"{"<<m_qb;
@@ -276,13 +271,17 @@ bool trace_vec::operator==(trace_vec& rhs) {
     if (i==s_1) return true;
     return false;
 }
-colour_term trace_vec::build_ct() {
-    colour_term ct;
+c_amplitude trace_vec::build_ca() {
+    c_amplitude ca;
+    size_t start_ind(101);
     for (auto& tr_t : m_tr_vec) {
-        if (ct.no_of_terms()==0) ct=tr_t.build_ct();
-        else ct=ct.multiply(tr_t.build_ct());
+        ca.push_back(tr_t.build_ca(start_ind));
+            
+        size_t n_qp(tr_t.no_qp()), n_g(tr_t.no_g());
+        if (n_qp!=0 and n_g>0) start_ind+=n_g-1;
+        else if (n_qp==0 and n_g>2) start_ind+=n_g;
     }
-    return ct;
+    return ca;
 }
 void trace_vec::print() {
     cout<<"[";
@@ -296,6 +295,11 @@ void trace_vec::print() {
 trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     m_ng=n_g;
     m_nqp=n_qp;
+    
+    // initialise process specifications
+    for (size_t n(0);n<m_nqp;n++) m_process.add_out_leg("q");
+    for (size_t n(0);n<m_nqp;n++) m_process.add_out_leg("qb");
+    for (size_t n(0);n<m_ng;n++) m_process.add_out_leg("g");
     
     // initialise quark, anti quark and gluon indices 
     // the process is ordered as q,...,q,qb,...,qb,g,...,g
@@ -350,13 +354,20 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
         m_tr_basis=trb_cpy;
     }
     
-    (*this).remove_sg();
-    (*this).normal_order();
-    (*this).remove_conj();
+    this->remove_sg();
+    this->normal_order();
+    this->remove_conj();
+    
+    m_dim=m_tr_basis.size();
+    for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
+    this->make_perms();
+    this->make_ca_basis();
 }
 trace_basis::~trace_basis() {
     
 }
+
+// private functions
 void trace_basis::remove_sg() {
     for (size_t i(0);i<m_tr_basis.size();i++) {
         if (m_tr_basis.at(i).has_sg()) {
@@ -385,34 +396,13 @@ void trace_basis::normal_order() {
         return lhs.comp(rhs);
     });
 }
-size_t trace_basis::dim() {
-    return m_tr_basis.size();
-}
-process trace_basis::proc() {
-    process proc;
-    for (size_t n(0);n<m_nqp;n++) proc.add_out_leg("q");
-    for (size_t n(0);n<m_nqp;n++) proc.add_out_leg("qb");
-    for (size_t n(0);n<m_ng;n++) proc.add_out_leg("g");
-    return proc;
-}
-vector<vector<size_t>> trace_basis::perms() {
-    vector<vector<size_t>> perms;
-    
+void trace_basis::make_perms() {
     for (auto& v : m_tr_basis)
-        if (v.is_connected()) perms.push_back(v.get_indices());
-    
-    return perms;
+        if (v.is_connected()) m_amp_perms.push_back(v.get_indices());
 }
-vector<colour_term> trace_basis::ct_basis() {
-    vector<colour_term> ct_basis;
-    
+void trace_basis::make_ca_basis() {
     for (auto& bv : m_tr_basis)
-        ct_basis.push_back(bv.build_ct());
-    
-    return ct_basis;
-}
-void trace_basis::print() {
-    for (auto& bv : m_tr_basis) bv.print();
+        m_ca_basis.push_back(bv.build_ca());
 }
 
 

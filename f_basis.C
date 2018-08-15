@@ -59,35 +59,28 @@ bool f_type::operator==(f_type rhs) {
     if (i==s_1) return true;
     return false;
 }
-colour_term f_type::build_ct() {
-    colour_term ct;
-    three_ind symmetric;
-    three_ind antisymmetric;
-    three_ind fundamental;
-    two_ind kronecker;
+c_term f_type::build_ct(size_t start_ind) {
+    c_term ct;
     size_t n_g(m_g.size());
     
-    if (!(*this).vanishes()) {
+    if (!this->vanishes()) {
         if (n_g==2) {
-            kronecker.set_indices(m_g.at(0), m_g.at(1), true);
-            ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+            ct.push_back(delta(m_g.at(0), m_g.at(1), true));
             return ct;
         }
         if (n_g==3) {
-            antisymmetric.set_indices(m_g.at(0),m_g.at(1),m_g.at(2));
-            ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
+            ct.push_back(antisymmetric(m_g.at(0),m_g.at(1),m_g.at(2)));
             return ct;
         }
-        size_t start_ind(101), incr(0);
-        antisymmetric.set_indices(m_g.at(0),m_g.at(1),start_ind);
+        size_t incr(0);
+        ct.push_back(antisymmetric(m_g.at(0),m_g.at(1),start_ind));
         for (size_t i(2);i<n_g-1;i++) {
             int c_ind;
             if (i==n_g-2) c_ind=m_g.at(i+1);
             else c_ind=start_ind+incr+1;
-            antisymmetric.set_indices(start_ind+incr,m_g.at(i),c_ind);
+            ct.push_back(antisymmetric(start_ind+incr,m_g.at(i),c_ind));
             incr++;
         }
-        ct.add_term(symmetric,antisymmetric,fundamental,kronecker,complex<double>(1.,0.),0);
         return ct;
     }
     else {
@@ -190,13 +183,14 @@ bool f_vec::comp(f_vec& f_v) {
     if (i==s_1) return false;
     return !(*this).at(i).comp(f_v.at(i));
 }
-colour_term f_vec::build_ct() {
-    colour_term ct;
+c_amplitude f_vec::build_ca() {
+    c_term ct;
+    size_t start_ind(101);
     for (auto& f_t : m_f_vec) {
-        if (ct.no_of_terms()==0) ct=f_t.build_ct();
-        else ct=ct.multiply(f_t.build_ct());
+        ct.push_back(f_t.build_ct(start_ind));
+        if (f_t.no_g()>3) start_ind+=f_t.no_g()-3;
     }
-    return ct;
+    return c_amplitude(ct);
 }
 void f_vec::print() {
     cout<<"[";
@@ -209,6 +203,9 @@ void f_vec::print() {
 f_basis::f_basis(size_t n_g) {
     m_ng=n_g;
 
+    // initialise process specifications
+    for (size_t n(0); n<m_ng; n++) m_process.add_out_leg("g");
+    
     // initialise gluon indices
     for (size_t n(1);n<=m_ng;n++) m_g_indices.push_back(n);
 
@@ -231,12 +228,19 @@ f_basis::f_basis(size_t n_g) {
         m_f_basis=fb_cpy;
     }
 
-    (*this).remove_sg();
-    (*this).normal_order();
+    this->remove_sg();
+    this->normal_order();
+    
+    m_dim=m_f_basis.size();
+    for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
+    this->make_perms();
+    this->make_ca_basis();
 }
 f_basis::~f_basis() {
 
 }
+
+// private functions
 void f_basis::remove_sg() {
     for (size_t i(0);i<m_f_basis.size();i++) {
         if (m_f_basis.at(i).has_sg()) {
@@ -247,34 +251,15 @@ void f_basis::remove_sg() {
 }
 void f_basis::normal_order() {
     sort(m_f_basis.begin(), m_f_basis.end(), [ ]( f_vec& lhs, f_vec& rhs )
-    {
-        return lhs.comp(rhs);
-    });
+         {
+             return lhs.comp(rhs);
+         });
 }
-size_t f_basis::dim() {
-    return m_f_basis.size();
-}
-process f_basis::proc() {
-    process proc;
-    for (size_t n(0);n<m_ng;n++) proc.add_out_leg("g");
-    return proc;
-}
-vector<vector<size_t>> f_basis::perms() {
-    vector<vector<size_t>> perms;
-
+void f_basis::make_perms() {
     for (auto& v : m_f_basis)
-        if (v.is_connected()) perms.push_back(v.get_indices());
-
-    return perms;
+        if (v.is_connected()) m_amp_perms.push_back(v.get_indices());
 }
-vector<colour_term> f_basis::ct_basis() {
-    vector<colour_term> ct_basis;
-
+void f_basis::make_ca_basis() {
     for (auto& bv : m_f_basis)
-        ct_basis.push_back(bv.build_ct());
-
-    return ct_basis;
-}
-void f_basis::print() {
-    for (auto& bv : m_f_basis) bv.print();
+        m_ca_basis.push_back(bv.build_ca());
 }

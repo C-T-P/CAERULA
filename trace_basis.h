@@ -1,10 +1,5 @@
-#include<string>
-#include<iostream>
-#include<vector>
-#include<algorithm>
-#include<complex>
-#include<cmath>
 #include "colourtools.h"
+#include "c_basis.h"
 
 
 using namespace std;
@@ -27,7 +22,7 @@ class trace_t {
         bool vanishes();
         bool comp(trace_t& tr_t);
         bool operator==(trace_t& rhs);
-        colour_term build_ct();
+        c_amplitude build_ca(size_t start_ind);
         void print();
 };
 
@@ -50,27 +45,24 @@ class trace_vec {
         void order();
         bool comp(trace_vec& tr_v);
         bool operator==(trace_vec& rhs);
-        colour_term build_ct();
+        c_amplitude build_ca();
         void print();
 };
 
-class trace_basis {
+class trace_basis : public c_basis {
     
     vector<trace_vec> m_tr_basis;
     vector<size_t> m_g_indices, m_q_indices, m_qb_indices;
     size_t m_ng, m_nqp;
     
+    void make_perms();
+    void make_ca_basis();
+    
+    void remove_sg();
+    void remove_conj();
+    void normal_order();
+    
     public:
         trace_basis(size_t n_g, size_t n_qp);
         ~trace_basis();
-    
-        void remove_sg();
-        void remove_conj();
-        void normal_order();
-    
-        size_t dim();
-        process proc();
-        vector<vector<size_t>> perms();
-        vector<colour_term> ct_basis();
-        void print();
 };

@@ -1,9 +1,6 @@
-#ifndef TENSORTOOLS_H
-#define TENSORTOOLS_H
+#ifndef COLOURTOOLS_H
+#define COLOURTOOLS_H
 
-#include<gsl/gsl_linalg.h>
-#include<gsl/gsl_complex.h>
-#include<gsl/gsl_complex_math.h>
 #include<cstring>
 #include<iostream>
 #include<vector>
@@ -13,6 +10,8 @@
 using namespace std;
 
 static double NC(3.); // number of colours
+static double CF((NC*NC-1)/(2.*NC)); // Fundamental Casimir
+static double TR(1./2.);
 
 class process {
     /* 
@@ -31,83 +30,98 @@ class process {
         bool is_in_leg(unsigned int index);
 };
 
-class three_ind {
-    vector<vector<int>> ind;
+
+class delta {
     public:
-        three_ind();
-        ~three_ind();
-        void set_indices(int i, int j, int k);
-        void append_by(vector<vector<int>> ind_v);
-        vector<vector<int>> get_all_indices();
-        void del_indices(size_t it);
-        void clear_indices();
-        void find_and_rep_indices(int old_ind, int new_ind);
-        int matching_indices(size_t it1, size_t it2);
-        void swap_indices_at(size_t pos, size_t it1, size_t it2);
-        void rotate_indices_at(size_t it);
-        void sort_indices_at(size_t it);
-        int count_index(int index);
-        int count_index_at(int index, size_t pos);
-        int index(size_t it0, size_t it1);
-        size_t len();
-        void sort_list();
-        pair<size_t,size_t> find_index(int index, size_t start);
-        bool has_index_at(int index, size_t it);
+        size_t m_i, m_j;
+        bool m_adj;
+        delta(size_t i, size_t j, bool adj);
+        ~delta();
+        bool is_free(size_t ind);
+        string build_string();
 };
-class two_ind {
-    struct flagged_indices {
-        vector<int> ind;
-        bool gluonic_k;
-        flagged_indices(vector<int> k_indices, bool is_gluonic) {
-            ind=k_indices;
-            gluonic_k=is_gluonic;
-        }
-    };
-    vector<flagged_indices> indices;
+class fundamental {
     public:
-        two_ind();
-        ~two_ind();
-        void set_indices(int i, int j, bool gluonic);
-        bool is_gluonic(size_t it);
-        void append_by(two_ind tensor);
-        vector<vector<int>> get_all_indices();
-        vector<bool> get_all_flags();
-        void del_indices(int it);
-        void clear_indices();
-        void find_and_rep_indices(int old_ind, int new_ind);
-        int count_index(int index);
-        void swap_indices_at(size_t pos);
-        void sort_indices_at(size_t it);
-        int index(size_t it0, size_t it1);
-        size_t len();
-        void sort_list();
-        pair<size_t,size_t> find_index(int index, size_t start);
+        size_t m_a, m_i, m_j;
+        fundamental(size_t a, size_t i, size_t j);
+        ~fundamental();
+        bool is_free(size_t ind);
+        string build_string();
 };
-struct colour_term {
-    vector<three_ind> sym;
-    vector<three_ind> asym;
-    vector<three_ind> fund;
-    vector<two_ind> kron;
-    vector<complex<double>> pref;
-    vector<int> NC_ctr;
+class antisymmetric {
+    public:
+        size_t m_a, m_b, m_c;
+        antisymmetric(size_t a, size_t b, size_t c);
+        ~antisymmetric();
+        bool is_free(size_t ind);
+        string build_string();
+};
+class symmetric {
+    public:
+        size_t m_a, m_b, m_c;
+        symmetric(size_t a, size_t b, size_t c);
+        ~symmetric();
+        bool is_free(size_t ind);
+        string build_string();
+};
+class c_term {
+    complex<double> m_cnum;
+    vector<delta> m_k_vec;
+    vector<fundamental> m_t_vec;
+    vector<antisymmetric> m_f_vec;
+    vector<symmetric> m_d_vec;
+    int m_NC_order;
+    size_t m_fi;
+    public:
+        c_term();
+        c_term(delta k, fundamental t, antisymmetric f, symmetric d, complex<double> c = complex<double>(0.,0.), int NC_order = 0);
+        ~c_term();
     
-    // member functions
-    colour_term();
-    ~colour_term();
-    size_t no_of_terms();
-    int count_index_in_term(int index, size_t t_no);
-    colour_term multiply(colour_term ct);
-    colour_term cconj();
-    // Scalar Product < A | B > = Tr(A^+ B) (anti-linear in first argument)
-    // NOTE: Returns colour term, which has to be evaluated !!!
-    colour_term scprod(colour_term ct2);
-    colour_term term(size_t termno);
-    void add_term(three_ind symmetric, three_ind antisymmetric, three_ind fundamental, two_ind kronecker, complex<double> prefactor, int NC_order);
-    void add_colour_term(colour_term term);
-    void delete_term(size_t j);
-    void delete_all_terms();
-    string build_string();
-    complex<double> build_complex();
+        void push_back(c_term ct);
+        void push_back(delta k);
+        void push_back(fundamental t);
+        void push_back(antisymmetric f);
+        void push_back(symmetric d);
+        void cnumber(complex<double> c);
+        void NC_order(int NC_o);
+    
+        void evaluate_deltas();
+        void shift_inds(size_t by, bool all);
+        c_term hconj();
+        c_term operator*(c_term ct);
+        complex<double> result();
+        void clear();
+    
+        string build_string();
+        void print();
+    
+        friend class c_amplitude;
+};
+class c_amplitude {
+    vector<c_term> m_cterm_vec;
+    complex<double> m_result;
+    public:
+        c_amplitude();
+        c_amplitude(c_term ct);
+        c_amplitude(string expr);
+        ~c_amplitude();
+    
+        void add(c_term ct);
+        void push_back(c_amplitude ca);
+        c_amplitude hconj();
+        c_amplitude shift_to_internal(size_t by);
+        c_amplitude operator*(complex<double> z);
+        c_amplitude operator*(c_amplitude ca);
+        complex<double> scprod(c_amplitude ca);
+        void clear();
+    
+        void evaluate();
+        void evaluate(size_t up_to_NC);
+        complex<double> result();
+    
+        size_t no_of_terms();
+        string build_string();
+        void print();
 };
 
 #endif

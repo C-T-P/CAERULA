@@ -1,26 +1,15 @@
-#include<string>
-#include<fstream>
-#include<iostream>
-#include<vector>
-#include<algorithm>
-#include<complex>
-#include<cmath>
+#ifndef GEN_BASIS_H
+#define GEN_BASIS_H
 
+#include "c_basis.h"
 
 using namespace std;
 
-class gen_basis {
-    
-    vector<colour_term> m_gen_basis;
-    vector<string> m_in_legs;
-    vector<string> m_out_legs;
+class gen_basis : public c_basis {
     
     public:
         gen_basis(string filename = "");
         ~gen_basis();
-    
-        size_t dim();
-        process proc();
-        vector<colour_term> ct_basis();
-        void print();
 };
+
+#endif
