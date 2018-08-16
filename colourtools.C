@@ -689,6 +689,9 @@ void c_amplitude::evaluate() {
         // evaluate deltas
         c_it->evaluate_deltas();
         
+//        cout<<"= "<<endl;
+//        c_it->print();
+        
         // evaluate antisymmetrics
         for (vector<antisymmetric>::iterator f_it(c_it->m_f_vec.begin()); c_it->m_cnum!=0. and f_it!=c_it->m_f_vec.end();f_it++) {
             bool ev(false);
@@ -703,11 +706,87 @@ void c_amplitude::evaluate() {
             for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); !ev and d_it!=c_it->m_d_vec.end() ; d_it++) {
                 if (f_it->m_a == d_it->m_b) swap<size_t>(d_it->m_a,d_it->m_b);
                 else if (f_it->m_a == d_it->m_c) swap<size_t>(d_it->m_a,d_it->m_c);
+                else if (f_it->m_b == d_it->m_a) {
+                    swap<size_t>(f_it->m_b,f_it->m_a);
+                    swap<size_t>(f_it->m_b,f_it->m_c);
+                }
+                else if (f_it->m_b == d_it->m_b) {
+                    swap<size_t>(f_it->m_b,f_it->m_a);
+                    swap<size_t>(f_it->m_b,f_it->m_c);
+                    swap<size_t>(d_it->m_b,d_it->m_a);
+                }
+                else if (f_it->m_b == d_it->m_c) {
+                    swap<size_t>(f_it->m_b,f_it->m_a);
+                    swap<size_t>(f_it->m_b,f_it->m_c);
+                    swap<size_t>(d_it->m_c,d_it->m_a);
+                }
+                else if (f_it->m_c == d_it->m_a) {
+                    swap<size_t>(f_it->m_b,f_it->m_a);
+                    swap<size_t>(f_it->m_b,f_it->m_c);
+                }
+                else if (f_it->m_c == d_it->m_b) {
+                    swap<size_t>(f_it->m_c,f_it->m_a);
+                    swap<size_t>(f_it->m_b,f_it->m_c);
+                    swap<size_t>(d_it->m_b,d_it->m_a);
+                }
+                else if (f_it->m_c == d_it->m_c) {
+                    swap<size_t>(f_it->m_c,f_it->m_a);
+                    swap<size_t>(f_it->m_b,f_it->m_c);
+                    swap<size_t>(d_it->m_c,d_it->m_a);
+                }
+                
                 if (f_it->m_a == d_it->m_a) {
                     if (f_it->m_b == d_it->m_b or f_it->m_b == d_it->m_c) {
                         c_it->clear();
                         c_it->m_cnum=0.;
                         ev=true;
+                    }
+                    else {
+                        // replace f_{abc}d_{ade}
+                        
+                        size_t b(f_it->m_b), c(f_it->m_c), d(d_it->m_b), e(d_it->m_c);
+                        c_it->m_d_vec.erase(d_it);
+                        c_it->m_f_vec.erase(f_it);
+                        c_term ct(*c_it);
+                        f_it--;
+                        ev=true;
+                        
+                        // first term
+                        c_it->m_cnum*=complex<double>(0.,-1./TR);
+                        c_it->push_back(fundamental(b,c_it->m_fi,++c_it->m_fi));
+                        c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi));
+                        c_it->push_back(fundamental(d,c_it->m_fi-1,c_it->m_fi));
+                        c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi-4));
+                        
+                        
+                        // second term
+                        c_term ct1(ct);
+                        ct1.m_cnum*=complex<double>(0.,1./TR);
+                        ct1.push_back(fundamental(c,ct1.m_fi,++ct1.m_fi));
+                        ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
+                        ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
+                        ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
+                        //                            new_c_terms.push_back(ct1);
+                        ca.add(ct1);
+                        
+                        // second term
+                        ct1=ct;
+                        ct1.m_cnum*=complex<double>(0.,-1./TR);
+                        ct1.push_back(fundamental(d,ct1.m_fi,++ct1.m_fi));
+                        ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
+                        ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi));
+                        ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
+                        //                            new_c_terms.push_back(ct1);
+                        ca.add(ct1);
+                        
+                        // third term
+                        ct.m_cnum*=complex<double>(0.,1./TR);
+                        ct.push_back(fundamental(d,ct.m_fi,++ct.m_fi));
+                        ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi));
+                        ct.push_back(fundamental(b,ct.m_fi-1,ct.m_fi));
+                        ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi-4));
+                        //                            new_c_terms.push_back(ct);
+                        ca.add(ct);
                     }
                 }
             }
@@ -723,6 +802,31 @@ void c_amplitude::evaluate() {
                         swap<size_t>(f_it2->m_a,f_it2->m_c);
                         swap<size_t>(f_it2->m_c,f_it2->m_b);
                     }
+                    else if (f_it->m_b == f_it2->m_a) {
+                        swap<size_t>(f_it->m_b,f_it->m_a);
+                        swap<size_t>(f_it->m_c,f_it->m_b);
+                    }
+                    else if (f_it->m_b == f_it2->m_b) {
+                        swap<size_t>(f_it->m_b,f_it->m_a);
+                        swap<size_t>(f_it2->m_b,f_it2->m_a);
+                    }
+                    else if (f_it->m_b == f_it2->m_c) {
+                        swap<size_t>(f_it->m_b,f_it->m_a);
+                        swap<size_t>(f_it2->m_c,f_it2->m_a);
+                    }
+                    else if (f_it->m_c == f_it2->m_a) {
+                        swap<size_t>(f_it->m_c,f_it->m_a);
+                        swap<size_t>(f_it->m_c,f_it->m_b);
+                    }
+                    else if (f_it->m_c == f_it2->m_b) {
+                        swap<size_t>(f_it->m_c,f_it->m_a);
+                        swap<size_t>(f_it2->m_b,f_it2->m_a);
+                    }
+                    else if (f_it->m_c == f_it2->m_c) {
+                        swap<size_t>(f_it->m_c,f_it->m_a);
+                        swap<size_t>(f_it2->m_c,f_it2->m_a);
+                    }
+                    
                 
                     if (f_it->m_a == f_it2->m_a) {
                         if (f_it->m_b == f_it2->m_b) {
@@ -856,6 +960,9 @@ void c_amplitude::evaluate() {
 //            if (ev) c_it->evaluate_deltas();
             if (ev) goto startpoint;
         }
+        
+//        cout<<"= "<<endl;
+//        c_it->print();
     
         // evaluate symmetrics
         for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); d_it!=c_it->m_d_vec.end();d_it++) {
@@ -921,6 +1028,9 @@ void c_amplitude::evaluate() {
 //            if (ev) c_it->evaluate_deltas();
             if (ev) goto startpoint;
         }
+        
+//        cout<<"= "<<endl;
+//        c_it->print();
         
         // replace fundamentals
         for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {

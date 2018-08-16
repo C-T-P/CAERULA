@@ -108,6 +108,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2) {
             bvj.push_back(ins_op);
             complex<double> r(m_ca_basis.at(i).scprod(bvj));
             colour_cm[i][j] = (abs(r) < eps ? 0. : r);
+            
         }
     }
     
