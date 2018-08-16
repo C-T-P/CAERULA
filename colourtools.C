@@ -8,36 +8,36 @@ process::~process(void) {
     
 }
 void process::add_in_leg(string ptcl) {
-    int index=in_legs.size()+1;
-    if (out_legs.size()>0) {
-        for (size_t i(0);i<out_legs.size();i++) {
-            out_legs.at(i).first+=1;
+    size_t index=m_in_legs.size()+1;
+    if (m_out_legs.size()>0) {
+        for (size_t i(0);i<m_out_legs.size();i++) {
+            m_out_legs.at(i).first+=1;
         }
     }
-    in_legs.push_back(pair<int,string>(index,ptcl));
+    m_in_legs.push_back(pair<size_t,string>(index,ptcl));
 }
 void process::add_out_leg(string ptcl) {
-    int index=in_legs.size()+out_legs.size()+1;
-    out_legs.push_back(pair<int,string>(index,ptcl));
+    size_t index=m_in_legs.size()+m_out_legs.size()+1;
+    m_out_legs.push_back(pair<size_t,string>(index,ptcl));
 }
 void process::delete_all_legs() {
-    in_legs.clear();
-    out_legs.clear();
+    m_in_legs.clear();
+    m_out_legs.clear();
 }
-unsigned int process::no_of_legs() {
-    return in_legs.size()+out_legs.size();
+size_t process::no_of_legs() {
+    return m_in_legs.size()+m_out_legs.size();
 }
-pair<unsigned int,string> process::leg(unsigned int index) {
-    // leg numbering starts at 1 !!!
-    if (index<=in_legs.size()) return in_legs.at(index-1);
-    else if (index<=out_legs.size()+in_legs.size()) return out_legs.at(index-in_legs.size()-1);
+pair<size_t,string> process::leg(size_t index) {
+    // leg numbering starts at 1 !
+    if (index<=m_in_legs.size()) return m_in_legs.at(index-1);
+    else if (index<=m_out_legs.size()+m_in_legs.size()) return m_out_legs.at(index-m_in_legs.size()-1);
     else {
         cerr << "Leg " << index << " does not exist in diagram." << endl;
         return pair<int,string>(0,"");
     }
 }
-bool process::is_in_leg(unsigned int index) {
-    if (index<=in_legs.size()) return true;
+bool process::is_in_leg(size_t index) {
+    if (index<=m_in_legs.size()) return true;
     else return false;
 }
 

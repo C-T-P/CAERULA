@@ -301,6 +301,9 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     for (size_t n(0);n<m_nqp;n++) m_process.add_out_leg("qb");
     for (size_t n(0);n<m_ng;n++) m_process.add_out_leg("g");
     
+    // set conversion factor to colour flow basis
+    m_confact=pow(sqrt(2),m_ng);
+    
     // initialise quark, anti quark and gluon indices 
     // the process is ordered as q,...,q,qb,...,qb,g,...,g
     for (size_t n(1);n<=m_nqp;n++) m_q_indices.push_back(n);
@@ -309,13 +312,13 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     size_t g_start(0);
     
 //     cout<<"q indices:"<<endl;
-//     for (const auto& i : q_indices) cout<<i<<" ";
+//     for (const auto& i : m_q_indices) cout<<i<<" ";
 //     cout<<endl;
 //     cout<<"qb indices:"<<endl;
-//     for (const auto& i : qb_indices) cout<<i<<" ";
+//     for (const auto& i : m_qb_indices) cout<<i<<" ";
 //     cout<<endl;
 //     cout<<"g indices:"<<endl;
-//     for (const auto& i : g_indices) cout<<i<<" ";
+//     for (const auto& i : m_g_indices) cout<<i<<" ";
 //     cout<<endl;
     
     // build all possible quark lines
@@ -362,6 +365,10 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
     this->make_perms();
     this->make_ca_basis();
+    
+    // initialise matrices
+    m_smat=c_matrix(m_dim);
+    m_ccmats=vector<c_matrix>();
 }
 trace_basis::~trace_basis() {
     

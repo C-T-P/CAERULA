@@ -38,7 +38,13 @@ gen_basis::gen_basis(string filename) {
     for (auto& str : basis_strs) m_ca_basis.push_back(c_amplitude(str));
     
     m_dim=m_ca_basis.size();
+    m_confact=1.;
+    m_amp_perms=vector<vector<size_t>>();
     for (size_t i(0); i<m_dim; i++) m_normalisations.push_back(1.);
+    
+    // initialise matrices
+    m_smat=c_matrix(m_dim);
+    m_ccmats=vector<c_matrix>();
 }
 gen_basis::~gen_basis() {
     

@@ -17,17 +17,17 @@ class process {
     /* 
      incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
      */
-    vector<pair<unsigned int,string>> in_legs;
-    vector<pair<unsigned int,string>> out_legs;
+    vector<pair<size_t,string>> m_in_legs;
+    vector<pair<size_t,string>> m_out_legs;
     public:
         process();
         ~process();
         void add_in_leg(string ptcl);
         void add_out_leg(string ptcl);
         void delete_all_legs();
-        unsigned int no_of_legs();
-        pair<unsigned int,string> leg(unsigned int index);
-        bool is_in_leg(unsigned int index);
+        size_t no_of_legs();
+        pair<size_t,string> leg(size_t index);
+        bool is_in_leg(size_t index);
 };
 
 

@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
             break;
         }
         case 3: {
+            clock_t t(clock());
             if (adjoint_basis) {
                 cout<<"Will construct adjoint basis for "<<n_g<<" gluons."<<endl;
                 basis = new f_basis(n_g);
@@ -112,7 +113,8 @@ int main(int argc, char **argv) {
                 cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
                 basis = new trace_basis(n_g, n_qp);
             }
-            
+            t=clock()-t;
+            cout<<"Computation time for basis construction: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
             break;
         }
         default: {
@@ -129,22 +131,31 @@ int main(int argc, char **argv) {
     cout<<"Basis Vectors:"<<endl;
     basis->print();
     cout<<"\nSoft Matrix:"<<endl;
-    c_matrix soft_matrix(basis->sm());
+//    c_matrix soft_matrix(basis->sm());
+    basis->sm();
     cout<<endl;
-    soft_matrix.print();
+//    soft_matrix.print();
 
     cout<<"\nColour Change Matrices:"<<endl;
-    vector<c_matrix> cc_mats(basis->get_ccms());
+    clock_t t(clock());
+//    vector<c_matrix> cc_mats(basis->get_ccms());
+    basis->get_ccms();
+    t=clock()-t;
     cout<<endl;
-    for (auto& ccm : cc_mats) {
-        ccm.print();
-        cout<<endl;
-    }
+//    for (auto& ccm : cc_mats) {
+//        ccm.print();
+//        cout<<endl;
+//    }
+    cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
+    
+    cout<<"\nPrinting to file..."<<endl;
+    basis->print_to_file();
+    cout<<"Done!"<<endl;
     
     return 0;
 }
 
 void run_error() {
-    cerr<<"Error: competing input given. Please specify EITHER a colour term to be simplified (-s)/evaluated (-e) OR perform a colour space calculation by specifying a basis through a file name (-f) OR the process by the number of quark pairs (-nqp) and number of gluons (-ng). See also the help menu for more information (-h)."<<endl;
+    cerr<<"Please specify EITHER a colour term to be simplified (-s)/evaluated (-e) OR perform a colour space calculation by specifying a basis through a file name (-f) OR the process by the number of quark pairs (-nqp) and number of gluons (-ng). See also the help menu for more information (-h)."<<endl;
     exit(EXIT_FAILURE);
 }

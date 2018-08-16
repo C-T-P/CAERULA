@@ -206,6 +206,9 @@ f_basis::f_basis(size_t n_g) {
     // initialise process specifications
     for (size_t n(0); n<m_ng; n++) m_process.add_out_leg("g");
     
+    // set conversion factor to colour flow basis
+    m_confact=pow(sqrt(2),m_ng-2);
+    
     // initialise gluon indices
     for (size_t n(1);n<=m_ng;n++) m_g_indices.push_back(n);
 
@@ -235,6 +238,10 @@ f_basis::f_basis(size_t n_g) {
     for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
     this->make_perms();
     this->make_ca_basis();
+    
+    // initialise matrices
+    m_smat=c_matrix(m_dim);
+    m_ccmats=vector<c_matrix>();
 }
 f_basis::~f_basis() {
 
