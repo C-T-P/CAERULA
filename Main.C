@@ -1,6 +1,7 @@
 #include<fstream>
 #include<iomanip> 
 #include<ctime>
+#include<climits>
 #include "colourtools.h"
 #include "trace_basis.h"
 #include "f_basis.h"
