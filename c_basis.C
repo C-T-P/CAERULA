@@ -1,4 +1,5 @@
 #include "c_basis.h"
+#include "multiplet_basis.h"
 #include<iomanip>
 #include<fstream>
 
@@ -34,20 +35,23 @@ void c_basis::print_to_file(string filename) {
         if (n_q!=0) out_filename+=to_string(n_q)+"q";
         if (n_qb!=0) out_filename+=to_string(n_qb)+"qb";
         if (n_g!=0) out_filename+=to_string(n_g)+"g";
+        
+        if (m_btype==1) out_filename+="_multiplet";
+        else if (m_btype==2) out_filename+="_trace";
+        else if (m_btype==3) out_filename+="_adjoint";
     }
     else out_filename=filename;
     
     ofstream file;
     file.open(out_filename+".dat");
     
+    // print amplitude permutations and normalisations for trace and adjoint basis (and multiplet basis if calculated)
     if (m_amp_perms.size()>0) {
         file<<"% number of basis vectors with non-zero coefficient"<<endl;
         file<<"SIZE_CONNECTED = "<<m_amp_perms.size()<<";\n"<<endl;
         file<<"% prefactors of the partial amplitude in total amplitude"<<endl;
-        for (size_t i(0);i<m_amp_perms.size();i++) {
-            // TODO: distinguish between adjoint and trace basis here!
+        for (size_t i(0);i<m_amp_perms.size();i++)
             file<<"a_"<<i<<" = "<<fixed<<setprecision(17)<<m_normalisations.at(i)*m_confact<<";"<<endl;
-        }
         
         file<<"\n% permutations defining the partial amplitudes"<<endl;
         for (size_t i(0);i<m_amp_perms.size();i++) {
@@ -56,6 +60,20 @@ void c_basis::print_to_file(string filename) {
             file<<";"<<endl;
         }
         file<<"\n"<<endl;
+    }
+    
+    // print basis change matrix if basis is a multiplet basis
+    if (m_btype==1) {
+        multiplet_basis *ortho_basis = static_cast<multiplet_basis*>(this);
+        
+        if (ortho_basis->m_bcm.size()>0) {
+            file<<"% basis change matrix from trace basis to multiplet basis"<<endl;
+            file<<"BCM =";
+            for (size_t m(0); m<ortho_basis->m_bcm.size(); m++)
+                for (size_t n(0); n<ortho_basis->m_bcm.size(); n++)
+                    file<<fixed<<setprecision(17)<<" "<<ortho_basis->m_bcm[m][n].real();
+            file<<";\n"<<endl;
+        }
     }
     
     file<<"% dimension of the colour space"<<endl;
@@ -96,7 +114,7 @@ c_matrix c_basis::sm() {
     
     return m_smat;
 }
-c_matrix c_basis::ccm(size_t lno1, size_t lno2) {
+c_matrix c_basis::ccm(size_t lno1, size_t lno2, size_t up_to_NC) {
     c_matrix colour_cm(m_dim);
     
     c_amplitude ins_op=construct_insertion_op(m_process,lno1,lno2);
@@ -106,7 +124,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2) {
             cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
             c_amplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
             bvj.push_back(ins_op);
-            complex<double> r(m_ca_basis.at(i).scprod(bvj));
+            complex<double> r(m_ca_basis.at(i).scprod(bvj, up_to_NC));
             colour_cm[i][j] = (abs(r) < eps ? 0. : r);
             
         }
@@ -115,10 +133,10 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2) {
     return colour_cm;
 }
 
-vector<c_matrix> c_basis::get_ccms() {
+vector<c_matrix> c_basis::get_ccms(size_t up_to_NC) {
     for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
-            m_ccmats.push_back(this->ccm(lno1, lno2));
+            m_ccmats.push_back(this->ccm(lno1, lno2, up_to_NC));
         }
     }
     return m_ccmats;

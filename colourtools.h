@@ -112,7 +112,7 @@ class c_amplitude {
         c_amplitude shift_to_internal(size_t by);
         c_amplitude operator*(complex<double> z);
         c_amplitude operator*(c_amplitude ca);
-        complex<double> scprod(c_amplitude ca);
+        complex<double> scprod(c_amplitude ca, size_t up_to_NC = INT_MAX);
         void clear();
     
         void evaluate();

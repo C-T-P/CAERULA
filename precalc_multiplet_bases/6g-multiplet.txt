@@ -1,0 +1,9 @@
+# legs will be numbered from 1 to n in the order given here
+l	out	g
+l	out	g
+l	out	g
+l	out	g
+l	out	g
+l	out	g
+# basis vectors will be numbered from 1 to n in the order given here
+# IMPORTANT: indices have to match the leg number !

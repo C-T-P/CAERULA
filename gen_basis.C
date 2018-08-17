@@ -4,6 +4,9 @@
 
 // member functions of gen_basis class
 gen_basis::gen_basis(string filename) {
+    // set basis type
+    m_btype=0;
+    
     vector<string> basis_strs;
     
     // read in process file, store process information and basis vectors as strings

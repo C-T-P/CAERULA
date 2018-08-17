@@ -293,6 +293,10 @@ void trace_vec::print() {
 
 // member functions of trace_basis class
 trace_basis::trace_basis(size_t n_g, size_t n_qp) {
+    // set basis type
+    m_btype=2;
+    
+    // set number of particles
     m_ng=n_g;
     m_nqp=n_qp;
     

@@ -8,6 +8,8 @@
 
 using namespace std;
 
+typedef vector<vector<complex<double>>> matrix;
+
 class c_matrix {
     vector<vector<complex<double>>> m_mat;
     public:

@@ -201,6 +201,10 @@ void f_vec::print() {
 
 //// member functions of f_basis class
 f_basis::f_basis(size_t n_g) {
+    // set basis type
+    m_btype=3;
+    
+    // set number of particles
     m_ng=n_g;
 
     // initialise process specifications

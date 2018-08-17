@@ -6,6 +6,7 @@
 #include "trace_basis.h"
 #include "f_basis.h"
 #include "gen_basis.h"
+#include "multiplet_basis.h"
 #include "c_matrix.h"
 
 void run_error();
@@ -14,7 +15,7 @@ int main(int argc, char **argv) {
     c_basis* basis=NULL;
     size_t n_g(0), n_qp(0);
     string expr, filename;
-    bool adjoint_basis(false), norm_basis(true);
+    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false);
     int NC_order(INT_MAX);
     
     // read in run parameters
@@ -29,6 +30,8 @@ int main(int argc, char **argv) {
             cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
             cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
             cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\nWorks only for pure gluon processes with ng>=3."<<endl;
+            cout<<"\t-multiplet:\t\t\tBuild multiplet basis (orthogonal basis).\nWorks only if a precalculated multiplet basis for this process is provided."<<endl;
+            cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.\nWorks only together with the -multiplet option and if a precalculated multiplet basis for the process is provided."<<endl;
             cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
             cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
             cout<<endl;
@@ -67,7 +70,12 @@ int main(int argc, char **argv) {
             i++;
         }
         else if (strcmp(argv[i],"-adj")==0) {
-            adjoint_basis=true;
+            if (!ortho_basis) adjoint_basis=true;
+            else run_error();
+        }
+        else if (strcmp(argv[i],"-multiplet")==0) {
+            if (!adjoint_basis) ortho_basis=true;
+            else run_error();
         }
         else if (strcmp(argv[i],"-NC")==0) {
             NC_order=stoi(argv[i+1]);
@@ -76,15 +84,15 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i],"-dnorm")==0) {
             norm_basis=false;
         }
-//        else if (strcmp(argv[i],"-bcm")==0) {
-//            runopt=5;
-//        }
+        else if (strcmp(argv[i],"-bcm")==0) {
+            construct_bcm=true;
+        }
     }
     
     // print order in 1/NC to which all terms are evaluated
-    cout<<"Order of 1/NC set to ";
-    if (NC_order!=INT_MAX) cout << NC_order << "." << endl;
-    else cout << "Infinity.\n" << endl;
+    cout<<"\n\033[1;31mOrder of 1/NC set to ";
+    if (NC_order!=INT_MAX) cout << NC_order << ".\033[0m\n" << endl;
+    else cout << "Infinity.\033[0m\n" << endl;
     
     // perform colour calculations depending on the given input
     switch (runopt) {
@@ -106,7 +114,19 @@ int main(int argc, char **argv) {
         }
         case 3: {
             clock_t t(clock());
-            if (adjoint_basis) {
+            if (ortho_basis) {
+                cout<<"Will construct multiplet basis."<<endl;
+                cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
+                
+                multiplet_basis* m_basis = new multiplet_basis(n_g, n_qp);
+                
+                if (construct_bcm) {
+                    m_basis->bcm();
+                }
+                
+                basis = m_basis;
+            }
+            else if (adjoint_basis) {
                 cout<<"Will construct adjoint basis for "<<n_g<<" gluons."<<endl;
                 basis = new f_basis(n_g);
             }
@@ -114,8 +134,10 @@ int main(int argc, char **argv) {
                 cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
                 basis = new trace_basis(n_g, n_qp);
             }
+            
             t=clock()-t;
             cout<<"Computation time for basis construction: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
+            
             break;
         }
         default: {
@@ -125,28 +147,26 @@ int main(int argc, char **argv) {
     }
 
     cout<<endl;
-    if (norm_basis) {
-        basis->normalise();
-        cout<<"Normalised ";
-    }
+    if (norm_basis and !construct_bcm) basis->normalise();
+    if (construct_bcm or norm_basis) cout<<"Normalised ";
     cout<<"Basis Vectors:"<<endl;
     basis->print();
     cout<<"\nSoft Matrix:"<<endl;
-//    c_matrix soft_matrix(basis->sm());
-    basis->sm();
+    c_matrix soft_matrix(basis->sm());
+//    basis->sm();
     cout<<endl;
-//    soft_matrix.print();
+    soft_matrix.print();
 
     cout<<"\nColour Change Matrices:"<<endl;
     clock_t t(clock());
-//    vector<c_matrix> cc_mats(basis->get_ccms());
-    basis->get_ccms();
+    vector<c_matrix> cc_mats(basis->get_ccms(NC_order));
+//    basis->get_ccms();
     t=clock()-t;
     cout<<endl;
-//    for (auto& ccm : cc_mats) {
-//        ccm.print();
-//        cout<<endl;
-//    }
+    for (auto& ccm : cc_mats) {
+        ccm.print();
+        cout<<endl;
+    }
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
     
     cout<<"\nPrinting to file..."<<endl;

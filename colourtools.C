@@ -303,6 +303,7 @@ void c_term::evaluate_deltas() {
         else {
             if (k_it->m_i == k_it->m_j) {
                 m_cnum*=NC;
+                m_NC_order++;
                 ev=true;
             }
             
@@ -311,6 +312,7 @@ void c_term::evaluate_deltas() {
                 if (k_it->m_i == k_it2->m_i) {
                     if (k_it->m_j == k_it2->m_j) {
                         m_cnum*=NC;
+                        m_NC_order++;
                         m_k_vec.erase(k_it2);
                         ev=true;
                     }
@@ -322,6 +324,7 @@ void c_term::evaluate_deltas() {
                 else if (k_it->m_j == k_it2->m_i) {
                     if (k_it->m_i == k_it2->m_j) {
                         m_cnum*=NC;
+                        m_NC_order++;
                         m_k_vec.erase(k_it2);
                         ev=true;
                     }
@@ -333,6 +336,7 @@ void c_term::evaluate_deltas() {
                 else if (k_it->m_i == k_it2->m_j) {
                     if (k_it->m_j == k_it2->m_i) {
                         m_cnum*=NC;
+                        m_NC_order++;
                         m_k_vec.erase(k_it2);
                         ev=true;
                     }
@@ -344,6 +348,7 @@ void c_term::evaluate_deltas() {
                 else if (k_it->m_j == k_it2->m_j) {
                     if (k_it->m_i == k_it2->m_i) {
                         m_cnum*=NC;
+                        m_NC_order++;
                         m_k_vec.erase(k_it2);
                         ev=true;
                     }
@@ -658,13 +663,14 @@ c_amplitude c_amplitude::operator*(c_amplitude ca){
     
     return new_ca;
 }
-complex<double> c_amplitude::scprod(c_amplitude ca) {
+complex<double> c_amplitude::scprod(c_amplitude ca, size_t up_to_NC) {
     c_amplitude scp(ca.hconj());
     scp=(*this)*scp;
     
 //    cout<<"\n---------------------------"<<endl;
 //    scp.print();
-    scp.evaluate();
+    if (up_to_NC == INT_MAX) scp.evaluate();
+    else scp.evaluate(up_to_NC);
 //    cout<<" = ";
 //    scp.print();
 //    cout<<" = "<<scp.result()<<endl;
@@ -1133,108 +1139,36 @@ void c_amplitude::evaluate(size_t up_to_NC) {
                 ev=true;
             }
             
-            // contract with indices in antisymmetrics
-            for (vector<antisymmetric>::iterator f_it2(c_it->m_f_vec.begin()); !ev and f_it2!=c_it->m_f_vec.end();f_it2++) {
-                if (f_it2!=f_it) {
-                    if (f_it->m_a == f_it2->m_b) {
-                        swap<size_t>(f_it2->m_a,f_it2->m_b);
-                        swap<size_t>(f_it2->m_b,f_it2->m_c);
-                    }
-                    else if (f_it->m_a == f_it2->m_c) {
-                        swap<size_t>(f_it2->m_a,f_it2->m_c);
-                        swap<size_t>(f_it2->m_c,f_it2->m_b);
-                    }
-                    
-                    if (f_it->m_a == f_it2->m_a) {
-                            // replace f_{abc}f_{ade}
-                            
-                            size_t b(f_it->m_b), c(f_it->m_c), d(f_it2->m_b), e(f_it2->m_c);
-                            c_it->m_f_vec.erase(f_it2);
-                            c_it->m_f_vec.erase(f_it);
-                            c_term ct(*c_it);
-                            f_it--;
-                            ev=true;
-                            
-                            // first term
-                            c_it->m_cnum*=-1./TR;
-                            c_it->push_back(fundamental(d,c_it->m_fi,++c_it->m_fi));
-                            c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi));
-                            c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
-                            c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-4));
-                            
-                            
-                            // second term
-                            c_term ct1(ct);
-                            ct1.m_cnum*=1./TR;
-                            ct1.push_back(fundamental(b,ct1.m_fi,++ct1.m_fi));
-                            ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
-                            //                            new_c_terms.push_back(ct1);
-                            ca.add(ct1);
-                            
-                            // second term
-                            ct1=ct;
-                            ct1.m_cnum*=1./TR;
-                            ct1.push_back(fundamental(e,ct1.m_fi,++ct1.m_fi));
-                            ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
-                            //                            new_c_terms.push_back(ct1);
-                            ca.add(ct1);
-                            
-                            // third term
-                            ct.m_cnum*=-1./TR;
-                            ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
-                            ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi));
-                            ct.push_back(fundamental(d,ct.m_fi-1,ct.m_fi));
-                            ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-4));
-                            //                            new_c_terms.push_back(ct);
-                            ca.add(ct);
-                    }
-                }
-            }
-            
-            // contract with indices in fundamentals
-            for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); !ev and t_it!=c_it->m_t_vec.end();t_it++) {
-                if (f_it->m_b == t_it->m_a) {
-                    swap<size_t>(f_it->m_a,f_it->m_b);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                }
-                else if (f_it->m_c == t_it->m_a) {
-                    swap<size_t>(f_it->m_a,f_it->m_c);
-                    swap<size_t>(f_it->m_c,f_it->m_b);
-                }
+            if (!ev) {
+                // replace f_{abc}
                 
-                if (f_it->m_a == t_it->m_a) {
-                    size_t b(f_it->m_b), c(f_it->m_c), i(t_it->m_i), j(t_it->m_j);
-                    c_it->m_f_vec.erase(f_it);
-                    c_it->m_t_vec.erase(t_it);
-                    c_term ct(*c_it);
-                    f_it--;
-                    ev=true;
-                    
-                    // first term
-                    c_it->m_cnum*=complex<double>(0.,-1.);
-                    c_it->push_back(fundamental(b,i,c_it->m_fi));
-                    c_it->push_back(fundamental(c,c_it->m_fi-1,j));
-                    
-                    // second term
-                    ct.m_cnum*=complex<double>(0.,1.);
-                    ct.push_back(fundamental(c,i,ct.m_fi));
-                    ct.push_back(fundamental(b,ct.m_fi-1,j));
-                    //                    new_c_terms.push_back(ct);
-                    ca.add(ct);
-                }
+                size_t a(f_it->m_a), b(f_it->m_b), c(f_it->m_c);
+                c_it->m_f_vec.erase(f_it);
+                c_term ct(*c_it);
+                f_it--;
+                ev=true;
+                
+                // first term
+                c_it->m_cnum*=complex<double>(0.,-1./TR);
+                c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
+                c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
+                c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
+                
+                
+                // second term
+                c_term ct1(ct);
+                ct1.m_cnum*=complex<double>(0.,1./TR);
+                ct1.push_back(fundamental(b,ct1.m_fi,++ct1.m_fi));
+                ct1.push_back(fundamental(a,ct1.m_fi-1,ct1.m_fi));
+                ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-3));
+//                            new_c_terms.push_back(ct1);
+                ca.add(ct1);
             }
-            
-            if (ev) c_it->evaluate_deltas();
         }
         
         // evaluate symmetrics
         for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); d_it!=c_it->m_d_vec.end();d_it++) {
             // replace d_{abc}
-            //                cout<<"replace "<<d_it->build_string()<<endl;
             size_t a(d_it->m_a), b(d_it->m_b), c(d_it->m_c);
             c_it->m_d_vec.erase(d_it);
             c_term ct(*c_it);
@@ -1245,20 +1179,14 @@ void c_amplitude::evaluate(size_t up_to_NC) {
             c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
             c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
             c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
-            //                cout<<"->";
-            //                c_it->print();
             
             // second term
             ct.m_cnum*=1./TR;
             ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
             ct.push_back(fundamental(a,ct.m_fi-1,ct.m_fi));
             ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-3));
-            //                cout<<"->";
-            //                ct.print();
-            //                new_c_terms.push_back(ct);
+//                new_c_terms.push_back(ct);
             ca.add(ct);
-            
-            c_it->evaluate_deltas();
         }
         
         

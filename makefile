@@ -1,5 +1,5 @@
-o_objects = Main.o I3NSERT.o colourtools.o c_basis.o trace_basis.o f_basis.o gen_basis.o
-c_objects = Main.C I3NSERT.C colourtools.C c_basis.C trace_basis.C f_basis.C gen_basis.C
+o_objects = Main.o I3NSERT.o colourtools.o c_basis.o trace_basis.o f_basis.o gen_basis.o multiplet_basis.o
+c_objects = Main.C I3NSERT.C colourtools.C c_basis.C trace_basis.C f_basis.C gen_basis.C multiplet_basis.C
 
 CXX = g++ -g -std=c++11
 
@@ -26,6 +26,9 @@ f_basis.o: f_basis.C
 
 gen_basis.o: gen_basis.C
 	$(CXX) -c -Wall gen_basis.C
+
+multiplet_basis.o: multiplet_basis.C
+	$(CXX) -c -Wall multiplet_basis.C
 
 clean:
 	rm -f $(o_objects)

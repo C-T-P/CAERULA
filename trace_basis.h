@@ -65,4 +65,6 @@ class trace_basis : public c_basis {
     public:
         trace_basis(size_t n_g, size_t n_qp);
         ~trace_basis();
+    
+        friend class multiplet_basis;
 };
