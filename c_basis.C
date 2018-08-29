@@ -1,3 +1,4 @@
+
 #include "c_basis.h"
 #include "multiplet_basis.h"
 #include<iomanip>
@@ -26,7 +27,7 @@ void c_basis::print_to_file(string filename) {
     if (filename=="") {
         size_t n_q(0), n_qb(0), n_g(0);
         for (size_t lno(1);lno<=m_process.no_of_legs();lno++) {
-            string ptcl=m_process.leg(lno).second;
+            string ptcl=m_process.leg(lno);
             
             if (ptcl=="q") n_q++;
             else if (ptcl=="qb") n_qb++;
@@ -104,7 +105,7 @@ void c_basis::print_to_file(string filename) {
 c_matrix c_basis::sm() {
     for (size_t i(0); i<m_dim; i++) {
         for (size_t j(0); j<m_dim; j++) {
-            cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
+//            cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
             complex<double> r;
             if (j>=i) r = m_ca_basis.at(i).scprod(m_ca_basis.at(j));
             else r = m_smat[j][i];
@@ -121,7 +122,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, size_t up_to_NC) {
     
     for (size_t i(0);i<m_dim;i++) {
         for (size_t j(0);j<m_dim;j++) {
-            cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
+//            cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
             c_amplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
             bvj.push_back(ins_op);
             complex<double> r(m_ca_basis.at(i).scprod(bvj, up_to_NC));

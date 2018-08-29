@@ -26,8 +26,8 @@ class process {
         void add_out_leg(string ptcl);
         void delete_all_legs();
         size_t no_of_legs();
-        pair<size_t,string> leg(size_t index);
-        bool is_in_leg(size_t index);
+        string leg(size_t lno);
+        bool is_in_leg(size_t lno);
 };
 
 
@@ -42,7 +42,7 @@ class delta {
 };
 class fundamental {
     public:
-        size_t m_a, m_i, m_j;
+        size_t m_i, m_a, m_b;
         fundamental(size_t a, size_t i, size_t j);
         ~fundamental();
         bool is_free(size_t ind);
@@ -50,16 +50,16 @@ class fundamental {
 };
 class antisymmetric {
     public:
-        size_t m_a, m_b, m_c;
-        antisymmetric(size_t a, size_t b, size_t c);
+        size_t m_i, m_j, m_k;
+        antisymmetric(size_t i, size_t j, size_t k);
         ~antisymmetric();
         bool is_free(size_t ind);
         string build_string();
 };
 class symmetric {
     public:
-        size_t m_a, m_b, m_c;
-        symmetric(size_t a, size_t b, size_t c);
+        size_t m_i, m_j, m_k;
+        symmetric(size_t i, size_t j, size_t k);
         ~symmetric();
         bool is_free(size_t ind);
         string build_string();
@@ -85,6 +85,9 @@ class c_term {
         void cnumber(complex<double> c);
         void NC_order(int NC_o);
     
+        void simplify();
+        void replace_zero();
+        bool replace_adjoint();
         void evaluate_deltas();
         void shift_inds(size_t by, bool all);
         c_term hconj();
@@ -116,7 +119,7 @@ class c_amplitude {
         void clear();
     
         void evaluate();
-        void evaluate(size_t up_to_NC);
+        //void evaluate(size_t up_to_NC);
         complex<double> result();
     
         size_t no_of_terms();

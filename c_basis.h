@@ -5,7 +5,7 @@
 #include "c_matrix.h"
 #include "colourtools.h"
 
-class c_basis {
+class c_basis { 
     protected:
         process m_process;
         vector<c_amplitude> m_ca_basis;

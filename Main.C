@@ -151,23 +151,29 @@ int main(int argc, char **argv) {
     if (construct_bcm or norm_basis) cout<<"Normalised ";
     cout<<"Basis Vectors:"<<endl;
     basis->print();
-    cout<<"\nSoft Matrix:"<<endl;
-    c_matrix soft_matrix(basis->sm());
-//    basis->sm();
-    cout<<endl;
-    soft_matrix.print();
-
-    cout<<"\nColour Change Matrices:"<<endl;
+    
+//    cout<<"\nSoft Matrix:"<<endl;
+//    c_matrix soft_matrix(basis->sm());
     clock_t t(clock());
-    vector<c_matrix> cc_mats(basis->get_ccms(NC_order));
-//    basis->get_ccms();
+    cout<<"\nCalculating the soft matrix..."<<endl;
+    basis->sm();
     t=clock()-t;
-    cout<<endl;
-    for (auto& ccm : cc_mats) {
-        ccm.print();
-        cout<<endl;
-    }
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
+//    cout<<endl;
+//    soft_matrix.print();
+
+//    cout<<"\nColour Change Matrices:"<<endl;
+    t=clock();
+//    vector<c_matrix> cc_mats(basis->get_ccms(NC_order));
+    cout<<"\nCalculating the colour change matrices..."<<endl;
+    basis->get_ccms();
+    t=clock()-t;
+    cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
+//    cout<<endl;
+//    for (auto& ccm : cc_mats) {
+//        ccm.print();
+//        cout<<endl;
+//    }
     
     cout<<"\nPrinting to file..."<<endl;
     basis->print_to_file();

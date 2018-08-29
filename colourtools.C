@@ -27,17 +27,17 @@ void process::delete_all_legs() {
 size_t process::no_of_legs() {
     return m_in_legs.size()+m_out_legs.size();
 }
-pair<size_t,string> process::leg(size_t index) {
+string process::leg(size_t lno) {
     // leg numbering starts at 1 !
-    if (index<=m_in_legs.size()) return m_in_legs.at(index-1);
-    else if (index<=m_out_legs.size()+m_in_legs.size()) return m_out_legs.at(index-m_in_legs.size()-1);
+    if (lno<=m_in_legs.size()) return m_in_legs.at(lno-1).second;
+    else if (lno<=m_out_legs.size()+m_in_legs.size()) return m_out_legs.at(lno-m_in_legs.size()-1).second;
     else {
-        cerr << "Leg " << index << " does not exist in diagram." << endl;
-        return pair<int,string>(0,"");
+        cerr << "Leg " << lno << " does not exist in diagram." << endl;
+        return "";
     }
 }
-bool process::is_in_leg(size_t index) {
-    if (index<=m_in_legs.size()) return true;
+bool process::is_in_leg(size_t lno) {
+    if (lno<=m_in_legs.size()) return true;
     else return false;
 }
 
@@ -64,59 +64,59 @@ string delta::build_string() {
 }
 
 // member functions of class fundamental
-fundamental::fundamental(size_t a, size_t i, size_t j) {
-    m_a=a;
+fundamental::fundamental(size_t i, size_t a, size_t b) {
     m_i=i;
-    m_j=j;
+    m_a=a;
+    m_b=b;
 }
 fundamental::~fundamental() {
     
 }
 bool fundamental::is_free(size_t ind) {
-    if (ind != m_a and ind != m_i and ind != m_j) return true;
+    if (ind != m_i and ind != m_a and ind != m_b) return true;
     else return false;
 }
 string fundamental::build_string() {
     string str("t_[");
-    str+=to_string(m_a)+","+to_string(m_i)+","+to_string(m_j)+"]";
+    str+=to_string(m_i)+","+to_string(m_a)+","+to_string(m_b)+"]";
     return str;
 }
 
 // member functions of class antisymmetric
-antisymmetric::antisymmetric(size_t a, size_t b, size_t c) {
-    m_a=a;
-    m_b=b;
-    m_c=c;
+antisymmetric::antisymmetric(size_t i, size_t j, size_t k) {
+    m_i=i;
+    m_j=j;
+    m_k=k;
 }
 antisymmetric::~antisymmetric() {
     
 }
 bool antisymmetric::is_free(size_t ind) {
-    if (ind != m_a and ind != m_b and ind != m_c) return true;
+    if (ind != m_i and ind != m_j and ind != m_k) return true;
     else return false;
 }
 string antisymmetric::build_string() {
     string str("f_[");
-    str+=to_string(m_a)+","+to_string(m_b)+","+to_string(m_c)+"]";
+    str+=to_string(m_i)+","+to_string(m_j)+","+to_string(m_k)+"]";
     return str;
 }
 
 // member functions of class symmetric
-symmetric::symmetric(size_t a, size_t b, size_t c) {
-    m_a=a;
-    m_b=b;
-    m_c=c;
+symmetric::symmetric(size_t i, size_t j, size_t k) {
+    m_i=i;
+    m_j=j;
+    m_k=k;
 }
 symmetric::~symmetric() {
     
 }
 bool symmetric::is_free(size_t ind) {
-    if (ind != m_a and ind != m_b and ind != m_c) return true;
+    if (ind != m_i and ind != m_j and ind != m_k) return true;
     else return false;
 }
 string symmetric::build_string() {
     string str("d_[");
-    str+=to_string(m_a)+","+to_string(m_b)+","+to_string(m_c)+"]";
+    str+=to_string(m_i)+","+to_string(m_j)+","+to_string(m_k)+"]";
     return str;
 }
 
@@ -168,6 +168,279 @@ void c_term::cnumber(complex<double> c) {
 }
 void c_term::NC_order(int NCo) {
     m_NC_order=NCo;
+}
+void c_term::simplify() {
+    do {
+        this->evaluate_deltas();
+        this->replace_zero();
+    } while (this->replace_adjoint());
+}
+void c_term::replace_zero() {
+    // check if fundamental vanishes
+    for (vector<fundamental>::iterator t_it(m_t_vec.begin()); m_cnum!=0. and t_it!=m_t_vec.end(); t_it++) {
+        if (t_it->m_a == t_it->m_b) {
+            clear();
+            m_cnum=0.;
+        }
+    }
+    
+    // check if adjoint generators vanish
+    for (vector<antisymmetric>::iterator f_it(m_f_vec.begin()); m_cnum!=0. and f_it!=m_f_vec.end(); f_it++) {
+        // check if antisymmetric structure constant vanishes
+        if (f_it->m_i == f_it->m_j or f_it->m_i == f_it->m_k or f_it->m_j == f_it->m_k) {
+            clear();
+            m_cnum=0.;
+        }
+        
+        // check if contraction with symmetric structure constant exists
+        for (vector<symmetric>::iterator d_it(m_d_vec.begin()); m_cnum!=0. and d_it!=m_d_vec.end(); d_it++) {
+            // check if symmetric structure constant vanishes
+            if (d_it->m_i == d_it->m_j or d_it->m_i == d_it->m_k or d_it->m_j == d_it->m_k) {
+                clear();
+                m_cnum=0.;
+            }
+            else {
+                if (f_it->m_i == d_it->m_j) swap<size_t>(d_it->m_i,d_it->m_j);
+                else if (f_it->m_i == d_it->m_k) swap<size_t>(d_it->m_i,d_it->m_k);
+                else if (f_it->m_j == d_it->m_i) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it->m_j,f_it->m_k);
+                }
+                else if (f_it->m_j == d_it->m_j) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it->m_j,f_it->m_k);
+                    swap<size_t>(d_it->m_j,d_it->m_i);
+                }
+                else if (f_it->m_j == d_it->m_k) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it->m_j,f_it->m_k);
+                    swap<size_t>(d_it->m_k,d_it->m_i);
+                }
+                else if (f_it->m_k == d_it->m_i) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it->m_j,f_it->m_k);
+                }
+                else if (f_it->m_k == d_it->m_j) {
+                    swap<size_t>(f_it->m_k,f_it->m_i);
+                    swap<size_t>(f_it->m_j,f_it->m_k);
+                    swap<size_t>(d_it->m_j,d_it->m_i);
+                }
+                else if (f_it->m_k == d_it->m_k) {
+                    swap<size_t>(f_it->m_k,f_it->m_i);
+                    swap<size_t>(f_it->m_j,f_it->m_k);
+                    swap<size_t>(d_it->m_k,d_it->m_i);
+                }
+                
+                if (f_it->m_i == d_it->m_i) {
+                    if (f_it->m_j == d_it->m_j or f_it->m_j == d_it->m_k) {
+                        clear();
+                        m_cnum=0.;
+                    }
+                }
+            }
+        }
+    }
+}
+bool c_term::replace_adjoint() {
+    bool rep_made(false);
+    
+    // replace contractions of two antisymmetric structure constants
+    for (vector<antisymmetric>::iterator f_it(m_f_vec.begin()); f_it!=m_f_vec.end(); f_it++) {
+        bool ev(false);
+        
+        for (vector<antisymmetric>::iterator f_it2(m_f_vec.begin()); !ev and f_it2!=m_f_vec.end();f_it2++) {
+            if (f_it2!=f_it) {
+                if (f_it->m_i == f_it2->m_j) {
+                    swap<size_t>(f_it2->m_i,f_it2->m_j);
+                    swap<size_t>(f_it2->m_j,f_it2->m_k);
+                }
+                else if (f_it->m_i == f_it2->m_k) {
+                    swap<size_t>(f_it2->m_i,f_it2->m_k);
+                    swap<size_t>(f_it2->m_k,f_it2->m_j);
+                }
+                else if (f_it->m_j == f_it2->m_i) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it->m_k,f_it->m_j);
+                }
+                else if (f_it->m_j == f_it2->m_j) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it2->m_j,f_it2->m_i);
+                }
+                else if (f_it->m_j == f_it2->m_k) {
+                    swap<size_t>(f_it->m_j,f_it->m_i);
+                    swap<size_t>(f_it2->m_k,f_it2->m_i);
+                }
+                else if (f_it->m_k == f_it2->m_i) {
+                    swap<size_t>(f_it->m_k,f_it->m_i);
+                    swap<size_t>(f_it->m_k,f_it->m_j);
+                }
+                else if (f_it->m_k == f_it2->m_j) {
+                    swap<size_t>(f_it->m_k,f_it->m_i);
+                    swap<size_t>(f_it2->m_j,f_it2->m_i);
+                }
+                else if (f_it->m_k == f_it2->m_k) {
+                    swap<size_t>(f_it->m_k,f_it->m_i);
+                    swap<size_t>(f_it2->m_k,f_it2->m_i);
+                }
+                
+                if (f_it->m_i == f_it2->m_i) {
+                    if (f_it->m_j == f_it2->m_j) {
+                        if (f_it->m_k == f_it2->m_k) m_cnum*=NC*(NC*NC-1);
+                        else {
+                            m_cnum*=NC;
+                            m_k_vec.push_back(delta(f_it->m_k,f_it2->m_k,true));
+                        }
+                        m_f_vec.erase(f_it2);
+                        m_f_vec.erase(f_it);
+                        f_it--;
+                        ev=true;
+                    }
+                    else if (f_it->m_j == f_it2->m_k) {
+                        if (f_it->m_k == f_it2->m_j) m_cnum*=-1.*NC*(NC*NC-1);
+                        else {
+                            m_cnum*=-1.*NC;
+                            m_k_vec.push_back(delta(f_it->m_k,f_it2->m_j,true));
+                        }
+                        m_f_vec.erase(f_it2);
+                        m_f_vec.erase(f_it);
+                        f_it--;
+                        ev=true;
+                    }
+                    else if (f_it->m_k == f_it2->m_k) {
+                        if (f_it->m_j == f_it2->m_j) m_cnum*=1.*NC*(NC*NC-1);
+                        else {
+                            m_cnum*=1.*NC;
+                            m_k_vec.push_back(delta(f_it->m_j,f_it2->m_j,true));
+                        }
+                        m_f_vec.erase(f_it2);
+                        m_f_vec.erase(f_it);
+                        f_it--;
+                        ev=true;
+                    }
+                    else if (f_it->m_k == f_it2->m_j) {
+                        if (f_it->m_j == f_it2->m_k) m_cnum*=-1.*NC*(NC*NC-1);
+                        else {
+                            m_cnum*=-1.*NC;
+                            m_k_vec.push_back(delta(f_it->m_j,f_it2->m_k,true));
+                        }
+                        m_f_vec.erase(f_it2);
+                        m_f_vec.erase(f_it);
+                        f_it--;
+                        ev=true;
+                    }
+                    
+                    if (ev) rep_made=true;
+                }
+            }
+        }
+    }
+    
+    // replace contractions of symmetric structure constant
+    for (vector<symmetric>::iterator d_it(m_d_vec.begin()); d_it!=m_d_vec.end(); d_it++) {
+        bool ev(false);
+        
+        for (vector<symmetric>::iterator d_it2(m_d_vec.begin()); !ev and d_it2!=m_d_vec.end();d_it2++) {
+            if (d_it2!=d_it) {
+                if (d_it->m_i == d_it2->m_j) swap<size_t>(d_it2->m_i,d_it2->m_j);
+                else if (d_it->m_i == d_it2->m_k) swap<size_t>(d_it2->m_i,d_it2->m_k);
+                else if (d_it->m_j == d_it2->m_i) swap<size_t>(d_it->m_j,d_it->m_i);
+                else if (d_it->m_j == d_it2->m_j) {
+                    swap<size_t>(d_it->m_j,d_it->m_i);
+                    swap<size_t>(d_it2->m_j,d_it2->m_i);
+                }
+                else if (d_it->m_j == d_it2->m_k) {
+                    swap<size_t>(d_it->m_j,d_it->m_i);
+                    swap<size_t>(d_it2->m_k,d_it2->m_i);
+                }
+                else if (d_it->m_k == d_it2->m_i) {
+                    swap<size_t>(d_it->m_k,d_it->m_i);
+                    swap<size_t>(d_it->m_k,d_it->m_j);
+                }
+                else if (d_it->m_k == d_it2->m_j) {
+                    swap<size_t>(d_it->m_k,d_it->m_i);
+                    swap<size_t>(d_it2->m_j,d_it2->m_i);
+                }
+                else if (d_it->m_k == d_it2->m_k) {
+                    swap<size_t>(d_it->m_k,d_it->m_i);
+                    swap<size_t>(d_it2->m_k,d_it2->m_i);
+                }
+                
+                if (d_it->m_i == d_it2->m_i) {
+                    if (d_it->m_j == d_it2->m_j) {
+                        if (d_it->m_k == d_it2->m_k) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        else {
+                            m_cnum*=(NC*NC-4)/NC;
+                            m_k_vec.push_back(delta(d_it->m_k,d_it2->m_k,true));
+                        }
+                        m_d_vec.erase(d_it2);
+                        m_d_vec.erase(d_it);
+                        d_it--;
+                        ev=true;
+                    }
+                    else if (d_it->m_j == d_it2->m_k) {
+                        if (d_it->m_k == d_it2->m_j) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        else {
+                            m_cnum*=(NC*NC-4)/NC;
+                            m_k_vec.push_back(delta(d_it->m_k,d_it2->m_j,true));
+                        }
+                        m_d_vec.erase(d_it2);
+                        m_d_vec.erase(d_it);
+                        d_it--;
+                        ev=true;
+                    }
+                    else if (d_it->m_k == d_it2->m_k) {
+                        if (d_it->m_j == d_it2->m_j) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        else {
+                            m_cnum*=(NC*NC-4)/NC;
+                            m_k_vec.push_back(delta(d_it->m_j,d_it2->m_j,true));
+                        }
+                        m_d_vec.erase(d_it2);
+                        m_d_vec.erase(d_it);
+                        d_it--;
+                        ev=true;
+                    }
+                    else if (d_it->m_k == d_it2->m_j) {
+                        if (d_it->m_j == d_it2->m_k) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        else {
+                            m_cnum*=(NC*NC-4)/NC;
+                            m_k_vec.push_back(delta(d_it->m_j,d_it2->m_k,true));
+                        }
+                        m_d_vec.erase(d_it2);
+                        m_d_vec.erase(d_it);
+                        d_it--;
+                        ev=true;
+                    }
+                    
+                    if (ev) rep_made=true;
+                }
+            }
+        }
+    }
+    
+    // remove traces over two generators
+    for (vector<fundamental>::iterator t_it(m_t_vec.begin()); t_it!=m_t_vec.end(); ++t_it) {
+        bool ev(false);
+        
+        for (vector<fundamental>::iterator t_it2(t_it+1); !ev and t_it2!=m_t_vec.end(); ++t_it2) {
+            if (t_it->m_b == t_it2->m_a and t_it->m_a == t_it2->m_b) {
+                if (t_it->m_i == t_it2->m_i) {
+                    m_cnum*=TR*(NC*NC-1);
+                }
+                else {
+                    m_cnum*=TR;
+                    m_k_vec.push_back(delta(t_it->m_i,t_it2->m_i,true));
+                }
+                ev=true;
+                m_t_vec.erase(t_it2);
+                m_t_vec.erase(t_it);
+                t_it--;
+            }
+        }
+        
+        if (ev) rep_made=true;
+    }
+    
+    return rep_made;
 }
 void c_term::evaluate_deltas() {
     for (vector<delta>::iterator k_it(m_k_vec.begin()); k_it!=m_k_vec.end(); ++k_it) {
@@ -229,66 +502,66 @@ void c_term::evaluate_deltas() {
             }
             // replace indices in fundamentals
             for (vector<fundamental>::iterator t_it(m_t_vec.begin()); !ev and t_it!=m_t_vec.end(); t_it++) {
-                if (k_it->m_i == t_it->m_a) {
-                    t_it->m_a=k_it->m_j;
+                if (k_it->m_i == t_it->m_i) {
+                    t_it->m_i=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == t_it->m_a) {
-                    t_it->m_a=k_it->m_i;
+                else if (k_it->m_j == t_it->m_i) {
+                    t_it->m_i=k_it->m_i;
                     ev=true;
                 }
             }
             // replace indices in antisymmetrics
             for (vector<antisymmetric>::iterator f_it(m_f_vec.begin()); !ev and f_it!=m_f_vec.end(); f_it++) {
-                if (k_it->m_i == f_it->m_a) {
-                    f_it->m_a=k_it->m_j;
+                if (k_it->m_i == f_it->m_i) {
+                    f_it->m_i=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == f_it->m_a) {
-                    f_it->m_a=k_it->m_i;
+                else if (k_it->m_j == f_it->m_i) {
+                    f_it->m_i=k_it->m_i;
                     ev=true;
                 }
-                else if (k_it->m_i == f_it->m_b) {
-                    f_it->m_b=k_it->m_j;
+                else if (k_it->m_i == f_it->m_j) {
+                    f_it->m_j=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == f_it->m_b) {
-                    f_it->m_b=k_it->m_i;
+                else if (k_it->m_j == f_it->m_j) {
+                    f_it->m_j=k_it->m_i;
                     ev=true;
                 }
-                else if (k_it->m_i == f_it->m_c) {
-                    f_it->m_c=k_it->m_j;
+                else if (k_it->m_i == f_it->m_k) {
+                    f_it->m_k=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == f_it->m_c) {
-                    f_it->m_c=k_it->m_i;
+                else if (k_it->m_j == f_it->m_k) {
+                    f_it->m_k=k_it->m_i;
                     ev=true;
                 }
             }
             // replace indices in symmetrics
             for (vector<symmetric>::iterator d_it(m_d_vec.begin()); !ev and d_it!=m_d_vec.end(); d_it++) {
-                if (k_it->m_i == d_it->m_a) {
-                    d_it->m_a=k_it->m_j;
+                if (k_it->m_i == d_it->m_i) {
+                    d_it->m_i=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == d_it->m_a) {
-                    d_it->m_a=k_it->m_i;
+                else if (k_it->m_j == d_it->m_i) {
+                    d_it->m_i=k_it->m_i;
                     ev=true;
                 }
-                else if (k_it->m_i == d_it->m_b) {
-                    d_it->m_b=k_it->m_j;
+                else if (k_it->m_i == d_it->m_j) {
+                    d_it->m_j=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == d_it->m_b) {
-                    d_it->m_b=k_it->m_i;
+                else if (k_it->m_j == d_it->m_j) {
+                    d_it->m_j=k_it->m_i;
                     ev=true;
                 }
-                else if (k_it->m_i == d_it->m_c) {
-                    d_it->m_c=k_it->m_j;
+                else if (k_it->m_i == d_it->m_k) {
+                    d_it->m_k=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == d_it->m_c) {
-                    d_it->m_c=k_it->m_i;
+                else if (k_it->m_j == d_it->m_k) {
+                    d_it->m_k=k_it->m_i;
                     ev=true;
                 }
             }
@@ -361,20 +634,20 @@ void c_term::evaluate_deltas() {
             
             // replace indices in fundamentals
             for (vector<fundamental>::iterator t_it(m_t_vec.begin()); !ev and t_it!=m_t_vec.end(); t_it++) {
-                if (k_it->m_i == t_it->m_i) {
-                    t_it->m_i=k_it->m_j;
+                if (k_it->m_i == t_it->m_a) {
+                    t_it->m_a=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_i == t_it->m_j) {
-                    t_it->m_j=k_it->m_j;
+                else if (k_it->m_i == t_it->m_b) {
+                    t_it->m_b=k_it->m_j;
                     ev=true;
                 }
-                else if (k_it->m_j == t_it->m_i) {
-                    t_it->m_i=k_it->m_i;
+                else if (k_it->m_j == t_it->m_a) {
+                    t_it->m_a=k_it->m_i;
                     ev=true;
                 }
-                else if (k_it->m_j == t_it->m_j) {
-                    t_it->m_j=k_it->m_i;
+                else if (k_it->m_j == t_it->m_b) {
+                    t_it->m_b=k_it->m_i;
                     ev=true;
                 }
             }
@@ -392,26 +665,26 @@ void c_term::shift_inds(size_t by, bool all) {
         if (k_it->m_j>100 or all) k_it->m_j+=by;
     }
     for (vector<fundamental>::iterator t_it(m_t_vec.begin()); t_it!=m_t_vec.end(); t_it++) {
-        if (t_it->m_a>100 or all) t_it->m_a+=by;
         if (t_it->m_i>100 or all) t_it->m_i+=by;
-        if (t_it->m_j>100 or all) t_it->m_j+=by;
+        if (t_it->m_a>100 or all) t_it->m_a+=by;
+        if (t_it->m_b>100 or all) t_it->m_b+=by;
     }
     for (vector<antisymmetric>::iterator f_it(m_f_vec.begin()); f_it!=m_f_vec.end(); f_it++) {
-        if (f_it->m_a>100 or all) f_it->m_a+=by;
-        if (f_it->m_b>100 or all) f_it->m_b+=by;
-        if (f_it->m_c>100 or all) f_it->m_c+=by;
+        if (f_it->m_i>100 or all) f_it->m_i+=by;
+        if (f_it->m_j>100 or all) f_it->m_j+=by;
+        if (f_it->m_k>100 or all) f_it->m_k+=by;
     }
     for (vector<symmetric>::iterator d_it(m_d_vec.begin()); d_it!=m_d_vec.end(); d_it++) {
-        if (d_it->m_a>100 or all) d_it->m_a+=by;
-        if (d_it->m_b>100 or all) d_it->m_b+=by;
-        if (d_it->m_c>100 or all) d_it->m_c+=by;
+        if (d_it->m_i>100 or all) d_it->m_i+=by;
+        if (d_it->m_j>100 or all) d_it->m_j+=by;
+        if (d_it->m_k>100 or all) d_it->m_k+=by;
     }
     m_fi+=by;
 }
 c_term c_term::hconj() {
     c_term ct(*this);
     for (auto & t : ct.m_t_vec) {
-        swap(t.m_i,t.m_j);
+        swap(t.m_a,t.m_b);
     }
     ct.m_cnum=conj(ct.m_cnum);
     return ct;
@@ -669,8 +942,7 @@ complex<double> c_amplitude::scprod(c_amplitude ca, size_t up_to_NC) {
     
 //    cout<<"\n---------------------------"<<endl;
 //    scp.print();
-    if (up_to_NC == INT_MAX) scp.evaluate();
-    else scp.evaluate(up_to_NC);
+    scp.evaluate();
 //    cout<<" = ";
 //    scp.print();
 //    cout<<" = "<<scp.result()<<endl;
@@ -690,259 +962,132 @@ void c_amplitude::evaluate() {
 //        cout<<"\n-------------------------"<<endl;
 //        c_it->print();
         
-    startpoint:
+        // remove all internal quark and gluon rings
+        c_it->simplify();
         
-        // evaluate deltas
-        c_it->evaluate_deltas();
-        
-//        cout<<"= "<<endl;
-//        c_it->print();
-        
-        // evaluate antisymmetrics
-        for (vector<antisymmetric>::iterator f_it(c_it->m_f_vec.begin()); c_it->m_cnum!=0. and f_it!=c_it->m_f_vec.end();f_it++) {
+        // replace antisymmetric structure constants
+        for (vector<antisymmetric>::iterator f_it(c_it->m_f_vec.begin()); f_it!=c_it->m_f_vec.end(); f_it++) {
             bool ev(false);
             
-            // check if term vanishes
-            if (f_it->m_a == f_it->m_b or f_it->m_a == f_it->m_c or f_it->m_b == f_it->m_c) {
-                c_it->clear();
-                ev=true;
-            }
+            // gluons have to be attached either to a three gluon vertex or a quark-gluon vertex by now
             
-            // contract with indices in symmetrics
-            for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); !ev and d_it!=c_it->m_d_vec.end() ; d_it++) {
-                if (f_it->m_a == d_it->m_b) swap<size_t>(d_it->m_a,d_it->m_b);
-                else if (f_it->m_a == d_it->m_c) swap<size_t>(d_it->m_a,d_it->m_c);
-                else if (f_it->m_b == d_it->m_a) {
-                    swap<size_t>(f_it->m_b,f_it->m_a);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
+            // replace contractions of two antisymmetric structure constants
+            for (vector<antisymmetric>::iterator f_it2(f_it+1); !ev and f_it2!=c_it->m_f_vec.end(); f_it2++) {
+                if (f_it->m_i == f_it2->m_j) {
+                    swap<size_t>(f_it2->m_i,f_it2->m_j);
+                    swap<size_t>(f_it2->m_j,f_it2->m_k);
                 }
-                else if (f_it->m_b == d_it->m_b) {
-                    swap<size_t>(f_it->m_b,f_it->m_a);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                    swap<size_t>(d_it->m_b,d_it->m_a);
-                }
-                else if (f_it->m_b == d_it->m_c) {
-                    swap<size_t>(f_it->m_b,f_it->m_a);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                    swap<size_t>(d_it->m_c,d_it->m_a);
-                }
-                else if (f_it->m_c == d_it->m_a) {
-                    swap<size_t>(f_it->m_b,f_it->m_a);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                }
-                else if (f_it->m_c == d_it->m_b) {
-                    swap<size_t>(f_it->m_c,f_it->m_a);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                    swap<size_t>(d_it->m_b,d_it->m_a);
-                }
-                else if (f_it->m_c == d_it->m_c) {
-                    swap<size_t>(f_it->m_c,f_it->m_a);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                    swap<size_t>(d_it->m_c,d_it->m_a);
+                else if (f_it->m_i == f_it2->m_k) {
+                    swap<size_t>(f_it2->m_i,f_it2->m_k);
+                    swap<size_t>(f_it2->m_j,f_it2->m_k);
                 }
                 
-                if (f_it->m_a == d_it->m_a) {
-                    if (f_it->m_b == d_it->m_b or f_it->m_b == d_it->m_c) {
-                        c_it->clear();
-                        c_it->m_cnum=0.;
-                        ev=true;
-                    }
-                    else {
-                        // replace f_{abc}d_{ade}
-                        
-                        size_t b(f_it->m_b), c(f_it->m_c), d(d_it->m_b), e(d_it->m_c);
-                        c_it->m_d_vec.erase(d_it);
-                        c_it->m_f_vec.erase(f_it);
-                        c_term ct(*c_it);
-                        f_it--;
-                        ev=true;
-                        
-                        // first term
-                        c_it->m_cnum*=complex<double>(0.,-1./TR);
-                        c_it->push_back(fundamental(b,c_it->m_fi,++c_it->m_fi));
-                        c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi));
-                        c_it->push_back(fundamental(d,c_it->m_fi-1,c_it->m_fi));
-                        c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi-4));
-                        
-                        
-                        // second term
-                        c_term ct1(ct);
-                        ct1.m_cnum*=complex<double>(0.,1./TR);
-                        ct1.push_back(fundamental(c,ct1.m_fi,++ct1.m_fi));
-                        ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
-                        ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
-                        ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
-                        //                            new_c_terms.push_back(ct1);
-                        ca.add(ct1);
-                        
-                        // second term
-                        ct1=ct;
-                        ct1.m_cnum*=complex<double>(0.,-1./TR);
-                        ct1.push_back(fundamental(d,ct1.m_fi,++ct1.m_fi));
-                        ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
-                        ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi));
-                        ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
-                        //                            new_c_terms.push_back(ct1);
-                        ca.add(ct1);
-                        
-                        // third term
-                        ct.m_cnum*=complex<double>(0.,1./TR);
-                        ct.push_back(fundamental(d,ct.m_fi,++ct.m_fi));
-                        ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi));
-                        ct.push_back(fundamental(b,ct.m_fi-1,ct.m_fi));
-                        ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi-4));
-                        //                            new_c_terms.push_back(ct);
-                        ca.add(ct);
-                    }
-                }
-            }
-            
-            // contract with indices in antisymmetrics
-            for (vector<antisymmetric>::iterator f_it2(c_it->m_f_vec.begin()); !ev and f_it2!=c_it->m_f_vec.end();f_it2++) {
-                if (f_it2!=f_it) {
-                    if (f_it->m_a == f_it2->m_b) {
-                        swap<size_t>(f_it2->m_a,f_it2->m_b);
-                        swap<size_t>(f_it2->m_b,f_it2->m_c);
-                    }
-                    else if (f_it->m_a == f_it2->m_c) {
-                        swap<size_t>(f_it2->m_a,f_it2->m_c);
-                        swap<size_t>(f_it2->m_c,f_it2->m_b);
-                    }
-                    else if (f_it->m_b == f_it2->m_a) {
-                        swap<size_t>(f_it->m_b,f_it->m_a);
-                        swap<size_t>(f_it->m_c,f_it->m_b);
-                    }
-                    else if (f_it->m_b == f_it2->m_b) {
-                        swap<size_t>(f_it->m_b,f_it->m_a);
-                        swap<size_t>(f_it2->m_b,f_it2->m_a);
-                    }
-                    else if (f_it->m_b == f_it2->m_c) {
-                        swap<size_t>(f_it->m_b,f_it->m_a);
-                        swap<size_t>(f_it2->m_c,f_it2->m_a);
-                    }
-                    else if (f_it->m_c == f_it2->m_a) {
-                        swap<size_t>(f_it->m_c,f_it->m_a);
-                        swap<size_t>(f_it->m_c,f_it->m_b);
-                    }
-                    else if (f_it->m_c == f_it2->m_b) {
-                        swap<size_t>(f_it->m_c,f_it->m_a);
-                        swap<size_t>(f_it2->m_b,f_it2->m_a);
-                    }
-                    else if (f_it->m_c == f_it2->m_c) {
-                        swap<size_t>(f_it->m_c,f_it->m_a);
-                        swap<size_t>(f_it2->m_c,f_it2->m_a);
-                    }
+                // replace f_{abc}f_{ade}
+                if (f_it->m_i == f_it2->m_i) {
+                    size_t b(f_it->m_j), c(f_it->m_k), d(f_it2->m_j), e(f_it2->m_k);
+                    c_it->m_f_vec.erase(f_it2);
+                    c_it->m_f_vec.erase(f_it);
+                    c_term ct(*c_it);
+                    f_it--;
+                    ev=true;
                     
-                
-                    if (f_it->m_a == f_it2->m_a) {
-                        if (f_it->m_b == f_it2->m_b) {
-                            if (f_it->m_c == f_it2->m_c) c_it->m_cnum*=NC*(NC*NC-1);
-                            else {
-                                c_it->m_cnum*=NC;
-                                c_it->m_k_vec.push_back(delta(f_it->m_c,f_it2->m_c,true));
-                            }
-                            c_it->m_f_vec.erase(f_it2);
-                            c_it->m_f_vec.erase(f_it);
-                            f_it--;
-                            ev=true;
-                        }
-                        else if (f_it->m_b == f_it2->m_c) {
-                            if (f_it->m_c == f_it2->m_b) c_it->m_cnum*=-1.*NC*(NC*NC-1);
-                            else {
-                                c_it->m_cnum*=-1.*NC;
-                                c_it->m_k_vec.push_back(delta(f_it->m_c,f_it2->m_b,true));
-                            }
-                            c_it->m_f_vec.erase(f_it2);
-                            c_it->m_f_vec.erase(f_it);
-                            f_it--;
-                            ev=true;
-                        }
-                        else if (f_it->m_c == f_it2->m_c) {
-                            if (f_it->m_b == f_it2->m_b) c_it->m_cnum*=1.*NC*(NC*NC-1);
-                            else {
-                                c_it->m_cnum*=1.*NC;
-                                c_it->m_k_vec.push_back(delta(f_it->m_b,f_it2->m_b,true));
-                            }
-                            c_it->m_f_vec.erase(f_it2);
-                            c_it->m_f_vec.erase(f_it);
-                            f_it--;
-                            ev=true;
-                        }
-                        else if (f_it->m_c == f_it2->m_b) {
-                            if (f_it->m_b == f_it2->m_c) c_it->m_cnum*=-1.*NC*(NC*NC-1);
-                            else {
-                                c_it->m_cnum*=-1.*NC;
-                                c_it->m_k_vec.push_back(delta(f_it->m_b,f_it2->m_c,true));
-                            }
-                            c_it->m_f_vec.erase(f_it2);
-                            c_it->m_f_vec.erase(f_it);
-                            f_it--;
-                            ev=true;
-                        }
-                        else {
-                            // replace f_{abc}f_{ade}
-
-                            size_t b(f_it->m_b), c(f_it->m_c), d(f_it2->m_b), e(f_it2->m_c);
-                            c_it->m_f_vec.erase(f_it2);
-                            c_it->m_f_vec.erase(f_it);
-                            c_term ct(*c_it);
-                            f_it--;
-                            ev=true;
-
-                            // first term
-                            c_it->m_cnum*=-1./TR;
-                            c_it->push_back(fundamental(d,c_it->m_fi,++c_it->m_fi));
-                            c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi));
-                            c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
-                            c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-4));
-
-
-                            // second term
-                            c_term ct1(ct);
-                            ct1.m_cnum*=1./TR;
-                            ct1.push_back(fundamental(b,ct1.m_fi,++ct1.m_fi));
-                            ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
-//                            new_c_terms.push_back(ct1);
-                            ca.add(ct1);
-
-                            // second term
-                            ct1=ct;
-                            ct1.m_cnum*=1./TR;
-                            ct1.push_back(fundamental(e,ct1.m_fi,++ct1.m_fi));
-                            ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
-                            ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
-//                            new_c_terms.push_back(ct1);
-                            ca.add(ct1);
-
-                            // third term
-                            ct.m_cnum*=-1./TR;
-                            ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
-                            ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi));
-                            ct.push_back(fundamental(d,ct.m_fi-1,ct.m_fi));
-                            ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-4));
-//                            new_c_terms.push_back(ct);
-                            ca.add(ct);
-                        }
-                    }
+                    // first term
+                    c_it->m_cnum*=-1./TR;
+                    c_it->push_back(fundamental(d,c_it->m_fi,++c_it->m_fi));
+                    c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi));
+                    c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
+                    c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-4));
+                    
+                    
+                    // second term
+                    c_term ct1(ct);
+                    ct1.m_cnum*=1./TR;
+                    ct1.push_back(fundamental(b,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
+                    //                            new_c_terms.push_back(ct1);
+                    ca.add(ct1);
+                    
+                    // second term
+                    ct1=ct;
+                    ct1.m_cnum*=1./TR;
+                    ct1.push_back(fundamental(e,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
+                    //                            new_c_terms.push_back(ct1);
+                    ca.add(ct1);
+                    
+                    // third term
+                    ct.m_cnum*=-1./TR;
+                    ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
+                    ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi));
+                    ct.push_back(fundamental(d,ct.m_fi-1,ct.m_fi));
+                    ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-4));
+                    //                            new_c_terms.push_back(ct);
+                    ca.add(ct);
                 }
             }
             
-            // contract with indices in fundamentals
-            for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); !ev and t_it!=c_it->m_t_vec.end();t_it++) {
-                if (f_it->m_b == t_it->m_a) {
-                    swap<size_t>(f_it->m_a,f_it->m_b);
-                    swap<size_t>(f_it->m_b,f_it->m_c);
-                }
-                else if (f_it->m_c == t_it->m_a) {
-                    swap<size_t>(f_it->m_a,f_it->m_c);
-                    swap<size_t>(f_it->m_c,f_it->m_b);
-                }
+            // replace contractions of an antisymmetric structure constant with a symmetric one
+            for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); !ev and d_it!=c_it->m_d_vec.end() ; d_it++) {
+                if (f_it->m_i == d_it->m_j) swap<size_t>(d_it->m_i,d_it->m_j);
+                else if (f_it->m_i == d_it->m_k) swap<size_t>(d_it->m_i,d_it->m_k);
                 
-                if (f_it->m_a == t_it->m_a) {
-                    size_t b(f_it->m_b), c(f_it->m_c), i(t_it->m_i), j(t_it->m_j);
+                // replace f_{abc}d_{ade}
+                if (f_it->m_i == d_it->m_i) {
+                    size_t b(f_it->m_j), c(f_it->m_k), d(d_it->m_j), e(d_it->m_k);
+                    c_it->m_d_vec.erase(d_it);
+                    c_it->m_f_vec.erase(f_it);
+                    c_term ct(*c_it);
+                    f_it--;
+                    ev=true;
+                    
+                    // first term
+                    c_it->m_cnum*=complex<double>(0.,-1./TR);
+                    c_it->push_back(fundamental(b,c_it->m_fi,++c_it->m_fi));
+                    c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi));
+                    c_it->push_back(fundamental(d,c_it->m_fi-1,c_it->m_fi));
+                    c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi-4));
+                    
+                    
+                    // second term
+                    c_term ct1(ct);
+                    ct1.m_cnum*=complex<double>(0.,1./TR);
+                    ct1.push_back(fundamental(c,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
+                    //                            new_c_terms.push_back(ct1);
+                    ca.add(ct1);
+                    
+                    // second term
+                    ct1=ct;
+                    ct1.m_cnum*=complex<double>(0.,-1./TR);
+                    ct1.push_back(fundamental(d,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi));
+                    ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
+                    //                            new_c_terms.push_back(ct1);
+                    ca.add(ct1);
+                    
+                    // third term
+                    ct.m_cnum*=complex<double>(0.,1./TR);
+                    ct.push_back(fundamental(d,ct.m_fi,++ct.m_fi));
+                    ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi));
+                    ct.push_back(fundamental(b,ct.m_fi-1,ct.m_fi));
+                    ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi-4));
+                    //                            new_c_terms.push_back(ct);
+                    ca.add(ct);
+                }
+            }
+            
+            // replace contractions of an antisymmetric structure constant with a fundamental generator
+            for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); !ev and t_it!=c_it->m_t_vec.end(); t_it++) {
+                // replace f_{abc}(T_a)_{ij}
+                if (f_it->m_i == t_it->m_i) {
+                    size_t b(f_it->m_j), c(f_it->m_k), i(t_it->m_a), j(t_it->m_b);
                     c_it->m_f_vec.erase(f_it);
                     c_it->m_t_vec.erase(t_it);
                     c_term ct(*c_it);
@@ -958,150 +1103,87 @@ void c_amplitude::evaluate() {
                     ct.m_cnum*=complex<double>(0.,1.);
                     ct.push_back(fundamental(c,i,ct.m_fi));
                     ct.push_back(fundamental(b,ct.m_fi-1,j));
-//                    new_c_terms.push_back(ct);
+                    //                    new_c_terms.push_back(ct);
                     ca.add(ct);
                 }
             }
-            
-//            if (ev) c_it->evaluate_deltas();
-            if (ev) goto startpoint;
         }
         
-//        cout<<"= "<<endl;
-//        c_it->print();
-    
-        // evaluate symmetrics
+        // replace remaining symmetric structure constants
         for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); d_it!=c_it->m_d_vec.end();d_it++) {
-            bool ev(false);
+            // replace d_{abc}
+            //                cout<<"replace "<<d_it->build_string()<<endl;
+            size_t a(d_it->m_i), b(d_it->m_j), c(d_it->m_k);
+            c_it->m_d_vec.erase(d_it);
+            c_term ct(*c_it);
+            d_it--;
             
-            // replace indices in symmetrics
-            for (vector<symmetric>::iterator d_it2(d_it+1); !ev and d_it2!=c_it->m_d_vec.end() ; d_it2++) {
-                if (d_it->m_a == d_it2->m_b) swap<size_t>(d_it2->m_a,d_it2->m_b);
-                else if (d_it->m_a == d_it2->m_c) swap<size_t>(d_it2->m_a,d_it2->m_c);
-                
-                if (d_it->m_a == d_it2->m_a) {
-                    if (d_it->m_b == d_it2->m_b) {
-                        if (d_it->m_c == d_it2->m_c) c_it->m_cnum*=(NC*NC-1.)*(NC*NC-4.)/NC;
-                        else {
-                            c_it->m_cnum*=(NC*NC-4.)/NC;
-                            c_it->m_k_vec.push_back(delta(d_it->m_c,d_it2->m_c,true));
-                        }
-                        ev=true;
-                    }
-                    else if (d_it->m_b == d_it2->m_c) {
-                        if (d_it->m_c and d_it2->m_b) c_it->m_cnum*=(NC*NC-1.)*(NC*NC-4.)/NC;
-                        else {
-                            c_it->m_cnum*=(NC*NC-4.)/NC;
-                            c_it->m_k_vec.push_back(delta(d_it->m_c,d_it2->m_b,true));
-                        }
-                        ev=true;
-                    }
-                    if (ev) {
-                        c_it->m_d_vec.erase(d_it2);
-                        c_it->m_d_vec.erase(d_it);
-                        d_it--;
-                    }
-                }
-            }
+            // first term
+            c_it->m_cnum*=1./TR;
+            c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
+            c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
+            c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
+            //                cout<<"->";
+            //                c_it->print();
             
-            if (!ev) {
-                // replace d_{abc}
-//                cout<<"replace "<<d_it->build_string()<<endl;
-                size_t a(d_it->m_a), b(d_it->m_b), c(d_it->m_c);
-                c_it->m_d_vec.erase(d_it);
-                c_term ct(*c_it);
-                d_it--;
-                ev=true;
-
-                // first term
-                c_it->m_cnum*=1./TR;
-                c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
-                c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
-                c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
-//                cout<<"->";
-//                c_it->print();
-
-                // second term
-                ct.m_cnum*=1./TR;
-                ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
-                ct.push_back(fundamental(a,ct.m_fi-1,ct.m_fi));
-                ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-3));
-//                cout<<"->";
-//                ct.print();
-//                new_c_terms.push_back(ct);
-                ca.add(ct);
-            }
-//            if (ev) c_it->evaluate_deltas();
-            if (ev) goto startpoint;
+            // second term
+            ct.m_cnum*=1./TR;
+            ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
+            ct.push_back(fundamental(a,ct.m_fi-1,ct.m_fi));
+            ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-3));
+            //                cout<<"->";
+            //                ct.print();
+            //                new_c_terms.push_back(ct);
+            ca.add(ct);
         }
         
-//        cout<<"= "<<endl;
-//        c_it->print();
-        
-        // replace fundamentals
+        // replace fundamentals by Fierz identity
         for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
             bool ev(false);
             
-            // check if fundamental vanishes
-            if (t_it->m_i == t_it->m_j) {
-                c_it->clear();
-                c_it->m_cnum=0.;
-                ev=true;
-            }
-            
             // contract indices with fundamentals
-            for (vector<fundamental>::iterator t_it2(c_it->m_t_vec.begin()); !ev and t_it2!=c_it->m_t_vec.end() and c_it->m_t_vec.size()>0; t_it2++) {
-                if (t_it2!=t_it) {
-                    if (t_it->m_a == t_it2->m_a) {
-                        if (t_it->m_j == t_it2->m_i) {
-                            if (t_it->m_i == t_it2->m_j) {
-                                c_it->m_cnum*=TR*(NC*NC-1);
-                            }
-                            else {
-                                c_it->m_cnum*=CF;
-                                c_it->m_k_vec.push_back(delta(t_it->m_i,t_it2->m_j,false));
-                            }
-                            c_it->m_t_vec.erase(t_it2);
-                            c_it->m_t_vec.erase(t_it);
-                            t_it--;
+            for (vector<fundamental>::iterator t_it2(t_it+1); !ev and t_it2!=c_it->m_t_vec.end() and c_it->m_t_vec.size()>0; t_it2++) {
+                if (t_it->m_i == t_it2->m_i) {
+                    if (t_it->m_b == t_it2->m_a) {
+                        if (t_it->m_a == t_it2->m_b) {
+                            c_it->m_cnum*=TR*(NC*NC-1);
                         }
                         else {
-                            // replace (T_a)_{ij}(T_a)_{kl}
-                            size_t i(t_it->m_i), j(t_it->m_j), k(t_it2->m_i), l(t_it2->m_j);
-                            c_it->m_t_vec.erase(t_it2);
-                            c_it->m_t_vec.erase(t_it);
-                            c_term ct(*c_it);
-                            t_it--;
-
-                            // first term
-                            c_it->m_cnum*=TR;
-                            c_it->m_k_vec.push_back(delta(i,l,false));
-                            c_it->m_k_vec.push_back(delta(j,k,false));
-
-                            // second term
-                            ct.NC_order(c_it->m_NC_order+1);
-                            ct.m_cnum*=-1./(2.*NC);
-                            ct.m_k_vec.push_back(delta(i,j,false));
-                            ct.m_k_vec.push_back(delta(k,l,false));
-//                                new_c_terms.push_back(ct);
-                            ca.add(ct);
+                            c_it->m_cnum*=CF;
+                            c_it->m_k_vec.push_back(delta(t_it->m_a,t_it2->m_b,false));
                         }
-                        ev=true;
-                    }
-                    else if ((t_it->m_i == t_it2->m_j and t_it->m_j == t_it2->m_i) or (t_it->m_j == t_it2->m_i and t_it->m_i == t_it2->m_j)) {
-                        c_it->m_cnum*=TR;
-                        c_it->m_k_vec.push_back(delta(t_it->m_a,t_it2->m_a,true));
                         c_it->m_t_vec.erase(t_it2);
                         c_it->m_t_vec.erase(t_it);
                         t_it--;
-                        ev=true;
                     }
+                    else {
+                        // replace (T_i)_{ab}(T_i)_{cd}
+                        size_t a(t_it->m_a), b(t_it->m_b), c(t_it2->m_a), d(t_it2->m_b);
+                        c_it->m_t_vec.erase(t_it2);
+                        c_it->m_t_vec.erase(t_it);
+                        c_term ct(*c_it);
+                        t_it--;
+                        
+                        // first term
+                        c_it->m_cnum*=TR;
+                        c_it->m_k_vec.push_back(delta(a,d,false));
+                        c_it->m_k_vec.push_back(delta(b,c,false));
+                        
+                        // second term
+                        ct.NC_order(c_it->m_NC_order+1);
+                        ct.m_cnum*=-1./(2.*NC);
+                        ct.m_k_vec.push_back(delta(a,b,false));
+                        ct.m_k_vec.push_back(delta(c,d,false));
+                        //                                new_c_terms.push_back(ct);
+                        ca.add(ct);
+                    }
+                    ev=true;
                 }
             }
-            
-            c_it->evaluate_deltas();
+            if (ev) c_it->evaluate_deltas();
         }
         
+        // by now only quark lines and rings exist
         c_it->evaluate_deltas();
         m_result+=c_it->result();
 //        cout<<"= "<<endl;
@@ -1112,135 +1194,17 @@ void c_amplitude::evaluate() {
         ca.evaluate();
         m_result+=ca.result();
         
+        if (m_result==complex<double>(NAN,NAN)) {
+            cerr<<"Error while computing a scalar product, result is nan:"<<endl;
+            c_it->print();
+        }
+        
 //        for (const auto& n : new_c_terms) {
 ////            m_cterm_vec.push_back(n);
 //            c_amplitude ca(n);
 //            ca.evaluate();
 //            m_result+=ca.result();
 //        }
-    }
-}
-void c_amplitude::evaluate(size_t up_to_NC) {
-    while (m_cterm_vec.size()>0) {
-        //        vector<c_term> new_c_terms;
-        c_amplitude ca;
-        vector<c_term>::iterator c_it(m_cterm_vec.begin());
-        
-        // evaluate deltas
-        c_it->evaluate_deltas();
-        
-        // evaluate antisymmetrics
-        for (vector<antisymmetric>::iterator f_it(c_it->m_f_vec.begin()); c_it->m_cnum!=0. and f_it!=c_it->m_f_vec.end();f_it++) {
-            bool ev(false);
-            
-            // check if term vanishes
-            if (f_it->m_a == f_it->m_b or f_it->m_a == f_it->m_c or f_it->m_b == f_it->m_c) {
-                c_it->clear();
-                ev=true;
-            }
-            
-            if (!ev) {
-                // replace f_{abc}
-                
-                size_t a(f_it->m_a), b(f_it->m_b), c(f_it->m_c);
-                c_it->m_f_vec.erase(f_it);
-                c_term ct(*c_it);
-                f_it--;
-                ev=true;
-                
-                // first term
-                c_it->m_cnum*=complex<double>(0.,-1./TR);
-                c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
-                c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
-                c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
-                
-                
-                // second term
-                c_term ct1(ct);
-                ct1.m_cnum*=complex<double>(0.,1./TR);
-                ct1.push_back(fundamental(b,ct1.m_fi,++ct1.m_fi));
-                ct1.push_back(fundamental(a,ct1.m_fi-1,ct1.m_fi));
-                ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-3));
-//                            new_c_terms.push_back(ct1);
-                ca.add(ct1);
-            }
-        }
-        
-        // evaluate symmetrics
-        for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); d_it!=c_it->m_d_vec.end();d_it++) {
-            // replace d_{abc}
-            size_t a(d_it->m_a), b(d_it->m_b), c(d_it->m_c);
-            c_it->m_d_vec.erase(d_it);
-            c_term ct(*c_it);
-            d_it--;
-            
-            // first term
-            c_it->m_cnum*=1./TR;
-            c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
-            c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
-            c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
-            
-            // second term
-            ct.m_cnum*=1./TR;
-            ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
-            ct.push_back(fundamental(a,ct.m_fi-1,ct.m_fi));
-            ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-3));
-//                new_c_terms.push_back(ct);
-            ca.add(ct);
-        }
-        
-        
-        // replace fundamentals
-        for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
-            bool ev(false);
-            
-            // check if fundamental vanishes
-            if (t_it->m_i == t_it->m_j) {
-                c_it->clear();
-                c_it->m_cnum=0.;
-                ev=true;
-            }
-            
-            // contract indices with fundamentals
-            for (vector<fundamental>::iterator t_it2(c_it->m_t_vec.begin()); !ev and t_it2!=c_it->m_t_vec.end() and c_it->m_t_vec.size()>0; t_it2++) {
-                if (t_it2!=t_it) {
-                    if (t_it->m_a == t_it2->m_a) {
-                        // replace (T_a)_{ij}(T_a)_{kl}
-                        size_t i(t_it->m_i), j(t_it->m_j), k(t_it2->m_i), l(t_it2->m_j);
-                        c_it->m_t_vec.erase(t_it2);
-                        c_it->m_t_vec.erase(t_it);
-                        c_term ct(*c_it);
-                        t_it--;
-                        
-                        // first term
-                        c_it->m_cnum*=TR;
-                        c_it->m_k_vec.push_back(delta(i,l,false));
-                        c_it->m_k_vec.push_back(delta(j,k,false));
-                        
-                        // second term
-                        if (c_it->m_NC_order<up_to_NC) {
-                            ct.NC_order(c_it->m_NC_order+1);
-                            ct.m_cnum*=-1./(2.*NC);
-                            ct.m_k_vec.push_back(delta(i,j,false));
-                            ct.m_k_vec.push_back(delta(k,l,false));
-                            // new_c_terms.push_back(ct);
-                            ca.add(ct);
-                        }
-                    
-                        ev=true;
-                    }
-                }
-            }
-            
-            c_it->evaluate_deltas();
-        }
-        
-        c_it->evaluate_deltas();
-        m_result+=c_it->result();
-        m_cterm_vec.erase(c_it);
-        
-        ca.evaluate(up_to_NC);
-        m_result+=ca.result();
     }
 }
 size_t c_amplitude::no_of_terms() {
