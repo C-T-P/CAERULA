@@ -142,12 +142,14 @@ int main(int argc, char **argv) {
         }
     }
 
-    cout<<endl;
-    if (norm_basis and !construct_bcm) basis->normalise();
-    if (construct_bcm or norm_basis) cout<<"Normalised ";
-    cout<<"Basis Vectors:"<<endl;
-    basis->print();
-    
+    if (print_to_console) {
+        cout<<endl;
+        if (norm_basis and !construct_bcm) basis->normalise();
+        if (construct_bcm or norm_basis) cout<<"Normalised ";
+        cout<<"Basis Vectors:"<<endl;
+        basis->print();
+    }
+        
     clock_t t(clock());
     cout<<"\nCalculating the soft matrix..."<<endl;
     if (print_to_console) {
@@ -162,14 +164,14 @@ int main(int argc, char **argv) {
     t=clock();
     cout<<"\nCalculating the colour change matrices..."<<endl;
     if (print_to_console) {
-        vector<c_matrix> cc_mats(basis->get_ccms(NC_order));
+        vector<c_matrix> cc_mats(basis->ccms(NC_order));
         cout<<"\nColour Change Matrices:"<<endl;
         for (auto& ccm : cc_mats) {
             ccm.print();
             cout<<endl;
         }
     }
-    else basis->get_ccms();
+    else basis->ccms();
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
     

@@ -134,7 +134,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, size_t up_to_NC) {
     return colour_cm;
 }
 
-vector<c_matrix> c_basis::get_ccms(size_t up_to_NC) {
+vector<c_matrix> c_basis::ccms(size_t up_to_NC) {
     for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
         for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
             m_ccmats.push_back(this->ccm(lno1, lno2, up_to_NC));

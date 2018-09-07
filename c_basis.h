@@ -32,7 +32,7 @@ class c_basis {
     
         c_matrix sm();
         c_matrix ccm(size_t lno1, size_t lno2, size_t up_to_NC = INT_MAX);
-        vector<c_matrix> get_ccms(size_t up_to_NC = INT_MAX);
+        vector<c_matrix> ccms(size_t up_to_NC = INT_MAX);
 };
 
 #endif
