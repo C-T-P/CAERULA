@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
             construct_bcm=true;
         }
         else if (strcmp(argv[i],"-printall")==0) {
-            construct_bcm=true;
+            print_to_console=true;
         }
     }
     
