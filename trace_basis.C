@@ -1,3 +1,4 @@
+#include "c_basis.h"
 #include "trace_basis.h"
 
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds);
@@ -120,8 +121,8 @@ c_amplitude trace_t::build_ca(size_t start_ind) {
             ct.push_back(fundamental(refl_ind.at(i),start_ind+incr,c_ind));
             incr++;
         }
-        if (n_g%2!=0) ct.cnumber(-1.);
-        else ct.cnumber(1.);
+        if (n_g%2!=0) ct.set_cnumber(-1.);
+        else ct.set_cnumber(1.);
         
         ca.add(ct);
         

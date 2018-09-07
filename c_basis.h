@@ -1,9 +1,8 @@
 #ifndef C_BASIS_H
 #define C_BASIS_H
 
-#include "I3NSERT.h"
-#include "c_matrix.h"
 #include "colourtools.h"
+#include "c_matrix.h"
 
 class c_basis { 
     protected:

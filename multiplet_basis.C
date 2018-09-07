@@ -1,6 +1,7 @@
+#include<fstream>
 #include "multiplet_basis.h"
 #include "trace_basis.h"
-#include<fstream>
+#include "gen_basis.h"
 
 // member functions of multiplet_basis class
 multiplet_basis::multiplet_basis(size_t n_g, size_t n_qp) {

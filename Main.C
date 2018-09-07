@@ -1,13 +1,12 @@
 #include<fstream>
 #include<iomanip> 
 #include<ctime>
-#include<climits>
+#include "c_matrix.h"
 #include "colourtools.h"
 #include "trace_basis.h"
 #include "f_basis.h"
 #include "gen_basis.h"
 #include "multiplet_basis.h"
-#include "c_matrix.h"
 
 void run_error();
 
@@ -32,7 +31,7 @@ int main(int argc, char **argv) {
             cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\nWorks only for pure gluon processes with ng>=3."<<endl;
             cout<<"\t-multiplet:\t\t\tBuild multiplet basis (orthogonal basis).\nWorks only if a precalculated multiplet basis for this process is provided."<<endl;
             cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.\nWorks only together with the -multiplet option and if a precalculated multiplet basis for the process is provided."<<endl;
-            cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
+            //cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
             cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
             cout<<endl;
             exit(EXIT_SUCCESS);
@@ -90,9 +89,9 @@ int main(int argc, char **argv) {
     }
     
     // print order in 1/NC to which all terms are evaluated
-    cout<<"\n\033[1;31mOrder of 1/NC set to ";
-    if (NC_order!=INT_MAX) cout << NC_order << ".\033[0m\n" << endl;
-    else cout << "Infinity.\033[0m\n" << endl;
+//    cout<<"\n\033[1;31mOrder of 1/NC set to ";
+//    if (NC_order!=INT_MAX) cout << NC_order << ".\033[0m\n" << endl;
+//    else cout << "Infinity.\033[0m\n" << endl;
     
     // perform colour calculations depending on the given input
     switch (runopt) {

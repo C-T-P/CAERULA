@@ -163,10 +163,10 @@ void c_term::push_back(symmetric d) {
     m_d_vec.push_back(d);
     while (!d.is_free(m_fi)) m_fi++;
 }
-void c_term::cnumber(complex<double> c) {
+void c_term::set_cnumber(complex<double> c) {
     m_cnum=c;
 }
-void c_term::NC_order(int NCo) {
+void c_term::set_NC_order(int NCo) {
     m_NC_order=NCo;
 }
 void c_term::simplify() {
@@ -285,9 +285,9 @@ bool c_term::replace_adjoint() {
                 
                 if (f_it->m_i == f_it2->m_i) {
                     if (f_it->m_j == f_it2->m_j) {
-                        if (f_it->m_k == f_it2->m_k) m_cnum*=NC*(NC*NC-1);
+                        if (f_it->m_k == f_it2->m_k) m_cnum*=CA*(NC*NC-1);
                         else {
-                            m_cnum*=NC;
+                            m_cnum*=CA;
                             m_k_vec.push_back(delta(f_it->m_k,f_it2->m_k,true));
                         }
                         m_f_vec.erase(f_it2);
@@ -296,9 +296,9 @@ bool c_term::replace_adjoint() {
                         ev=true;
                     }
                     else if (f_it->m_j == f_it2->m_k) {
-                        if (f_it->m_k == f_it2->m_j) m_cnum*=-1.*NC*(NC*NC-1);
+                        if (f_it->m_k == f_it2->m_j) m_cnum*=-1.*CA*(NC*NC-1);
                         else {
-                            m_cnum*=-1.*NC;
+                            m_cnum*=-1.*CA;
                             m_k_vec.push_back(delta(f_it->m_k,f_it2->m_j,true));
                         }
                         m_f_vec.erase(f_it2);
@@ -307,9 +307,9 @@ bool c_term::replace_adjoint() {
                         ev=true;
                     }
                     else if (f_it->m_k == f_it2->m_k) {
-                        if (f_it->m_j == f_it2->m_j) m_cnum*=1.*NC*(NC*NC-1);
+                        if (f_it->m_j == f_it2->m_j) m_cnum*=CA*(NC*NC-1);
                         else {
-                            m_cnum*=1.*NC;
+                            m_cnum*=CA;
                             m_k_vec.push_back(delta(f_it->m_j,f_it2->m_j,true));
                         }
                         m_f_vec.erase(f_it2);
@@ -318,9 +318,9 @@ bool c_term::replace_adjoint() {
                         ev=true;
                     }
                     else if (f_it->m_k == f_it2->m_j) {
-                        if (f_it->m_j == f_it2->m_k) m_cnum*=-1.*NC*(NC*NC-1);
+                        if (f_it->m_j == f_it2->m_k) m_cnum*=-1.*CA*(NC*NC-1);
                         else {
-                            m_cnum*=-1.*NC;
+                            m_cnum*=-1.*CA;
                             m_k_vec.push_back(delta(f_it->m_j,f_it2->m_k,true));
                         }
                         m_f_vec.erase(f_it2);
@@ -367,9 +367,9 @@ bool c_term::replace_adjoint() {
                 
                 if (d_it->m_i == d_it2->m_i) {
                     if (d_it->m_j == d_it2->m_j) {
-                        if (d_it->m_k == d_it2->m_k) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        if (d_it->m_k == d_it2->m_k) m_cnum*=(TR*(2*NC*NC-4)-2)/NC*(NC*NC-1);
                         else {
-                            m_cnum*=(NC*NC-4)/NC;
+                            m_cnum*=(TR*(2*NC*NC-4)-2)/NC;
                             m_k_vec.push_back(delta(d_it->m_k,d_it2->m_k,true));
                         }
                         m_d_vec.erase(d_it2);
@@ -378,9 +378,9 @@ bool c_term::replace_adjoint() {
                         ev=true;
                     }
                     else if (d_it->m_j == d_it2->m_k) {
-                        if (d_it->m_k == d_it2->m_j) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        if (d_it->m_k == d_it2->m_j) m_cnum*=(TR*(2*NC*NC-4)-2)/NC*(NC*NC-1);
                         else {
-                            m_cnum*=(NC*NC-4)/NC;
+                            m_cnum*=(TR*(2*NC*NC-4)-2)/NC;
                             m_k_vec.push_back(delta(d_it->m_k,d_it2->m_j,true));
                         }
                         m_d_vec.erase(d_it2);
@@ -389,9 +389,9 @@ bool c_term::replace_adjoint() {
                         ev=true;
                     }
                     else if (d_it->m_k == d_it2->m_k) {
-                        if (d_it->m_j == d_it2->m_j) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        if (d_it->m_j == d_it2->m_j) m_cnum*=(TR*(2*NC*NC-4)-2)/NC*(NC*NC-1);
                         else {
-                            m_cnum*=(NC*NC-4)/NC;
+                            m_cnum*=(TR*(2*NC*NC-4)-2)/NC;
                             m_k_vec.push_back(delta(d_it->m_j,d_it2->m_j,true));
                         }
                         m_d_vec.erase(d_it2);
@@ -400,9 +400,9 @@ bool c_term::replace_adjoint() {
                         ev=true;
                     }
                     else if (d_it->m_k == d_it2->m_j) {
-                        if (d_it->m_j == d_it2->m_k) m_cnum*=(NC*NC-4)/NC*(NC*NC-1);
+                        if (d_it->m_j == d_it2->m_k) m_cnum*=(TR*(2*NC*NC-4)-2)/NC*(NC*NC-1);
                         else {
-                            m_cnum*=(NC*NC-4)/NC;
+                            m_cnum*=(TR*(2*NC*NC-4)-2)/NC;
                             m_k_vec.push_back(delta(d_it->m_j,d_it2->m_k,true));
                         }
                         m_d_vec.erase(d_it2);
@@ -1170,7 +1170,7 @@ void c_amplitude::evaluate() {
                         c_it->m_k_vec.push_back(delta(b,c,false));
                         
                         // second term
-                        ct.NC_order(c_it->m_NC_order+1);
+                        ct.set_NC_order(c_it->m_NC_order+1);
                         ct.m_cnum*=-1./(2.*NC);
                         ct.m_k_vec.push_back(delta(a,b,false));
                         ct.m_k_vec.push_back(delta(c,d,false));

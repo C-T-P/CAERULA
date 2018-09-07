@@ -1,8 +1,8 @@
-
-#include "c_basis.h"
-#include "multiplet_basis.h"
 #include<iomanip>
 #include<fstream>
+#include "c_basis.h"
+#include "insert.h"
+#include "multiplet_basis.h"
 
 double eps = 1.e-4;
 

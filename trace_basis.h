@@ -1,6 +1,8 @@
-#include "colourtools.h"
-#include "c_basis.h"
+#ifndef TRACE_BASIS_H
+#define TRACE_BASIS_H
 
+#include "c_basis.h"
+#include "colourtools.h"
 
 using namespace std;
 
@@ -68,3 +70,5 @@ class trace_basis : public c_basis {
     
         friend class multiplet_basis;
 };
+
+#endif

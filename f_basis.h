@@ -1,4 +1,6 @@
-#include "colourtools.h"
+#ifndef F_BASIS_H
+#define F_BASIS_H
+
 #include "c_basis.h"
 
 using namespace std;
@@ -58,3 +60,5 @@ class f_basis : public c_basis {
         f_basis(size_t n_g);
         ~f_basis();
 };
+
+#endif

@@ -1,4 +1,4 @@
-#include "I3NSERT.h"
+#include "insert.h"
 
 // construct insertion operator for gluon insertion between leg lno1 and lno2 as a colour term
 c_amplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
@@ -40,7 +40,7 @@ c_amplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
         }
     }
     
-    ins_op.cnumber(prefactor);
+    ins_op.set_cnumber(prefactor);
 
     return c_amplitude(ins_op);
 }

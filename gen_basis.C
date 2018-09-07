@@ -1,6 +1,5 @@
-#include "c_basis.h"
-#include "gen_basis.h"
 #include<fstream>
+#include "gen_basis.h"
 
 // member functions of gen_basis class
 gen_basis::gen_basis(string filename) {

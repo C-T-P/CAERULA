@@ -2,7 +2,6 @@
 #define MULTIPLET_BASIS_H
 
 #include "c_basis.h"
-#include "gen_basis.h"
 
 using namespace std;
 

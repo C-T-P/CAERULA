@@ -1,16 +1,16 @@
-o_objects = Main.o I3NSERT.o colourtools.o c_basis.o trace_basis.o f_basis.o gen_basis.o multiplet_basis.o
-c_objects = Main.C I3NSERT.C colourtools.C c_basis.C trace_basis.C f_basis.C gen_basis.C multiplet_basis.C
+o_objects = Main.o insert.o colourtools.o c_basis.o trace_basis.o f_basis.o gen_basis.o multiplet_basis.o
+c_objects = Main.C insert.C colourtools.C c_basis.C trace_basis.C f_basis.C gen_basis.C multiplet_basis.C
 
 CXX = g++ -g -std=c++11
 
 Spectrum: $(o_objects)
-	$(CXX) -o Spectrum -lm $(o_objects)
+	$(CXX) $(CXXFLAGS) -o Spectrum -lm $(o_objects)
 
 Main.o:	Main.C
 	$(CXX) -c -Wall Main.C
 
-I3NSERT.o: I3NSERT.C
-	$(CXX) -c -Wall I3NSERT.C
+insert.o: insert.C
+	$(CXX) -c -Wall insert.C
 
 colourtools.o: colourtools.C
 	$(CXX) -c -Wall colourtools.C

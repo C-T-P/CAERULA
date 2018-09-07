@@ -1,4 +1,5 @@
 #include "f_basis.h"
+#include "colourtools.h"
 
 // member functions of f_type class
 f_type::f_type(vector<size_t> g_inds) {

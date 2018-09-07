@@ -7,11 +7,13 @@
 #include<algorithm>
 #include<complex>
 #include<cmath>
+
 using namespace std;
 
-static double NC(3.); // number of colours
-static double CF((NC*NC-1)/(2.*NC)); // Fundamental Casimir
-static double TR(1./2.);
+const double NC(3.); // number of colours
+const double TR(1./2.); // generator normalisation
+const double CF((NC*NC-1)/(2.*NC)); // Fundamental Casimir
+const double CA(2.*TR*NC); // Adjoint Casimir
 
 class process {
     /* 
@@ -82,8 +84,8 @@ class c_term {
         void push_back(fundamental t);
         void push_back(antisymmetric f);
         void push_back(symmetric d);
-        void cnumber(complex<double> c);
-        void NC_order(int NC_o);
+        void set_cnumber(complex<double> c);
+        void set_NC_order(int NC_o);
     
         void simplify();
         void replace_zero();
