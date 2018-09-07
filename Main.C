@@ -9,32 +9,21 @@
 #include "multiplet_basis.h"
 
 void run_error();
+void print_help_message();
 
 int main(int argc, char **argv) {
     c_basis* basis=NULL;
     size_t n_g(0), n_qp(0);
     string expr, filename;
-    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false);
+    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), print_to_console(false);
     int NC_order(INT_MAX);
     
     // read in run parameters
+    if (argc==1) print_help_message();
     int runopt(0);
     for(int i(1); i<argc; ++i) {
         if (strcmp(argv[i], "-help")==0 or strcmp(argv[i], "-h")==0) {
-            cout<<"\nOptions:"<<endl;
-            cout<<"\t-h, -help:\t\tPrint this message and exit."<<endl;
-            cout<<"\t-e, -evaluate:\t\tEvaluate colour term in which all indices must be contracted."<<endl;
-            cout<<"\t\t\t\tReturns complex number or NAN if not all indices are contracted."<<endl;
-            cout<<"\t-f, -file:\t\tRead process and colour basis from file and compute the soft matrix and all colour change matrices."<<endl;
-            cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
-            cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
-            cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\nWorks only for pure gluon processes with ng>=3."<<endl;
-            cout<<"\t-multiplet:\t\t\tBuild multiplet basis (orthogonal basis).\nWorks only if a precalculated multiplet basis for this process is provided."<<endl;
-            cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.\nWorks only together with the -multiplet option and if a precalculated multiplet basis for the process is provided."<<endl;
-            //cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
-            cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
-            cout<<endl;
-            exit(EXIT_SUCCESS);
+            print_help_message();
         }
         else if (strcmp(argv[i], "-evaluate")==0 or strcmp(argv[i], "-e")==0) {
             if (runopt==0) runopt=1;
@@ -76,14 +65,17 @@ int main(int argc, char **argv) {
             if (!adjoint_basis) ortho_basis=true;
             else run_error();
         }
-        else if (strcmp(argv[i],"-NC")==0) {
-            NC_order=stoi(argv[i+1]);
-            i++;
-        }
+//        else if (strcmp(argv[i],"-NC")==0) {
+//            NC_order=stoi(argv[i+1]);
+//            i++;
+//        }
         else if (strcmp(argv[i],"-dnorm")==0) {
             norm_basis=false;
         }
         else if (strcmp(argv[i],"-bcm")==0) {
+            construct_bcm=true;
+        }
+        else if (strcmp(argv[i],"-printall")==0) {
             construct_bcm=true;
         }
     }
@@ -140,7 +132,7 @@ int main(int argc, char **argv) {
             break;
         }
         default: {
-            cerr<<"Error: Couldn't perform colour calculations!"<<endl;
+            cerr<<"Error: Couldn't perform colour calculations! Check -h for usage instructions."<<endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -151,28 +143,30 @@ int main(int argc, char **argv) {
     cout<<"Basis Vectors:"<<endl;
     basis->print();
     
-//    cout<<"\nSoft Matrix:"<<endl;
-//    c_matrix soft_matrix(basis->sm());
     clock_t t(clock());
     cout<<"\nCalculating the soft matrix..."<<endl;
-    basis->sm();
+    if (print_to_console) {
+        c_matrix soft_matrix(basis->sm());
+        cout<<"\nSoft Matrix:"<<endl;
+        soft_matrix.print();
+    }
+    else basis->sm();
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
-//    cout<<endl;
-//    soft_matrix.print();
 
-//    cout<<"\nColour Change Matrices:"<<endl;
     t=clock();
-//    vector<c_matrix> cc_mats(basis->get_ccms(NC_order));
     cout<<"\nCalculating the colour change matrices..."<<endl;
-    basis->get_ccms();
+    if (print_to_console) {
+        vector<c_matrix> cc_mats(basis->get_ccms(NC_order));
+        cout<<"\nColour Change Matrices:"<<endl;
+        for (auto& ccm : cc_mats) {
+            ccm.print();
+            cout<<endl;
+        }
+    }
+    else basis->get_ccms();
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
-//    cout<<endl;
-//    for (auto& ccm : cc_mats) {
-//        ccm.print();
-//        cout<<endl;
-//    }
     
     cout<<"\nPrinting to file..."<<endl;
     basis->print_to_file();
@@ -184,4 +178,20 @@ int main(int argc, char **argv) {
 void run_error() {
     cerr<<"Please specify EITHER a colour term to be simplified (-s)/evaluated (-e) OR perform a colour space calculation by specifying a basis through a file name (-f) OR the process by the number of quark pairs (-nqp) and number of gluons (-ng). See also the help menu for more information (-h)."<<endl;
     exit(EXIT_FAILURE);
+}
+void print_help_message() {
+    cout<<"\nOptions:"<<endl;
+    cout<<"\t-h, -help:\t\tPrint this message and exit."<<endl;
+    cout<<"\t-e, -evaluate:\t\tEvaluate colour term in which all indices must be contracted."<<endl;
+    cout<<"\t\t\t\tReturns complex number or NAN if not all indices are contracted."<<endl;
+    cout<<"\t-f, -file:\t\tRead process and colour basis from file and compute the soft matrix and all colour change matrices."<<endl;
+    cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
+    cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
+    cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\nWorks only for pure gluon processes with ng>=3."<<endl;
+    cout<<"\t-multiplet:\t\t\tBuild multiplet basis (orthogonal basis).\nWorks only if a precalculated multiplet basis for this process is provided."<<endl;
+    cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.\nWorks only together with the -multiplet option and if a precalculated multiplet basis for the process is provided."<<endl;
+    //cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
+    cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
+    cout<<endl;
+    exit(EXIT_SUCCESS);
 }
