@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     c_basis* basis=NULL;
     size_t n_g(0), n_qp(0);
     string expr, filename;
-    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), print_to_console(false);
+    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), print_to_console(false), no_output(false);
     int NC_order(INT_MAX);
     
     // read in run parameters
@@ -77,6 +77,11 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(argv[i],"-printall")==0) {
             print_to_console=true;
+            cout<<"Print to console set to true."<<endl;
+        }
+        else if (strcmp(argv[i],"-noout")==0) {
+            no_output=true;
+            cout<<"No output file will be saved."<<endl;
         }
     }
     
@@ -168,9 +173,11 @@ int main(int argc, char **argv) {
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
     
-    cout<<"\nPrinting to file..."<<endl;
-    basis->print_to_file();
-    cout<<"Done!"<<endl;
+    if (!no_output) {
+        cout<<"\nPrinting to file..."<<endl;
+        basis->print_to_file();
+        cout<<"Done!"<<endl;
+    }
     
     return 0;
 }
