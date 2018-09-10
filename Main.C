@@ -159,9 +159,10 @@ int main(int argc, char **argv) {
         }
     }
 
+    
+    if (norm_basis and !construct_bcm) basis->normalise();
     if (print_to_console) {
         cout<<endl;
-        if (norm_basis and !construct_bcm) basis->normalise();
         if (construct_bcm or norm_basis) cout<<"Normalised ";
         cout<<"Basis Vectors:"<<endl;
         basis->print();

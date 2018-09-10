@@ -366,7 +366,7 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     this->remove_sg();
     this->normal_order();
     this->remove_conj();
-    for (auto& v : m_tr_basis) v.print();
+//    for (auto& v : m_tr_basis) v.print();
     
     m_dim=m_tr_basis.size();
     for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
