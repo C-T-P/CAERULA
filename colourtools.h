@@ -16,9 +16,7 @@ const double CF((NC*NC-1)/(2.*NC)); // Fundamental Casimir
 const double CA(2.*TR*NC); // Adjoint Casimir
 
 class process {
-    /* 
-     incoming and outgoing legs: an index is assigned to each leg (first component) and the particle id according to pdg is stored in second component
-     */
+    //incoming and outgoing legs: an index is assigned to each leg (first component) and the particle is stored in second component
     vector<pair<size_t,string>> m_in_legs;
     vector<pair<size_t,string>> m_out_legs;
     public:
@@ -32,7 +30,6 @@ class process {
         bool is_in_leg(size_t lno);
 };
 
-
 class delta {
     public:
         size_t m_i, m_j;
@@ -45,7 +42,7 @@ class delta {
 class fundamental {
     public:
         size_t m_i, m_a, m_b;
-        fundamental(size_t a, size_t i, size_t j);
+        fundamental(size_t i, size_t a, size_t b);
         ~fundamental();
         bool is_free(size_t ind);
         string build_string();
@@ -74,9 +71,15 @@ class c_term {
     vector<symmetric> m_d_vec;
     int m_NC_order;
     size_t m_fi;
+    
+    void replace_zero();
+    bool replace_adjoint();
+    void evaluate_deltas();
+    void shift_inds(size_t by, bool all);
+    
     public:
         c_term();
-        c_term(delta k, fundamental t, antisymmetric f, symmetric d, complex<double> c = complex<double>(0.,0.), int NC_order = 0);
+        c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c = complex<double>(0.,0.), int NC_o= 0);
         ~c_term();
     
         void push_back(c_term ct);
@@ -88,10 +91,6 @@ class c_term {
         void set_NC_order(int NC_o);
     
         void simplify();
-        void replace_zero();
-        bool replace_adjoint();
-        void evaluate_deltas();
-        void shift_inds(size_t by, bool all);
         c_term hconj();
         c_term operator*(c_term ct);
         complex<double> result();
@@ -105,6 +104,7 @@ class c_term {
 class c_amplitude {
     vector<c_term> m_cterm_vec;
     complex<double> m_result;
+    
     public:
         c_amplitude();
         c_amplitude(c_term ct);
@@ -112,15 +112,17 @@ class c_amplitude {
         ~c_amplitude();
     
         void add(c_term ct);
-        void push_back(c_amplitude ca);
+//        void push_back(c_amplitude ca);
         c_amplitude hconj();
-        c_amplitude shift_to_internal(size_t by);
         c_amplitude operator*(complex<double> z);
         c_amplitude operator*(c_amplitude ca);
+        void multiply(c_amplitude ca);
+        c_amplitude shift_to_internal(size_t by);
         complex<double> scprod(c_amplitude ca, size_t up_to_NC = INT_MAX);
         void clear();
     
         void evaluate();
+        void simplify();
         //void evaluate(size_t up_to_NC);
         complex<double> result();
     

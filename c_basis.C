@@ -124,7 +124,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, size_t up_to_NC) {
         for (size_t j(0);j<m_dim;j++) {
 //            cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
             c_amplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
-            bvj.push_back(ins_op);
+            bvj.multiply(ins_op);
             complex<double> r(m_ca_basis.at(i).scprod(bvj, up_to_NC));
             colour_cm[i][j] = (abs(r) < eps ? 0. : r);
             

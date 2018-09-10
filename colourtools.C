@@ -2,7 +2,8 @@
 
 // member functions of class process
 process::process(void) {
-    
+    m_in_legs={};
+    m_out_legs={};
 }
 process::~process(void) {
     
@@ -123,18 +124,22 @@ string symmetric::build_string() {
 // member functions of class c_term
 c_term::c_term() {
     m_cnum=1.;
+    m_k_vec = {};
+    m_t_vec = {};
+    m_f_vec = {};
+    m_d_vec = {};
     m_NC_order=0;
     m_fi=1001;
 }
-c_term::c_term(delta k, fundamental t, antisymmetric f, symmetric d, complex<double> c, int NC) {
+c_term::c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c, int NC_o) {
     m_cnum=c;
     m_NC_order=NC;
-    m_k_vec.push_back(k);
-    m_t_vec.push_back(t);
-    m_f_vec.push_back(f);
-    m_d_vec.push_back(d);
-    m_fi=1001;
-    while (!k.is_free(m_fi) or !t.is_free(m_fi) or !f.is_free(m_fi) or !d.is_free(m_fi)) m_fi++;
+    m_k_vec = {k};
+    m_t_vec = {t};
+    m_f_vec = {f};
+    m_d_vec = {d};
+    m_fi = 1001;
+    while (!k.is_free(m_fi) or !t.is_free(m_fi) or !f.is_free(m_fi) or !d.is_free(m_fi)) ++m_fi;
 }
 c_term::~c_term() {
     
@@ -142,26 +147,26 @@ c_term::~c_term() {
 void c_term::push_back(c_term ct) {
     m_cnum*=ct.m_cnum;
     m_NC_order+=ct.m_NC_order;
-    for (auto& k : ct.m_k_vec) m_k_vec.push_back(k);
-    for (auto& t : ct.m_t_vec) m_t_vec.push_back(t);
-    for (auto& f : ct.m_f_vec) m_f_vec.push_back(f);
-    for (auto& d : ct.m_d_vec) m_d_vec.push_back(d);
+    for (auto& k : ct.m_k_vec) this->push_back(k);
+    for (auto& t : ct.m_t_vec) this->push_back(t);
+    for (auto& f : ct.m_f_vec) this->push_back(f);
+    for (auto& d : ct.m_d_vec) this->push_back(d);
 }
 void c_term::push_back(delta k) {
     m_k_vec.push_back(k);
-    while (!k.is_free(m_fi)) m_fi++;
+    while (!k.is_free(m_fi)) ++m_fi;
 }
 void c_term::push_back(fundamental t) {
     m_t_vec.push_back(t);
-    while (!t.is_free(m_fi)) m_fi++;
+    while (!t.is_free(m_fi)) ++m_fi;
 }
 void c_term::push_back(antisymmetric f) {
     m_f_vec.push_back(f);
-    while (!f.is_free(m_fi)) m_fi++;
+    while (!f.is_free(m_fi)) ++m_fi;
 }
 void c_term::push_back(symmetric d) {
     m_d_vec.push_back(d);
-    while (!d.is_free(m_fi)) m_fi++;
+    while (!d.is_free(m_fi)) ++m_fi;
 }
 void c_term::set_cnumber(complex<double> c) {
     m_cnum=c;
@@ -693,7 +698,7 @@ c_term c_term::operator*(c_term ct) {
     ct.m_cnum*=m_cnum;
     ct.m_NC_order+=m_NC_order;
     
-    ct.shift_inds(10000,false);
+    ct.shift_inds(m_fi,false);
     for (auto& k : m_k_vec) ct.push_back(k);
     for (auto& t : m_t_vec) ct.push_back(t);
     for (auto& f : m_f_vec) ct.push_back(f);
@@ -743,6 +748,7 @@ void c_term::print() {
 // member functions of class c_amplitude
 c_amplitude::c_amplitude() {
     m_result=0.;
+    m_cterm_vec={};
 }
 c_amplitude::c_amplitude(c_term ct) {
     m_result=0.;
@@ -881,26 +887,6 @@ c_amplitude::~c_amplitude() {
 void c_amplitude::add(c_term ct) {
     m_cterm_vec.push_back(ct);
 }
-void c_amplitude::push_back(c_amplitude ca) {
-    if (m_cterm_vec.size()==0) {
-        for (vector<c_term>::iterator c_it(ca.m_cterm_vec.begin()); c_it!=ca.m_cterm_vec.end(); c_it++) {
-            m_cterm_vec.push_back(*c_it);
-        }
-    }
-    else {
-        vector<c_term> new_c_terms;
-        
-        for (vector<c_term>::iterator c_it1(m_cterm_vec.begin()); c_it1!=m_cterm_vec.end(); c_it1++) {
-            for (vector<c_term>::iterator c_it2(ca.m_cterm_vec.begin()); c_it2!=ca.m_cterm_vec.end(); c_it2++) {
-                c_term ct(*c_it1);
-                ct.push_back(*c_it2);
-                new_c_terms.push_back(ct);
-            }
-        }
-        
-        m_cterm_vec=new_c_terms;
-    }
-}
 c_amplitude c_amplitude::hconj() {
     c_amplitude ca(*this);
     
@@ -929,12 +915,32 @@ c_amplitude c_amplitude::operator*(c_amplitude ca){
     if (ca.m_cterm_vec.size()==0) return ca;
     
     c_amplitude new_ca;
-    
+
     for (vector<c_term>::iterator c_it1(m_cterm_vec.begin()); c_it1!=m_cterm_vec.end(); c_it1++)
         for (vector<c_term>::iterator c_it2(ca.m_cterm_vec.begin()); c_it2!=ca.m_cterm_vec.end(); c_it2++)
             new_ca.add((*c_it1)*(*c_it2));
-    
+
     return new_ca;
+}
+void c_amplitude::multiply(c_amplitude ca) {
+    if (m_cterm_vec.size()==0) {
+        for (vector<c_term>::iterator c_it(ca.m_cterm_vec.begin()); c_it!=ca.m_cterm_vec.end(); c_it++) {
+            m_cterm_vec.push_back(*c_it);
+        }
+    }
+    else {
+        vector<c_term> new_c_terms;
+        
+        for (vector<c_term>::iterator c_it1(m_cterm_vec.begin()); c_it1!=m_cterm_vec.end(); c_it1++) {
+            for (vector<c_term>::iterator c_it2(ca.m_cterm_vec.begin()); c_it2!=ca.m_cterm_vec.end(); c_it2++) {
+                c_term ct(*c_it1);
+                ct.push_back(*c_it2);
+                new_c_terms.push_back(ct);
+            }
+        }
+        
+        m_cterm_vec=new_c_terms;
+    }
 }
 complex<double> c_amplitude::scprod(c_amplitude ca, size_t up_to_NC) {
     c_amplitude scp(ca.hconj());
@@ -952,6 +958,7 @@ complex<double> c_amplitude::scprod(c_amplitude ca, size_t up_to_NC) {
 }
 void c_amplitude::clear() {
     m_cterm_vec.clear();
+    m_result = 0.;
 }
 void c_amplitude::evaluate() {
     while (m_cterm_vec.size()>0) {
@@ -1206,6 +1213,10 @@ void c_amplitude::evaluate() {
 //            m_result+=ca.result();
 //        }
     }
+}
+void c_amplitude::simplify() {
+    for (vector<c_term>::iterator c_it(m_cterm_vec.begin()); c_it!=m_cterm_vec.end(); ++c_it)
+        c_it->simplify();
 }
 size_t c_amplitude::no_of_terms() {
     return m_cterm_vec.size();

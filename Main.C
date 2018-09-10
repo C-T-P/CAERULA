@@ -33,8 +33,16 @@ int main(int argc, char **argv) {
             
             i++;
         }
-        else if (strcmp(argv[i], "-f")==0 or strcmp(argv[i], "-file")==0) {
+        else if (strcmp(argv[i], "-simplify")==0 or strcmp(argv[i], "-s")==0) {
             if (runopt==0) runopt=2;
+            else run_error();
+            
+            expr=argv[i+1];
+            
+            i++;
+        }
+        else if (strcmp(argv[i], "-f")==0 or strcmp(argv[i], "-file")==0) {
+            if (runopt==0) runopt=3;
             else run_error();
             
             filename=argv[i+1];
@@ -42,7 +50,7 @@ int main(int argc, char **argv) {
             i++;
         }
         else if (strcmp(argv[i],"-ng")==0) {
-            if (runopt==0 or runopt==3) runopt=3;
+            if (runopt==0 or runopt==4) runopt=4;
             else run_error();
             
             n_g=stoi(argv[i+1]);
@@ -50,7 +58,7 @@ int main(int argc, char **argv) {
             i++;
         }
         else if (strcmp(argv[i],"-nqp")==0) {
-            if (runopt==0 or runopt==3) runopt=3;
+            if (runopt==0 or runopt==4) runopt=4;
             else run_error();
             
             n_qp=stoi(argv[i+1]);
@@ -101,6 +109,15 @@ int main(int argc, char **argv) {
             return 0;
         }
         case 2: {
+            c_amplitude ca(expr);
+            ca.print();
+            ca.simplify();
+            cout<<"= ";
+            ca.print();
+            
+            return 0;
+        }
+        case 3: {
             cout<<"Will construct colour basis from file "<<filename<<"."<<endl;
             cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
             
@@ -108,7 +125,7 @@ int main(int argc, char **argv) {
             
             break;
         }
-        case 3: {
+        case 4: {
             clock_t t(clock());
             if (ortho_basis) {
                 cout<<"Will construct multiplet basis."<<endl;
@@ -191,7 +208,8 @@ void run_error() {
 void print_help_message() {
     cout<<"\nOptions:"<<endl;
     cout<<"\t-h, -help:\t\tPrint this message and exit."<<endl;
-    cout<<"\t-e, -evaluate:\t\tEvaluate colour term in which all indices must be contracted."<<endl;
+    cout<<"\t-e, -evaluate:\t\tEvaluate colour amplitude in which all indices must be contracted."<<endl;
+    cout<<"\t-s, -simplify:\t\tSimplify colour term by replacing internal quark and gluon rings. Returns colour amplitude."<<endl;
     cout<<"\t\t\t\tReturns complex number or NAN if not all indices are contracted."<<endl;
     cout<<"\t-f, -file:\t\tRead process and colour basis from file and compute the soft matrix and all colour change matrices."<<endl;
     cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;

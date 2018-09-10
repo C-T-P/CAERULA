@@ -54,7 +54,7 @@ size_t trace_t::no_qp() {
     if (m_qb!=0 and m_q!=0) return 1;
     return 0;
 }
-bool trace_t::is_non_zero() {
+bool trace_t::is_not_empty() {
     if ((m_qb!=0 and m_q!=0) or m_g.size()>0) return true;
     else return false;
 }
@@ -62,10 +62,11 @@ bool trace_t::vanishes() {
     if (m_qb==0 and m_q==0 and m_g.size()<=1) return true;
     else return false;
 }
-bool trace_t::comp(trace_t& tr_t) {
-    vector<size_t> indices1((*this).get_indices()), indices2(tr_t.get_indices());
+bool trace_t::comp(trace_t& rhs) {
+    vector<size_t> indices1((*this).get_indices()), indices2(rhs.get_indices());
     size_t s_1(indices1.size()), s_2(indices2.size());
     
+    // TODO CHECK THIS !!!
     if (s_1>s_2) return true;
     else if (s_1==s_2) {
         size_t i(0);
@@ -156,14 +157,15 @@ void trace_t::print() {
 
 // member functions of trace_vec class
 trace_vec::trace_vec(trace_t tr) {
-    if (tr.is_non_zero())
+    if (tr.is_not_empty())
         m_tr_vec.push_back(tr);
+    else m_tr_vec = {};
 }
 trace_vec::~trace_vec(void) {
     
 }
 void trace_vec::push_back(trace_t tr) {
-    if (tr.is_non_zero()) 
+    if (tr.is_not_empty())
         m_tr_vec.push_back(tr);
     else {
         cerr<<"Error: can't push empty trace_t to trace_vec."<<endl;
@@ -202,7 +204,7 @@ vector<trace_vec> trace_vec::conjugates() {
     
     for (size_t i(0);i<m_tr_vec.size();i++) {
         trace_t refl(m_tr_vec.at(i).conj());
-        if (refl.is_non_zero()) {
+        if (refl.is_not_empty()) {
             size_t curr_s(conjugate_tr_vecs.size());
             for (size_t j(0);j<curr_s;j++) {
                 trace_vec tmp_tr_vec(conjugate_tr_vecs.at(j));
@@ -228,7 +230,7 @@ vector<size_t> trace_vec::get_indices() {
 size_t trace_vec::no_groups() {
     return m_tr_vec.size();
 }
-bool trace_vec::is_connected() {
+bool trace_vec::is_tree_level() {
     size_t n_ql(0), n_con_g(0), n_qlg(0);
     for (auto & tr_t : m_tr_vec) {
         size_t ng(tr_t.no_g()), nqp(tr_t.no_qp());
@@ -252,18 +254,18 @@ void trace_vec::order() {
         return lhs.comp(rhs);
     });
 }
-bool trace_vec::comp(trace_vec& tr_v) {
+bool trace_vec::comp(trace_vec& rhs) {
     (*this).order();
-    tr_v.order();
+    rhs.order();
     
-    size_t s_1((*this).no_groups()), s_2(tr_v.no_groups());
+    size_t s_1((*this).no_groups()), s_2(rhs.no_groups());
     if (s_1>s_2) return !true;
     if (s_1<s_2) return !false;
     
     size_t i(0);
-    while (i<s_1 and (*this).at(i)==tr_v.at(i)) i++;
+    while (i<s_1 and (*this).at(i)==rhs.at(i)) i++;
     if (i==s_1) return false;
-    return !(*this).at(i).comp(tr_v.at(i));
+    return !(*this).at(i).comp(rhs.at(i));
 }
 bool trace_vec::operator==(trace_vec& rhs) {
     size_t i(0), s_1(m_tr_vec.size()), s_2(rhs.no_groups());
@@ -276,7 +278,7 @@ c_amplitude trace_vec::build_ca() {
     c_amplitude ca;
     size_t start_ind(101);
     for (auto& tr_t : m_tr_vec) {
-        ca.push_back(tr_t.build_ca(start_ind));
+        ca.multiply(tr_t.build_ca(start_ind));
             
         size_t n_qp(tr_t.no_qp()), n_g(tr_t.no_g());
         if (n_qp!=0 and n_g>0) start_ind+=n_g-1;
@@ -410,7 +412,7 @@ void trace_basis::normal_order() {
 }
 void trace_basis::make_perms() {
     for (auto& v : m_tr_basis)
-        if (v.is_connected()) m_amp_perms.push_back(v.get_indices());
+        if (v.is_tree_level()) m_amp_perms.push_back(v.get_indices());
 }
 void trace_basis::make_ca_basis() {
     for (auto& bv : m_tr_basis)

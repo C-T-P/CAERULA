@@ -30,7 +30,7 @@ vector<size_t> f_type::get_indices() {
 size_t f_type::no_g() {
     return m_g.size();
 }
-bool f_type::is_non_zero() {
+bool f_type::is_not_empty() {
     if (m_g.size()>0) return true;
     else return false;
 }
@@ -38,8 +38,8 @@ bool f_type::vanishes() {
     if (m_g.size()<=1) return true;
     else return false;
 }
-bool f_type::comp(f_type& tr_t) {
-    vector<size_t> indices1((*this).get_indices()), indices2(tr_t.get_indices());
+bool f_type::comp(f_type& rhs) {
+    vector<size_t> indices1((*this).get_indices()), indices2(rhs.get_indices());
     size_t s_1(indices1.size()), s_2(indices2.size());
     
     if (s_1>s_2) return true;
@@ -101,14 +101,14 @@ void f_type::print() {
 
 // member functions of f_vec class
 f_vec::f_vec(f_type f) {
-    if (f.is_non_zero())
+    if (f.is_not_empty())
         m_f_vec.push_back(f);
 }
 f_vec::~f_vec(void) {
 
 }
 void f_vec::push_back(f_type f) {
-    if (f.is_non_zero())
+    if (f.is_not_empty())
         m_f_vec.push_back(f);
     else {
         cerr<<"Error: can't push empty f_type to f_vec."<<endl;
@@ -156,7 +156,7 @@ vector<size_t> f_vec::get_indices() {
 size_t f_vec::no_groups() {
     return m_f_vec.size();
 }
-bool f_vec::is_connected() {
+bool f_vec::is_tree_level() {
     if (m_f_vec.size()==1) return true;
     else return false;
 }
@@ -171,18 +171,18 @@ void f_vec::order() {
         return lhs.comp(rhs);
     });
 }
-bool f_vec::comp(f_vec& f_v) {
+bool f_vec::comp(f_vec& rhs) {
     (*this).order();
-    f_v.order();
+    rhs.order();
 
-    size_t s_1((*this).no_groups()), s_2(f_v.no_groups());
+    size_t s_1((*this).no_groups()), s_2(rhs.no_groups());
     if (s_1>s_2) return !true;
     if (s_1<s_2) return !false;
 
     size_t i(0);
-    while (i<s_1 and (*this).at(i)==f_v.at(i)) i++;
+    while (i<s_1 and (*this).at(i)==rhs.at(i)) i++;
     if (i==s_1) return false;
-    return !(*this).at(i).comp(f_v.at(i));
+    return !(*this).at(i).comp(rhs.at(i));
 }
 c_amplitude f_vec::build_ca() {
     c_term ct;
@@ -269,7 +269,7 @@ void f_basis::normal_order() {
 }
 void f_basis::make_perms() {
     for (auto& v : m_f_basis)
-        if (v.is_connected()) m_amp_perms.push_back(v.get_indices());
+        if (v.is_tree_level()) m_amp_perms.push_back(v.get_indices());
 }
 void f_basis::make_ca_basis() {
     for (auto& bv : m_f_basis)

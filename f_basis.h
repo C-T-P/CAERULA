@@ -15,9 +15,9 @@ class f_type {
         vector<f_type> add_one_gluon(size_t g_ind);
         vector<size_t> get_indices();
         size_t no_g();
-        bool is_non_zero();
+        bool is_not_empty();
         bool vanishes();
-        bool comp(f_type& f_t);
+        bool comp(f_type& rhs);
         bool operator==(f_type rhs);
         c_term build_ct(size_t start_ind);
         void print();
@@ -28,18 +28,18 @@ class f_vec {
     vector<f_type> m_f_vec;
 
     public:
-        f_vec(f_type tr = f_type(vector<size_t>({})));
+        f_vec(f_type f = f_type(vector<size_t>({})));
         ~f_vec();
-        void push_back(f_type tr);
+        void push_back(f_type f);
         f_type& at(size_t i);
         f_type at(size_t i) const;
         vector<f_vec> add_one_gluon(size_t g_ind);
         vector<size_t> get_indices();
         size_t no_groups();
-        bool is_connected();
+        bool is_tree_level();
         bool has_sg();
         void order();
-        bool comp(f_vec& tr_v);
+        bool comp(f_vec& rhs);
         c_amplitude build_ca();
         void print();
 };

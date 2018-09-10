@@ -20,9 +20,9 @@ class trace_t {
         trace_t conj();
         size_t no_g();
         size_t no_qp();
-        bool is_non_zero();
+        bool is_not_empty();
         bool vanishes();
-        bool comp(trace_t& tr_t);
+        bool comp(trace_t& rhs);
         bool operator==(trace_t& rhs);
         c_amplitude build_ca(size_t start_ind);
         void print();
@@ -42,10 +42,10 @@ class trace_vec {
         vector<trace_vec> conjugates();
         vector<size_t> get_indices();
         size_t no_groups();
-        bool is_connected();
+        bool is_tree_level();
         bool has_sg();
         void order();
-        bool comp(trace_vec& tr_v);
+        bool comp(trace_vec& rhs);
         bool operator==(trace_vec& rhs);
         c_amplitude build_ca();
         void print();
