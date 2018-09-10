@@ -17,7 +17,7 @@ class f_type {
         size_t no_g();
         bool is_not_empty();
         bool vanishes();
-        bool comp(f_type& rhs);
+        bool operator>(f_type& rhs);
         bool operator==(f_type rhs);
         c_term build_ct(size_t start_ind);
         void print();
@@ -39,7 +39,7 @@ class f_vec {
         bool is_tree_level();
         bool has_sg();
         void order();
-        bool comp(f_vec& rhs);
+        bool operator>(f_vec& rhs);
         c_amplitude build_ca();
         void print();
 };

@@ -1,5 +1,6 @@
 #include<fstream>
-#include<iomanip> 
+#include<iomanip>
+#include<climits>
 #include<ctime>
 #include "c_matrix.h"
 #include "colourtools.h"
