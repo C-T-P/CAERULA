@@ -22,7 +22,7 @@ class trace_t {
         size_t no_qp();
         bool is_not_empty();
         bool vanishes();
-        bool comp(trace_t& rhs);
+        bool operator>(trace_t& rhs);
         bool operator==(trace_t& rhs);
         c_amplitude build_ca(size_t start_ind);
         void print();
@@ -45,7 +45,7 @@ class trace_vec {
         bool is_tree_level();
         bool has_sg();
         void order();
-        bool comp(trace_vec& rhs);
+        bool operator>(trace_vec& rhs);
         bool operator==(trace_vec& rhs);
         c_amplitude build_ca();
         void print();

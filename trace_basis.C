@@ -62,16 +62,15 @@ bool trace_t::vanishes() {
     if (m_qb==0 and m_q==0 and m_g.size()<=1) return true;
     else return false;
 }
-bool trace_t::comp(trace_t& rhs) {
-    vector<size_t> indices1((*this).get_indices()), indices2(rhs.get_indices());
+bool trace_t::operator>(trace_t& rhs) {
+    vector<size_t> indices1(this->get_indices()), indices2(rhs.get_indices());
     size_t s_1(indices1.size()), s_2(indices2.size());
     
-    // TODO CHECK THIS !!!
     if (s_1>s_2) return true;
     else if (s_1==s_2) {
         size_t i(0);
-        while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
-        if (i<s_1 and indices1.at(i)>indices2.at(i)) return true;
+        while (i<s_1 and indices1.at(i)==indices2.at(i)) ++i;
+        if (i<s_1 and indices1.at(i)<indices2.at(i)) return true;
         return false;
     }
     else return false;
@@ -81,7 +80,7 @@ bool trace_t::operator==(trace_t& rhs) {
     size_t s_1(indices1.size()), s_2(indices2.size());
     if (s_1!=s_2) return false;
     size_t i(0);
-    while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
+    while (i<s_1 and indices1.at(i)==indices2.at(i)) ++i;
     if (i==s_1) return true;
     return false;
 }
@@ -251,10 +250,10 @@ bool trace_vec::has_sg() {
 void trace_vec::order() {
     sort(m_tr_vec.begin(), m_tr_vec.end(), [ ]( trace_t& lhs, trace_t& rhs )
     {
-        return lhs.comp(rhs);
+        return lhs>rhs;
     });
 }
-bool trace_vec::comp(trace_vec& rhs) {
+bool trace_vec::operator>(trace_vec& rhs) {
     this->order();
     rhs.order();
     
@@ -263,8 +262,8 @@ bool trace_vec::comp(trace_vec& rhs) {
     if (s_1<s_2) return true;
     
     if ((this->at(0)).get_indices().size()>rhs.at(0).get_indices().size()) return true;
-    if ((this->at(0)).get_indices().size()>rhs.at(0).get_indices().size()) return false;
-    return (*this).at(0).comp(rhs.at(0));
+    if ((this->at(0)).get_indices().size()<rhs.at(0).get_indices().size()) return false;
+    return this->at(0)>(rhs.at(0));
 }
 bool trace_vec::operator==(trace_vec& rhs) {
     size_t i(0), s_1(m_tr_vec.size()), s_2(rhs.no_groups());
@@ -407,7 +406,7 @@ void trace_basis::remove_conj() {
 void trace_basis::normal_order() {
     sort(m_tr_basis.begin(), m_tr_basis.end(), [ ]( trace_vec& lhs, trace_vec& rhs )
     {
-        return lhs.comp(rhs);
+        return lhs>rhs;
     });
 }
 void trace_basis::make_perms() {

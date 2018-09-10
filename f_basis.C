@@ -38,16 +38,16 @@ bool f_type::vanishes() {
     if (m_g.size()<=1) return true;
     else return false;
 }
-bool f_type::comp(f_type& rhs) {
+bool f_type::operator>(f_type& rhs) {
     vector<size_t> indices1((*this).get_indices()), indices2(rhs.get_indices());
     size_t s_1(indices1.size()), s_2(indices2.size());
     
     if (s_1>s_2) return true;
     else if (s_1==s_2) {
         size_t i(0);
-        while (i<s_1 and indices1.at(i)==indices2.at(i)) i++;
-        if (i<s_1 and indices1.at(i)>indices2.at(i)) return false;
-        return true;
+        while (i<s_1 and indices1.at(i)==indices2.at(i)) ++i;
+        if (i<s_1 and indices1.at(i)<indices2.at(i)) return true;
+        return false;
     }
     else return false;
 }
@@ -168,21 +168,20 @@ bool f_vec::has_sg() {
 void f_vec::order() {
     sort(m_f_vec.begin(), m_f_vec.end(), [ ]( f_type& lhs, f_type& rhs )
     {
-        return lhs.comp(rhs);
+        return lhs>rhs;
     });
 }
-bool f_vec::comp(f_vec& rhs) {
-    (*this).order();
+bool f_vec::operator>(f_vec& rhs) {
+    this->order();
     rhs.order();
 
-    size_t s_1((*this).no_groups()), s_2(rhs.no_groups());
-    if (s_1>s_2) return !true;
-    if (s_1<s_2) return !false;
+    size_t s_1(this->no_groups()), s_2(rhs.no_groups());
+    if (s_1>s_2) return false;
+    if (s_1<s_2) return true;
 
-    size_t i(0);
-    while (i<s_1 and (*this).at(i)==rhs.at(i)) i++;
-    if (i==s_1) return false;
-    return !(*this).at(i).comp(rhs.at(i));
+    if ((this->at(0)).get_indices().size()>rhs.at(0).get_indices().size()) return true;
+    if ((this->at(0)).get_indices().size()<rhs.at(0).get_indices().size()) return false;
+    return this->at(0)>(rhs.at(0));
 }
 c_amplitude f_vec::build_ca() {
     c_term ct;
@@ -238,6 +237,7 @@ f_basis::f_basis(size_t n_g) {
 
     this->remove_sg();
     this->normal_order();
+//    for (auto& v : m_f_basis) v.print();
     
     m_dim=m_f_basis.size();
     for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
@@ -264,7 +264,7 @@ void f_basis::remove_sg() {
 void f_basis::normal_order() {
     sort(m_f_basis.begin(), m_f_basis.end(), [ ]( f_vec& lhs, f_vec& rhs )
          {
-             return lhs.comp(rhs);
+             return lhs>rhs;
          });
 }
 void f_basis::make_perms() {
