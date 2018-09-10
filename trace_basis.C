@@ -255,17 +255,16 @@ void trace_vec::order() {
     });
 }
 bool trace_vec::comp(trace_vec& rhs) {
-    (*this).order();
+    this->order();
     rhs.order();
     
-    size_t s_1((*this).no_groups()), s_2(rhs.no_groups());
-    if (s_1>s_2) return !true;
-    if (s_1<s_2) return !false;
+    size_t s_1(this->no_groups()), s_2(rhs.no_groups());
+    if (s_1>s_2) return false;
+    if (s_1<s_2) return true;
     
-    size_t i(0);
-    while (i<s_1 and (*this).at(i)==rhs.at(i)) i++;
-    if (i==s_1) return false;
-    return !(*this).at(i).comp(rhs.at(i));
+    if ((this->at(0)).get_indices().size()>rhs.at(0).get_indices().size()) return true;
+    if ((this->at(0)).get_indices().size()>rhs.at(0).get_indices().size()) return false;
+    return (*this).at(0).comp(rhs.at(0));
 }
 bool trace_vec::operator==(trace_vec& rhs) {
     size_t i(0), s_1(m_tr_vec.size()), s_2(rhs.no_groups());
@@ -367,6 +366,7 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
     this->remove_sg();
     this->normal_order();
     this->remove_conj();
+    for (auto& v : m_tr_basis) v.print();
     
     m_dim=m_tr_basis.size();
     for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
