@@ -947,6 +947,7 @@ complex<double> c_amplitude::scprod(c_amplitude ca, size_t up_to_NC) {
     scp=(*this)*scp;
     
 //    cout<<"\n---------------------------"<<endl;
+//    cout<<"scp = ";
 //    scp.print();
     scp.evaluate();
 //    cout<<" = ";
@@ -966,11 +967,13 @@ void c_amplitude::evaluate() {
         c_amplitude ca;
         vector<c_term>::iterator c_it(m_cterm_vec.begin());
         
-//        cout<<"\n-------------------------"<<endl;
-//        c_it->print();
+	//        cout<<"\n-------------------------"<<endl;
+	//        c_it->print();
         
         // remove all internal quark and gluon rings
         c_it->simplify();
+        //cout<<"= ";
+        //c_it->print();
         
         // replace antisymmetric structure constants
         for (vector<antisymmetric>::iterator f_it(c_it->m_f_vec.begin()); f_it!=c_it->m_f_vec.end(); f_it++) {
@@ -1000,7 +1003,7 @@ void c_amplitude::evaluate() {
                     
                     // first term
                     c_it->m_cnum*=-1./TR;
-                    c_it->push_back(fundamental(d,c_it->m_fi,++c_it->m_fi));
+                    c_it->push_back(fundamental(d,c_it->m_fi,c_it->m_fi+1));
                     c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi));
                     c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
                     c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-4));
@@ -1009,7 +1012,7 @@ void c_amplitude::evaluate() {
                     // second term
                     c_term ct1(ct);
                     ct1.m_cnum*=1./TR;
-                    ct1.push_back(fundamental(b,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(b,ct1.m_fi,ct1.m_fi+1));
                     ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
@@ -1019,7 +1022,7 @@ void c_amplitude::evaluate() {
                     // second term
                     ct1=ct;
                     ct1.m_cnum*=1./TR;
-                    ct1.push_back(fundamental(e,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(e,ct1.m_fi,ct1.m_fi+1));
                     ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi-4));
@@ -1028,7 +1031,7 @@ void c_amplitude::evaluate() {
                     
                     // third term
                     ct.m_cnum*=-1./TR;
-                    ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
+                    ct.push_back(fundamental(b,ct.m_fi,ct.m_fi+1));
                     ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi));
                     ct.push_back(fundamental(d,ct.m_fi-1,ct.m_fi));
                     ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-4));
@@ -1053,7 +1056,7 @@ void c_amplitude::evaluate() {
                     
                     // first term
                     c_it->m_cnum*=complex<double>(0.,-1./TR);
-                    c_it->push_back(fundamental(b,c_it->m_fi,++c_it->m_fi));
+                    c_it->push_back(fundamental(b,c_it->m_fi,c_it->m_fi+1));
                     c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi));
                     c_it->push_back(fundamental(d,c_it->m_fi-1,c_it->m_fi));
                     c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi-4));
@@ -1062,7 +1065,7 @@ void c_amplitude::evaluate() {
                     // second term
                     c_term ct1(ct);
                     ct1.m_cnum*=complex<double>(0.,1./TR);
-                    ct1.push_back(fundamental(c,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(c,ct1.m_fi,ct1.m_fi+1));
                     ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
@@ -1072,7 +1075,7 @@ void c_amplitude::evaluate() {
                     // second term
                     ct1=ct;
                     ct1.m_cnum*=complex<double>(0.,-1./TR);
-                    ct1.push_back(fundamental(d,ct1.m_fi,++ct1.m_fi));
+                    ct1.push_back(fundamental(d,ct1.m_fi,ct1.m_fi+1));
                     ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi));
                     ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi-4));
@@ -1081,7 +1084,7 @@ void c_amplitude::evaluate() {
                     
                     // third term
                     ct.m_cnum*=complex<double>(0.,1./TR);
-                    ct.push_back(fundamental(d,ct.m_fi,++ct.m_fi));
+                    ct.push_back(fundamental(d,ct.m_fi,ct.m_fi+1));
                     ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi));
                     ct.push_back(fundamental(b,ct.m_fi-1,ct.m_fi));
                     ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi-4));
@@ -1116,6 +1119,9 @@ void c_amplitude::evaluate() {
             }
         }
         
+        // cout<<"= ";
+        // c_it->print();
+        
         // replace remaining symmetric structure constants
         for (vector<symmetric>::iterator d_it(c_it->m_d_vec.begin()); d_it!=c_it->m_d_vec.end();d_it++) {
             // replace d_{abc}
@@ -1127,7 +1133,7 @@ void c_amplitude::evaluate() {
             
             // first term
             c_it->m_cnum*=1./TR;
-            c_it->push_back(fundamental(a,c_it->m_fi,++c_it->m_fi));
+            c_it->push_back(fundamental(a,c_it->m_fi,c_it->m_fi+1));
             c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
             c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
             //                cout<<"->";
@@ -1135,7 +1141,7 @@ void c_amplitude::evaluate() {
             
             // second term
             ct.m_cnum*=1./TR;
-            ct.push_back(fundamental(b,ct.m_fi,++ct.m_fi));
+            ct.push_back(fundamental(b,ct.m_fi,ct.m_fi+1));
             ct.push_back(fundamental(a,ct.m_fi-1,ct.m_fi));
             ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-3));
             //                cout<<"->";
@@ -1143,6 +1149,9 @@ void c_amplitude::evaluate() {
             //                new_c_terms.push_back(ct);
             ca.add(ct);
         }
+        
+        // cout<<"= ";
+        // c_it->print();
         
         // replace fundamentals by Fierz identity
         for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
@@ -1190,12 +1199,15 @@ void c_amplitude::evaluate() {
             if (ev) c_it->evaluate_deltas();
         }
         
+        // cout<<"= ";
+        // c_it->print();
+        
         // by now only quark lines and rings exist
         c_it->evaluate_deltas();
         m_result+=c_it->result();
-//        cout<<"= "<<endl;
-//        c_it->print();
-//        cout<<"-------------------------\n"<<endl;
+        //cout<<"= "<<endl;
+        //c_it->print();
+        //cout<<"-------------------------\n"<<endl;
         m_cterm_vec.erase(c_it);
         
         ca.evaluate();

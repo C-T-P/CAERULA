@@ -113,7 +113,6 @@ class c_amplitude {
         ~c_amplitude();
     
         void add(c_term ct);
-//        void push_back(c_amplitude ca);
         c_amplitude hconj();
         c_amplitude operator*(complex<double> z);
         c_amplitude operator*(c_amplitude ca);

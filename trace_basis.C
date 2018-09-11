@@ -32,9 +32,9 @@ vector<trace_t> trace_t::add_one_gluon(size_t g_ind) {
 }
 vector<size_t> trace_t::get_indices() {
     vector<size_t> indices;
-    if (m_qb!=0) indices.push_back(m_qb);
+    if (m_qb!=0) indices.push_back(m_q);
     for (vector<size_t>::iterator g_it(m_g.begin());g_it!=m_g.end();g_it++) indices.push_back(*g_it);
-    if (m_q!=0) indices.push_back(m_q);
+    if (m_q!=0) indices.push_back(m_qb);
     
     return indices;
 }
@@ -89,7 +89,7 @@ c_amplitude trace_t::build_ca(size_t start_ind) {
     size_t n_g(m_g.size());
     
     if (n_g==0) {
-        ct.push_back(delta(m_qb, m_q, false));
+        ct.push_back(delta(m_q, m_qb, false));
         return c_amplitude(ct);
     }
     if (m_qb==0 and m_q==0) {
@@ -129,27 +129,27 @@ c_amplitude trace_t::build_ca(size_t start_ind) {
         return ca;
     }
     if (n_g==1) {
-        ct.push_back(fundamental(m_g.at(0),m_qb,m_q));
+        ct.push_back(fundamental(m_g.at(0),m_q,m_qb));
         return c_amplitude(ct);
     }
     
     size_t incr(0);
-    ct.push_back(fundamental(m_g.at(0),m_qb,start_ind));
+    ct.push_back(fundamental(m_g.at(0),m_q,start_ind));
     while (incr<n_g-2) {
         ct.push_back(fundamental(m_g.at(incr+1),start_ind+incr,start_ind+incr+1));
         incr++;
     }
-    ct.push_back(fundamental(m_g.back(),start_ind+incr,m_q));
+    ct.push_back(fundamental(m_g.back(),start_ind+incr,m_qb));
     return c_amplitude(ct);
 }
 void trace_t::print() {
-    if (m_qb!=0) cout<<"{"<<m_qb;
+    if (m_qb!=0) cout<<"{"<<m_q;
     else cout<<"(";
     for (vector<size_t>::iterator g_it(m_g.begin());g_it!=m_g.end();g_it++) {
         if (g_it!=m_g.begin() or m_qb!=0) cout<<",";
         cout<<*g_it;
     }
-    if (m_q!=0) cout<<","<<m_q<<"}";
+    if (m_qb!=0) cout<<","<<m_qb<<"}";
     else cout<<")";
 }
 

@@ -1,7 +1,7 @@
 o_objects = Main.o insert.o colourtools.o c_basis.o trace_basis.o f_basis.o gen_basis.o multiplet_basis.o
 c_objects = Main.C insert.C colourtools.C c_basis.C trace_basis.C f_basis.C gen_basis.C multiplet_basis.C
 
-CXX = g++ -g -O3 -std=c++11
+CXX = g++ -Wall -std=c++11
 
 Spectrum: $(o_objects)
 	$(CXX) $(CXXFLAGS) -o Spectrum -lm $(o_objects)
