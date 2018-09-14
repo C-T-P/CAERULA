@@ -53,8 +53,8 @@ delta::~delta() {
     
 }
 bool delta::is_free(size_t ind) {
-    if (ind != m_i and ind != m_j) return true;
-    else return false;
+    if (ind > m_i and ind > m_j) return true;
+    return false;
 }
 string delta::build_string() {
     string str;
@@ -74,7 +74,7 @@ fundamental::~fundamental() {
     
 }
 bool fundamental::is_free(size_t ind) {
-    if (ind != m_i and ind != m_a and ind != m_b) return true;
+    if (ind > m_i and ind > m_a and ind > m_b) return true;
     else return false;
 }
 string fundamental::build_string() {
@@ -93,7 +93,7 @@ antisymmetric::~antisymmetric() {
     
 }
 bool antisymmetric::is_free(size_t ind) {
-    if (ind != m_i and ind != m_j and ind != m_k) return true;
+    if (ind > m_i and ind > m_j and ind > m_k) return true;
     else return false;
 }
 string antisymmetric::build_string() {
@@ -112,7 +112,7 @@ symmetric::~symmetric() {
     
 }
 bool symmetric::is_free(size_t ind) {
-    if (ind != m_i and ind != m_j and ind != m_k) return true;
+    if (ind > m_i and ind > m_j and ind > m_k) return true;
     else return false;
 }
 string symmetric::build_string() {

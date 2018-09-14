@@ -156,10 +156,10 @@ vector<size_t> f_vec::get_indices() {
 size_t f_vec::no_groups() {
     return m_f_vec.size();
 }
-bool f_vec::is_tree_level() {
-    if (m_f_vec.size()==1) return true;
-    else return false;
-}
+//bool f_vec::is_tree_level() {
+//    if (m_f_vec.size()==1) return true;
+//    else return false;
+//}
 bool f_vec::has_sg() {
     for (auto& f_t : m_f_vec)
         if (f_t.vanishes()) return true;
@@ -268,8 +268,8 @@ void f_basis::normal_order() {
          });
 }
 void f_basis::make_perms() {
-    for (auto& v : m_f_basis)
-        if (v.is_tree_level()) m_amp_perms.push_back(v.get_indices());
+    for (auto& v : m_f_basis) m_amp_perms.push_back(v.get_indices());
+//        if (v.is_tree_level()) m_amp_perms.push_back(v.get_indices());
 }
 void f_basis::make_ca_basis() {
     for (auto& bv : m_f_basis)

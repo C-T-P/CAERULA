@@ -12,8 +12,8 @@ class trace_t {
     vector<size_t> m_g;
 
     public:
-        trace_t(vector<size_t> g_inds = {}, size_t qb_ind = 0, size_t q_ind = 0);
-        trace_t(size_t qb_ind, size_t q_ind);
+        trace_t(vector<size_t> g_inds = {}, size_t q_ind = 0, size_t qb_ind = 0);
+        trace_t(size_t q_ind, size_t qb_ind);
         ~trace_t();
         vector<trace_t> add_one_gluon(size_t g_ind);
         vector<size_t> get_indices();
@@ -42,7 +42,7 @@ class trace_vec {
         vector<trace_vec> conjugates();
         vector<size_t> get_indices();
         size_t no_groups();
-        bool is_tree_level();
+//        bool is_tree_level();
         bool has_sg();
         void order();
         bool operator>(trace_vec& rhs);

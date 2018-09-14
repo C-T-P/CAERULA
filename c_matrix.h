@@ -33,9 +33,9 @@ class c_matrix {
         size_t dim(m_mat2.dim());
         c_matrix m_matr(dim);
         if (dim==m_mat.size()) {
-            for (size_t i(0);i<dim;i++)
-                for (size_t j(0);j<dim;j++)
-                    for (size_t k(0);k<dim;k++)
+            for (size_t i(0);i<dim;++i)
+                for (size_t j(0);j<dim;++j)
+                    for (size_t k(0);k<dim;++k)
                         m_matr[i][j]+=m_mat[i][k]*m_mat2[k][j];
         }
         else {
@@ -43,6 +43,32 @@ class c_matrix {
             exit(EXIT_FAILURE);
         }
         return m_matr;
+    }
+    c_matrix operator+(c_matrix m_mat2) {
+        size_t dim(m_mat2.dim());
+        c_matrix m_matr(dim);
+        if (dim==m_mat.size()) {
+            for (size_t i(0);i<dim;++i)
+                for (size_t j(0);j<dim;++j)
+                    m_matr[i][j]=m_mat[i][j]+m_mat2[i][j];
+        }
+        else {
+            cout<<"Error adding square matrices "<<&m_mat<<" and "<< &m_mat2<<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
+            exit(EXIT_FAILURE);
+        }
+        return m_matr;
+    }
+    void operator+=(c_matrix m_mat2) {
+        size_t dim(m_mat2.dim());
+        if (dim==m_mat.size()) {
+            for (size_t i(0);i<dim;++i)
+                for (size_t j(0);j<dim;j++)
+                    m_mat[i][j]+=m_mat2[i][j];
+        }
+        else {
+            cout<<"Error adding square matrices "<<&m_mat<<" and "<< &m_mat2<<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
+            exit(EXIT_FAILURE);
+        }
     }
     void print() {
         size_t dim(m_mat.size());

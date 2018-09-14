@@ -129,8 +129,7 @@ int main(int argc, char **argv) {
         case 4: {
             clock_t t(clock());
             if (ortho_basis) {
-                cout<<"Will construct multiplet basis."<<endl;
-                cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
+                cout<<"Will read in multiplet basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
                 
                 multiplet_basis* m_basis = new multiplet_basis(n_g, n_qp);
                 
@@ -193,6 +192,10 @@ int main(int argc, char **argv) {
     else basis->ccms();
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
+    
+    cout<<"\nIs colour conserved? ";
+    if(basis->check_colourcons()) cout<<"Yes!"<<endl;
+    else cout<<"NO!"<<endl;
     
     if (!no_output) {
         cout<<"\nPrinting to file..."<<endl;

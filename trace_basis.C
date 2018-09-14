@@ -4,12 +4,12 @@
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds);
 
 // member functions of trace_t class
-trace_t::trace_t(vector<size_t> g_inds, size_t qb_ind, size_t q_ind) {
+trace_t::trace_t(vector<size_t> g_inds, size_t q_ind, size_t qb_ind) {
     m_q=q_ind;
     m_qb=qb_ind;
     m_g=g_inds;
 }
-trace_t::trace_t(size_t qb_ind, size_t q_ind) {
+trace_t::trace_t(size_t q_ind, size_t qb_ind) {
     m_q=q_ind;
     m_qb=qb_ind;
     m_g=vector<size_t>();
@@ -26,7 +26,7 @@ vector<trace_t> trace_t::add_one_gluon(size_t g_ind) {
         vector<size_t> new_g_inds(m_g);
         new_g_inds.insert(new_g_inds.begin()+pos,g_ind);
         pos++;
-        new_trs.push_back(trace_t(new_g_inds,m_qb,m_q));
+        new_trs.push_back(trace_t(new_g_inds,m_q,m_qb));
     }
     return new_trs;
 }
@@ -229,19 +229,20 @@ vector<size_t> trace_vec::get_indices() {
 size_t trace_vec::no_groups() {
     return m_tr_vec.size();
 }
-bool trace_vec::is_tree_level() {
-    size_t n_ql(0), n_con_g(0), n_qlg(0);
-    for (auto & tr_t : m_tr_vec) {
-        size_t ng(tr_t.no_g()), nqp(tr_t.no_qp());
-        if (ng==0 and nqp!=0) n_ql++;
-        else if (ng!=0 and nqp==0) n_con_g++;
-        else n_qlg++;
-    }
-    if (n_ql>0 and n_con_g==0 and n_qlg==0) return true;
-    if (n_ql==0 and n_con_g==1 and n_qlg==0) return true;
-    if (n_con_g==0 and n_qlg==1) return true;
-    return false;
-}
+//bool trace_vec::is_tree_level() {
+//    return true;
+//    size_t n_ql(0), n_con_g(0), n_qlg(0);
+//    for (auto & tr_t : m_tr_vec) {
+//        size_t ng(tr_t.no_g()), nqp(tr_t.no_qp());
+//        if (ng==0 and nqp!=0) n_ql++;
+//        else if (ng!=0 and nqp==0) n_con_g++;
+//        else n_qlg++;
+//    }
+//    if (n_ql>0 and n_con_g==0 and n_qlg==0) return true;
+//    if (n_ql==0 and n_con_g==1 and n_qlg==0) return true;
+//    if (n_con_g==0 and n_qlg>=1) return true;
+//    return false;
+//}
 bool trace_vec::has_sg() {
     for (auto& tr_t : m_tr_vec) 
         if (tr_t.vanishes()) return true;
@@ -333,7 +334,7 @@ trace_basis::trace_basis(size_t n_g, size_t n_qp) {
         for (const auto& qqb_inds : qqb_ind_combos) {
             trace_vec tmp_trv;
             for (size_t qp_no(0);qp_no<2*m_nqp;qp_no+=2)
-                tmp_trv.push_back(trace_t(qqb_inds.at(qp_no+1),qqb_inds.at(qp_no)));
+                tmp_trv.push_back(trace_t(qqb_inds.at(qp_no),qqb_inds.at(qp_no+1)));
             m_tr_basis.push_back(tmp_trv);
         }
     }
@@ -410,8 +411,8 @@ void trace_basis::normal_order() {
     });
 }
 void trace_basis::make_perms() {
-    for (auto& v : m_tr_basis)
-        if (v.is_tree_level()) m_amp_perms.push_back(v.get_indices());
+    for (auto& v : m_tr_basis) m_amp_perms.push_back(v.get_indices());
+//        if (v.is_tree_level()) m_amp_perms.push_back(v.get_indices());
 }
 void trace_basis::make_ca_basis() {
     for (auto& bv : m_tr_basis)

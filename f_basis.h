@@ -36,7 +36,7 @@ class f_vec {
         vector<f_vec> add_one_gluon(size_t g_ind);
         vector<size_t> get_indices();
         size_t no_groups();
-        bool is_tree_level();
+//        bool is_tree_level();
         bool has_sg();
         void order();
         bool operator>(f_vec& rhs);
