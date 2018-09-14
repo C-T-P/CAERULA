@@ -3,8 +3,10 @@
 #include "trace_basis.h"
 #include "gen_basis.h"
 
+string get_filename(size_t n_g, size_t n_qp);
+
 // member functions of multiplet_basis class
-multiplet_basis::multiplet_basis(size_t n_g, size_t n_qp) {
+multiplet_basis::multiplet_basis(size_t n_g, size_t n_qp) : gen_basis(get_filename(n_g, n_qp)) {
     // set basis type
     m_btype=1;
     
@@ -12,30 +14,7 @@ multiplet_basis::multiplet_basis(size_t n_g, size_t n_qp) {
     m_ng=n_g;
     m_nqp=n_qp;
     
-    string filename="";
-    if (n_qp!=0) filename+=to_string(n_qp)+"qqb";
-    if (n_g!=0) filename+=to_string(n_g)+"g";
-    
-    filename+="-multiplet.txt";
-    
-    ifstream fin("precalc_multiplet_bases/"+filename);
-    if (!fin) {
-        cerr<<"Error: No precalculated multiplet basis file "<< filename <<" found in /precalc_multiplet_bases/"<<endl;
-        exit(EXIT_FAILURE);
-    }
-    
-    gen_basis basis("precalc_multiplet_bases/"+filename);
-    
-    m_process=basis.m_process;
-    m_ca_basis=basis.m_ca_basis;
-    m_dim=basis.m_dim;
-    m_confact=1.;
-    m_amp_perms=basis.m_amp_perms;
-    m_normalisations=basis.m_normalisations;
-    
-    // initialise matrices
-    m_smat=c_matrix(m_dim);
-    m_ccmats=vector<c_matrix>();
+    // initialise basis change matrix
     m_bcm=matrix();
 }
 multiplet_basis::~multiplet_basis() {
@@ -65,4 +44,21 @@ matrix multiplet_basis::bcm() {
     m_bcm = tmp_bcm;
     
     return m_bcm;
+}
+
+// helper function
+string get_filename(size_t n_g, size_t n_qp) {
+    string filename="";
+    if (n_qp!=0) filename+=to_string(n_qp)+"qqb";
+    if (n_g!=0) filename+=to_string(n_g)+"g";
+    
+    filename+="-multiplet.txt";
+    
+    ifstream fin("precalc_multiplet_bases/"+filename);
+    if (!fin) {
+        cerr<<"Error: No precalculated multiplet basis file "<< filename <<" found in /precalc_multiplet_bases/"<<endl;
+        exit(EXIT_FAILURE);
+    }
+    filename="precalc_multiplet_bases/"+filename;
+    return filename;
 }

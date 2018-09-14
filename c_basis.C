@@ -122,7 +122,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, size_t up_to_NC) {
     
     for (size_t i(0);i<m_dim;i++) {
         for (size_t j(0);j<m_dim;j++) {
-//            cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
+            cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
             c_amplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
 //            cout<<"\n---------------------------"<<endl;
 //            cout<<"bvj = ";
@@ -147,3 +147,44 @@ vector<c_matrix> c_basis::ccms(size_t up_to_NC) {
     }
     return m_ccmats;
 }
+
+bool c_basis::check_colourcons() {
+    bool is_conserved(true);
+    size_t no_legs(m_process.no_of_legs());
+    complex<double> casimir(0.);
+    for (size_t i(1);i<=no_legs;i++) {
+        if (m_process.leg(i)=="q" or m_process.leg(i)=="qb") casimir+=CF;
+        else if (m_process.leg(i)=="g") casimir+=CA;
+    }
+    casimir*=0.5;
+    
+//    c_matrix casimir_mat(m_smat);
+//    for (size_t i(0); i<m_dim; ++i)
+//        for (size_t j(0); j<m_dim; ++j)
+//            casimir_mat[i][j]*=casimir;
+//
+//    c_matrix sum_ccmats(m_dim);
+//    for (size_t i(0); i<no_ccmats; ++i)
+//        sum_ccmats+=m_ccmats.at(i);
+    
+    size_t no_ccmats(m_ccmats.size());
+    for (size_t i(0); i<m_dim; ++i) {
+        for (size_t j(0); j<m_dim; ++j) {
+            complex<double> sum_all(casimir*m_smat[i][j]);
+            for (size_t k(0); k<no_ccmats; ++k)
+                sum_all+=m_ccmats[k][i][j];
+            if (abs(sum_all)>eps) is_conserved=false;
+        }
+    }
+    
+//    cout<<"Sum TProds:"<<endl;
+//    sum_ccmats.print();
+//    cout<<"Casimir Matrix:"<<endl;
+//    casimir_mat.print();
+
+    return is_conserved;
+}
+
+
+
+

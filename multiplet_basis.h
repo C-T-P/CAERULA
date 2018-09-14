@@ -1,11 +1,11 @@
 #ifndef MULTIPLET_BASIS_H
 #define MULTIPLET_BASIS_H
 
-#include "c_basis.h"
+#include "gen_basis.h"
 
 using namespace std;
 
-class multiplet_basis : public c_basis {
+class multiplet_basis : public gen_basis {
     
     matrix m_bcm;
     size_t m_ng, m_nqp;
