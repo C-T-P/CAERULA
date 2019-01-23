@@ -17,4 +17,4 @@ See './Spectrum -help' for further informations.
 Christian Tobias Preuss
 
 ## LICENSE
-The Spectrum package is licensed under the GNU GPL version 2 - see the [COPYING.md](COPYING.md) for details.
+The Spectrum package is licensed under the GNU GPL version 3 - see the [COPYING.md](COPYING.md) for details.
