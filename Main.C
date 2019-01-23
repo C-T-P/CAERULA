@@ -1,3 +1,11 @@
+// Copyright (C) 2018 Christian T Preuss
+// This file is part of Spectrum.
+//
+// Spectrum is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// any later version.
+
 #include<fstream>
 #include<iomanip>
 #include<climits>
@@ -11,8 +19,11 @@
 
 void run_error();
 void print_help_message();
+void print_startup_message();
 
 int main(int argc, char **argv) {
+    print_startup_message();
+
     c_basis* basis=NULL;
     size_t n_g(0), n_qp(0);
     string expr, filename;
@@ -213,17 +224,34 @@ void run_error() {
 void print_help_message() {
     cout<<"\nOptions:"<<endl;
     cout<<"\t-h, -help:\t\tPrint this message and exit."<<endl;
+    cout<<endl;
     cout<<"\t-e, -evaluate:\t\tEvaluate colour amplitude in which all indices must be contracted."<<endl;
     cout<<"\t-s, -simplify:\t\tSimplify colour term by replacing internal quark and gluon rings. Returns colour amplitude."<<endl;
     cout<<"\t\t\t\tReturns complex number or NAN if not all indices are contracted."<<endl;
+    cout<<endl;
     cout<<"\t-f, -file:\t\tRead process and colour basis from file and compute the soft matrix and all colour change matrices."<<endl;
     cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis and compute the soft matrix and all colour change matrices."<<endl;
     cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis and compute the soft matrix and all colour change matrices."<<endl;
-    cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\nWorks only for pure gluon processes with ng>=3."<<endl;
-    cout<<"\t-multiplet:\t\t\tBuild multiplet basis (orthogonal basis).\nWorks only if a precalculated multiplet basis for this process is provided."<<endl;
-    cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.\nWorks only together with the -multiplet option and if a precalculated multiplet basis for the process is provided."<<endl;
+    cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.\n\t\t\t\tWorks only for pure gluon processes with ng>=3."<<endl;
+    cout<<"\t-multiplet:\t\tBuild multiplet basis (orthogonal basis).\n\t\t\t\tWorks only if a precalculated multiplet basis for this process is provided."<<endl;
+    cout<<endl;
+    cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.\n\t\t\t\tWorks only together with the -multiplet option and if a precalculated multiplet basis for the process is provided."<<endl;
     //cout<<"\t-NC:\t\t\tSpecify order in 1/NC to which all colour products shall be evaluated."<<endl;
     cout<<"\t-dnorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
     cout<<endl;
     exit(EXIT_SUCCESS);
+}
+void print_startup_message() {
+    cout<<endl;
+    cout<<"============================================================"<<endl;
+    cout<<"============            \e[31mSpe\e[32mctr\e[34mum\e[0m             ==============="<<endl;
+    cout<<"============---------------------------------==============="<<endl;
+    cout<<"============  Calculations in Colour Space   ==============="<<endl;
+    cout<<"============================================================"<<endl;
+    cout<<endl;
+    cout<<"Spectrum version 1.0, Copyright (C) 2018 Christian T Preuss"<<endl;
+    cout<<endl;
+    cout<<"=== Author =================================================\n"<<endl;
+    cout<<"\tChristian Tobias Preuss\n\tSchool of Physics, Monash University,\n\t3800 Melbourne, Australia\n\temail: christian.preuss@monash.edu\n"<<endl;
+    cout<<"============================================================\n"<<endl;
 }
