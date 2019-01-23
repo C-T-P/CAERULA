@@ -1,7 +1,7 @@
 # Spectrum
 Spectrum is a C++ package to calculate matrices in colour space describing the gluon exchange between two partonic legs needed for the construction of the soft anomalous dimension matrix. 
 
-## INSTALLATION
+## COMPILING
 Just run 'make' in the Spectrum directory.
 
 ## USAGE
