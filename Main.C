@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
     c_basis* basis=NULL;
     size_t n_g(0), n_qp(0);
     string expr, filename;
-    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), print_to_console(false), no_output(false);
-    int NC_order(INT_MAX);
+    bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), 
+      print_to_console(false), no_output(false), to_LC(false);
     
     // read in run parameters
     if (argc==1) print_help_message();
@@ -85,10 +85,6 @@ int main(int argc, char **argv) {
             if (!adjoint_basis) ortho_basis=true;
             else run_error();
         }
-//        else if (strcmp(argv[i],"-NC")==0) {
-//            NC_order=stoi(argv[i+1]);
-//            i++;
-//        }
         else if (strcmp(argv[i],"-dnorm")==0) {
             norm_basis=false;
         }
@@ -103,19 +99,22 @@ int main(int argc, char **argv) {
             no_output=true;
             cout<<"No output file will be saved."<<endl;
         }
+	else if (strcmp(argv[i],"-LC")==0) {
+            to_LC=true;
+        }
     }
     
-    // print order in 1/NC to which all terms are evaluated
-//    cout<<"\n\033[1;31mOrder of 1/NC set to ";
-//    if (NC_order!=INT_MAX) cout << NC_order << ".\033[0m\n" << endl;
-//    else cout << "Infinity.\033[0m\n" << endl;
+    // print warning that only LC will be used
+    if (to_LC)
+      cout<<"\n\033[1;31mLeading Colour enabled.\033[0m\n" << endl;
     
     // perform colour calculations depending on the given input
     switch (runopt) {
         case 1: {
             c_amplitude ca(expr);
             ca.print();
-            ca.evaluate();
+	    if (to_LC) ca.evaluate_LC();
+	    else ca.evaluate();
             cout<<"= "<<ca.result()<<endl;
             
             return 0;
@@ -181,26 +180,24 @@ int main(int argc, char **argv) {
         
     clock_t t(clock());
     cout<<"\nCalculating the soft matrix..."<<endl;
+    c_matrix soft_matrix(basis->sm(to_LC));
     if (print_to_console) {
-        c_matrix soft_matrix(basis->sm());
         cout<<"\nSoft Matrix:"<<endl;
         soft_matrix.print();
     }
-    else basis->sm();
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
 
     t=clock();
     cout<<"\nCalculating the colour change matrices..."<<endl;
+    vector<c_matrix> cc_mats(basis->ccms(to_LC));
     if (print_to_console) {
-        vector<c_matrix> cc_mats(basis->ccms(NC_order));
         cout<<"\nColour Change Matrices:"<<endl;
         for (auto& ccm : cc_mats) {
             ccm.print();
             cout<<endl;
         }
     }
-    else basis->ccms();
     t=clock()-t;
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
     
@@ -210,7 +207,7 @@ int main(int argc, char **argv) {
     
     if (!no_output) {
         cout<<"\nPrinting to file..."<<endl;
-        basis->print_to_file();
+        basis->print_to_file("", to_LC);
         cout<<"Done!"<<endl;
     }
     

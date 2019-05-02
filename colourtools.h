@@ -1,9 +1,10 @@
-// Copyright (C) 2018 Christian T Preuss                                                                                                                                                                                                                                       
-// This file is part of Spectrum.                                                                                                                                                                                                                                              
-//                                                                                                                                                                                                                                                                             
-// Spectrum is free software: you can redistribute it and/or modify                                                                                                                                                                                                            
-// it under the terms of the GNU General Public License as published by                                                                                                                                                                                                        
-// the Free Software Foundation, either version 3 of the License, or                                                                                                                                                                                                           // any later version.  
+// Copyright (C) 2018 Christian T Preuss
+// This file is part of Spectrum.
+//
+// Spectrum is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// any later version.  
 
 #ifndef COLOURTOOLS_H
 #define COLOURTOOLS_H
@@ -23,14 +24,21 @@ const double TR(1./2.); // generator normalisation
 const double CF((NC*NC-1)/(2.*NC)); // Fundamental Casimir
 const double CA(2.*TR*NC); // Adjoint Casimir
 
+//*********************************************************************************************************
+//
+// Class process
+//
+//*********************************************************************************************************
+
 class process {
-    //incoming and outgoing legs: an index is assigned to each leg (first component) and the particle is stored in second component
-    vector<pair<size_t,string>> m_in_legs;
-    vector<pair<size_t,string>> m_out_legs;
-    public:
-        process();
-        ~process();
-        void add_in_leg(string ptcl);
+  //incoming and outgoing legs: an index is assigned to each leg (first component) and the particle is stored in second component
+  vector<pair<size_t,string>> m_in_legs;
+  vector<pair<size_t,string>> m_out_legs;
+
+ public:
+  process();
+  ~process();
+  void add_in_leg(string ptcl);
         void add_out_leg(string ptcl);
         void delete_all_legs();
         size_t no_of_legs();
@@ -38,104 +46,269 @@ class process {
         bool is_in_leg(size_t lno);
 };
 
+//*********************************************************************************************************
+// 
+// Class delta
+//
+//*********************************************************************************************************
+
 class delta {
-    public:
-        size_t m_i, m_j;
-        bool m_adj;
-        delta(size_t i, size_t j, bool adj);
-        ~delta();
-        bool is_free(size_t ind);
-        string build_string();
+ public:
+  // Adjoint/Fundamental indices i, j in k_[i,j]/K_[i,j]
+  size_t m_i, m_j;
+
+  // Are indices adjoint?
+  bool m_adj;
+  
+  // Constructor from indices
+  delta(size_t i, size_t j, bool adj);
+
+  // Destructor
+  ~delta();
+
+  // Method to check whether given index is free
+  bool is_free(size_t ind);
+
+  //Method to build string representation
+  string build_string();
 };
+
+//*********************************************************************************************************
+//
+// Class fundamental
+//
+//*********************************************************************************************************
+
 class fundamental {
-    public:
-        size_t m_i, m_a, m_b;
-        fundamental(size_t i, size_t a, size_t b);
-        ~fundamental();
-        bool is_free(size_t ind);
-        string build_string();
+ public:
+  // Adjoint index i and fundamental indices a, b in t_[i,a,b]      
+  size_t m_i, m_a, m_b;
+
+  // Constructor from indices
+  fundamental(size_t i, size_t a, size_t b);
+
+  // Destructor
+  ~fundamental();
+  
+  // Method to check whether given index is free
+  bool is_free(size_t ind);
+
+  // Method to build string representation
+  string build_string();
 };
+
+//*********************************************************************************************************
+//
+// Class antisymmetric
+//
+//*********************************************************************************************************
+
 class antisymmetric {
-    public:
-        size_t m_i, m_j, m_k;
-        antisymmetric(size_t i, size_t j, size_t k);
-        ~antisymmetric();
-        bool is_free(size_t ind);
-        string build_string();
+ public:
+  // Adjoint indices i, j, k in  f_[i,j,k]
+  size_t m_i, m_j, m_k;
+
+  // Constructor from indices
+  antisymmetric(size_t i, size_t j, size_t k);
+
+  // Destructor
+  ~antisymmetric();
+
+  // Method to check whether given index is free
+  bool is_free(size_t ind);
+
+  // Method to build string representation
+  string build_string();
 };
+
+//*********************************************************************************************************
+//
+// Class symmetric
+//
+//*********************************************************************************************************
+
 class symmetric {
-    public:
-        size_t m_i, m_j, m_k;
-        symmetric(size_t i, size_t j, size_t k);
-        ~symmetric();
-        bool is_free(size_t ind);
-        string build_string();
+ public:
+  // Adjoint indices i, j, k in d_[i,j,k]
+  size_t m_i, m_j, m_k;
+
+  // Constructor from indices
+  symmetric(size_t i, size_t j, size_t k);
+
+  // Destructor
+  ~symmetric();
+
+  // Method to check whether given index is free
+  bool is_free(size_t ind);
+
+  // Method to build string representation
+  string build_string();
 };
+
+//*********************************************************************************************************
+//
+// Class c_term
+//
+//*********************************************************************************************************
+
 class c_term {
-    complex<double> m_cnum;
-    vector<delta> m_k_vec;
-    vector<fundamental> m_t_vec;
-    vector<antisymmetric> m_f_vec;
-    vector<symmetric> m_d_vec;
-    int m_NC_order;
-    size_t m_fi;
+ private:
+  // The prefactor of the colour term
+  complex<double> m_cnum;
+
+  // The product of all Kronecker deltas (both fundamental and adjoint)
+  vector<delta> m_k_vec;
+
+  // The product of all fundamental generators
+  vector<fundamental> m_t_vec;
+
+  // The product of all antisymmetric structure constants
+  vector<antisymmetric> m_f_vec;
+
+  // The product of all symmetric structure constants
+  vector<symmetric> m_d_vec;
+
+  // Integer to store first free index 
+  size_t m_fi;
     
-    void replace_zero();
-    bool replace_adjoint();
-    void evaluate_deltas();
-    void shift_inds(size_t by, bool all);
+  // Method to check whether colour term vanishes
+  void replace_zero();
+
+  // Method to replace quantities with adjoint indices
+  bool replace_adjoint();
+
+  // Method to replace Kronecker deltas (both fundamental and adjoint)
+  void evaluate_deltas(bool to_LC = false);
+
+  // Method to shift all indices by a constant
+  void shift_inds(size_t by, bool all);
     
-    public:
-        c_term();
-        c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c = complex<double>(0.,0.), int NC_o= 0);
-        ~c_term();
+ public:
+  // Default constructor
+  c_term();
+
+  // Constructor from given quantities
+  c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c = complex<double>(0.,0.));
+
+  // Destructor
+  ~c_term();
+  
+  // Method to multiply with another colour term (without checking for duplicate indices)
+  void push_back(c_term ct);
+
+  // Method to multiply with a Kronecker delta (without checking for duplicate indices)
+  void push_back(delta k);
+
+  // Method to multiply with a fundamental generator (without checking for duplicate indices)
+  void push_back(fundamental t);
+
+  // Method to multiply with an antisymmetric structure constant (without checking for duplicate indices)
+  void push_back(antisymmetric f);
+
+  // Method to multiply with a symmetric structure constant (without checking for duplicate indices)
+  void push_back(symmetric d);
+
+  // Method to set the prefactor
+  void set_cnumber(complex<double> c);
     
-        void push_back(c_term ct);
-        void push_back(delta k);
-        void push_back(fundamental t);
-        void push_back(antisymmetric f);
-        void push_back(symmetric d);
-        void set_cnumber(complex<double> c);
-        void set_NC_order(int NC_o);
+  // Method to contract all internal indices
+  // (no replacements will be made that produce new terms)
+  void simplify();
+
+  // Method to get hermitian conjugate
+  c_term hconj();
+
+  // Method to multiply with another colour term (avoiding duplicate indices)
+  c_term operator*(c_term ct);
+
+  // Method to get result from index contraction (if cnumber)
+  complex<double> result();
+  
+  // Method to delete all quantities from colour term
+  void clear();
     
-        void simplify();
-        c_term hconj();
-        c_term operator*(c_term ct);
-        complex<double> result();
-        void clear();
-    
-        string build_string();
-        void print();
-    
-        friend class c_amplitude;
+  // Method to get string representation of colour term
+  string build_string();
+
+  // Method to print string representation to terminal
+  void print();
+  
+  // Declare c_amplitude as friend class
+  // (needed to alter c_terms)
+  friend class c_amplitude;
 };
+
+//*********************************************************************************************************
+//
+// Class c_amplitude
+//
+//*********************************************************************************************************
+
 class c_amplitude {
-    vector<c_term> m_cterm_vec;
-    complex<double> m_result;
+  // Sum of all colour terms
+  vector<c_term> m_cterm_vec;
+  
+  // Result of index contraction in all terms (if cnumber)
+  complex<double> m_result;
     
-    public:
-        c_amplitude();
-        c_amplitude(c_term ct);
-        c_amplitude(string expr);
-        ~c_amplitude();
+ public:
+  // Default constructor
+  c_amplitude();
+
+  // Constructor from colour term
+  c_amplitude(c_term ct);
+  
+  // Constructor from string representation of colour term
+  c_amplitude(string expr);
+
+  // Destructor
+  ~c_amplitude();
+  
+  // Method to add another colour term
+  void add(c_term ct);
+
+  // Method to return hermitian conjugate of colour amplitude
+  c_amplitude hconj();
+
+  // Method to multiply by complex number
+  c_amplitude operator*(complex<double> z);
+
+  // Method to multiply with another colour amplitude (avoiding duplicate indices)
+  c_amplitude operator*(c_amplitude ca);
+
+  // Method to multiply with another colour amplitude (without check for duplicate indices)
+  void multiply(c_amplitude ca);
+
+  // Method to shift all indices by constant
+  c_amplitude shift_to_internal(size_t by);
+
+  // Method to calculate scalar product < c1 | c2 > of two colour amplitudes
+  // If to_LC = true, all terms suppressed by at least 1/NC are neglected
+  complex<double> scprod(c_amplitude ca, bool to_LC = false);
+
+  // Method to delete all terms
+  void clear();
+  
+  // Method to evaluate colour amplitude at leading colour order
+  void evaluate_LC();
+
+  // Method to evaluate colour amplitude at full colour
+  void evaluate();
+
+  // Method to simplify colour amplitude (calls c_term::simplify() for all terms)
+  void simplify();
+
+  // Method to get result of index contraction (if cnumber)
+  complex<double> result();
     
-        void add(c_term ct);
-        c_amplitude hconj();
-        c_amplitude operator*(complex<double> z);
-        c_amplitude operator*(c_amplitude ca);
-        void multiply(c_amplitude ca);
-        c_amplitude shift_to_internal(size_t by);
-        complex<double> scprod(c_amplitude ca, size_t up_to_NC = INT_MAX);
-        void clear();
-    
-        void evaluate();
-        void simplify();
-        //void evaluate(size_t up_to_NC);
-        complex<double> result();
-    
-        size_t no_of_terms();
-        string build_string();
-        void print();
+  // Method to get number of terms in colour amplitude
+  size_t no_of_terms();
+
+  // Method to build string representation of colour amplitude
+  string build_string();
+
+  // Method to print string representation to terminal
+  void print();
 };
 
 #endif
