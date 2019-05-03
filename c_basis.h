@@ -54,7 +54,7 @@ class c_basis {
  
  public:
   // Method to normalise basis vectors
-  void normalise(bool to_LC = false);
+  void normalise();
   
   // Method to get dimension of basis
   size_t dim();

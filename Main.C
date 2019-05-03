@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     }
 
     
-    if (norm_basis and !construct_bcm) basis->normalise(is_LC);
+    if (norm_basis and !construct_bcm) basis->normalise();
     if (print_to_console) {
         cout<<endl;
         if (construct_bcm or norm_basis) cout<<"Normalised ";

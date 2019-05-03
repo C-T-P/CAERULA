@@ -14,9 +14,9 @@
 
 double eps = 1.e-4;
 
-void c_basis::normalise(bool to_LC) {
+void c_basis::normalise() {
   for (size_t i(0);i<m_dim;i++) {
-    complex<double> z=m_ca_basis.at(i).scprod(m_ca_basis.at(i), to_LC);
+    complex<double> z=m_ca_basis.at(i).scprod(m_ca_basis.at(i));
     m_normalisations.at(i)=sqrt(abs(z));
     m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
   }
