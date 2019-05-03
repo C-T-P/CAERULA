@@ -14,9 +14,9 @@
 
 double eps = 1.e-4;
 
-void c_basis::normalise() {
+void c_basis::normalise(bool to_LC) {
   for (size_t i(0);i<m_dim;i++) {
-    complex<double> z=m_ca_basis.at(i).scprod(m_ca_basis.at(i));
+    complex<double> z=m_ca_basis.at(i).scprod(m_ca_basis.at(i), to_LC);
     m_normalisations.at(i)=sqrt(abs(z));
     m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
   }
@@ -121,10 +121,10 @@ c_matrix c_basis::sm(bool to_LC) {
   for (size_t i(0); i<m_dim; ++i) {
     for (size_t j(0); j<m_dim; ++j) {
       // Calculate scalar products only for full colour
-      if (true) {
+      if (!to_LC) {
 	//            cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
 	complex<double> r;
-	if (j>=i) r = m_ca_basis.at(i).scprod(m_ca_basis.at(j), to_LC);
+	if (j>=i) r = m_ca_basis.at(i).scprod(m_ca_basis.at(j));
 	else r = m_smat[j][i];
 	m_smat[i][j] = (abs(r) < eps ? 0. : r);
       }

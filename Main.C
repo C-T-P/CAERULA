@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     size_t n_g(0), n_qp(0);
     string expr, filename;
     bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), 
-      print_to_console(false), no_output(false), to_LC(false);
+      print_to_console(false), no_output(false), is_LC(false);
     
     // read in run parameters
     if (argc==1) print_help_message();
@@ -100,12 +100,12 @@ int main(int argc, char **argv) {
             cout<<"No output file will be saved."<<endl;
         }
 	else if (strcmp(argv[i],"-LC")==0) {
-            to_LC=true;
+            is_LC=true;
         }
     }
     
     // print warning that only LC will be used
-    if (to_LC)
+    if (is_LC)
       cout<<"\n\033[1;31mLeading Colour enabled.\033[0m\n" << endl;
     
     // perform colour calculations depending on the given input
@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
         case 1: {
             c_amplitude ca(expr);
             ca.print();
-	    if (to_LC) ca.evaluate_LC();
+	    if (is_LC) ca.evaluate_LC();
 	    else ca.evaluate();
             cout<<"= "<<ca.result()<<endl;
             
@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
     }
 
     
-    if (norm_basis and !construct_bcm) basis->normalise();
+    if (norm_basis and !construct_bcm) basis->normalise(is_LC);
     if (print_to_console) {
         cout<<endl;
         if (construct_bcm or norm_basis) cout<<"Normalised ";
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
         
     clock_t t(clock());
     cout<<"\nCalculating the soft matrix..."<<endl;
-    c_matrix soft_matrix(basis->sm(to_LC));
+    c_matrix soft_matrix(basis->sm(is_LC));
     if (print_to_console) {
         cout<<"\nSoft Matrix:"<<endl;
         soft_matrix.print();
@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
 
     t=clock();
     cout<<"\nCalculating the colour change matrices..."<<endl;
-    vector<c_matrix> cc_mats(basis->ccms(to_LC));
+    vector<c_matrix> cc_mats(basis->ccms(is_LC));
     if (print_to_console) {
         cout<<"\nColour Change Matrices:"<<endl;
         for (auto& ccm : cc_mats) {
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
     
     if (!no_output) {
         cout<<"\nPrinting to file..."<<endl;
-        basis->print_to_file("", to_LC);
+        basis->print_to_file("", is_LC);
         cout<<"Done!"<<endl;
     }
     
