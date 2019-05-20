@@ -39,6 +39,9 @@ class c_basis {
   // Normalisation factors of basis vectors
   vector<double> m_normalisations;
 
+  // Norms^2 of the basis vectors as ColourSums
+  vector<ColourSum> m_norms2;
+
   // The scalar product (soft) matrix
   c_matrix m_smat;
 
@@ -54,7 +57,7 @@ class c_basis {
  
  public:
   // Method to normalise basis vectors
-  void normalise();
+  void normalise(bool to_LC = false);
   
   // Method to get dimension of basis
   size_t dim();

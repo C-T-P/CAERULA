@@ -63,6 +63,430 @@ bool process::is_in_leg(size_t lno) {
 
 //*********************************************************************************************************
 //
+// Member functions of class ColourFactor
+//
+//*********************************************************************************************************
+
+ColourFactor::ColourFactor() {
+  m_NC = 0;
+  m_TR = 0;
+  m_CF = 0;
+  m_CA = 0;
+  m_cmplx = 1.;
+}
+
+ColourFactor::ColourFactor(string expr) {
+  m_NC = 0;
+  m_TR = 0;
+  m_CF = 0;
+  m_CA = 0;
+  m_cmplx = 1.;
+
+  for (size_t mpos(expr.find('*')), dpos(expr.find('/')); dpos!=string::npos or mpos!=string::npos
+	 or expr.length()>0; mpos=expr.find('*'), dpos=expr.find('/')) {
+    string factor;
+    int pow(dpos < mpos ? -1 : +1);
+    if (mpos == string::npos and dpos == string::npos) {
+      factor=expr;
+      expr="";
+    }
+    else {
+      // Choose which symbol came first
+      size_t del(mpos < dpos ? mpos : dpos);
+      
+      size_t dpos2(expr.find('/',del+1)), mpos2(expr.find('*',del+1));
+      if (dpos2 == string::npos && mpos2 == string::npos) {
+	factor = expr.substr(del+1);
+	expr = expr.substr(0,del);
+      }
+      else {
+	size_t del2(dpos2 < mpos2 ? dpos2 : mpos2);
+	factor = expr.substr(del+1,del2-del-1);
+	expr.erase(del,del2-del);
+      }
+    }
+
+    if (factor == "NC") m_NC += pow;
+    else if (factor == "TR") m_TR += pow;
+    else if (factor == "CF") m_CF += pow;
+    else if (factor == "CA") m_CA += pow;
+    else cout << "ColourFactor::ColourFactor() unknown expression "
+	      << factor << " encountered." << endl;
+  }
+}
+
+ColourFactor::ColourFactor(complex<double> cnum, int pow_NC, int pow_TR, int pow_CF, int pow_CA) {
+  m_cmplx = cnum;
+  m_NC = pow_NC;
+  m_TR = pow_TR;
+  m_CF = pow_CF;
+  m_CA = pow_CA;
+}
+
+string ColourFactor::get_string() {
+  string str("");
+  str += "(" + to_string(m_cmplx.real());
+  if (m_cmplx.imag() < 0.) str += "-";
+  else str += "+";
+  str += to_string(m_cmplx.imag())+")";
+  if (m_NC != 0) str +=  " * NC^{" + to_string(m_NC) + "}";
+  if (m_TR != 0) {
+    str += " * TR^{" + to_string(m_TR) + "}";
+  }
+  if (m_CF != 0) {
+    str += " * CF^{" + to_string(m_CF) + "}";
+ }
+ if (m_CA != 0) {
+    str += " * CA^{" + to_string(m_CA) + "}";
+ }
+ return str;
+}
+
+void ColourFactor::operator=(string expr) {
+  ColourFactor newColFac(expr);
+  
+  m_cmplx = newColFac.m_cmplx;
+  m_NC = newColFac.m_NC;
+  m_TR = newColFac.m_TR;
+  m_CF = newColFac.m_CF;
+  m_CA = newColFac.m_CA;
+}
+
+void ColourFactor::operator=(complex<double> z) {
+  m_NC = 0;
+  m_TR = 0;
+  m_CF = 0;
+  m_CA = 0;
+  m_cmplx = z;
+}
+
+ColourFactor ColourFactor::operator*(string expr) {
+  ColourFactor result(expr);
+  result *= (*this);
+  return result;
+}
+
+void ColourFactor::operator*=(string expr) {
+  ColourFactor rhs(expr);
+  m_NC += rhs.m_NC;
+  m_TR += rhs.m_TR;
+  m_CF += rhs.m_CF;
+  m_CA += rhs.m_CA;
+  m_cmplx *= rhs.m_cmplx;
+}
+
+ColourFactor ColourFactor::operator*(ColourFactor rhs) {
+  ColourFactor result;
+
+  result.m_NC = m_NC + rhs.m_NC;
+  result.m_TR = m_TR + rhs.m_TR;
+  result.m_CF = m_CF + rhs.m_CF;
+  result.m_CA = m_CA + rhs.m_CA;
+  result.m_cmplx = m_cmplx * rhs.m_cmplx;
+
+  return result;
+}
+
+void ColourFactor::operator*=(ColourFactor rhs) {
+  m_NC += rhs.m_NC;
+  m_TR += rhs.m_TR;
+  m_CF += rhs.m_CF;
+  m_CA += rhs.m_CA;
+  m_cmplx *= rhs.m_cmplx;
+}
+
+ColourFactor ColourFactor::operator*(complex<double> rhs) {
+  ColourFactor result(*this);
+  result.m_cmplx = rhs;
+  return result;
+}
+
+void ColourFactor::operator*=(complex<double> rhs) {
+  m_cmplx *= rhs;
+}
+
+ColourFactor ColourFactor::operator/(ColourFactor rhs) {
+  ColourFactor result;
+
+  result.m_NC = m_NC - rhs.m_NC;
+  result.m_TR = m_TR - rhs.m_TR;
+  result.m_CF = m_CF - rhs.m_CF;
+  result.m_CA = m_CA - rhs.m_CA;
+  result.m_cmplx = m_cmplx / rhs.m_cmplx;
+
+  return result;
+}
+
+void ColourFactor::operator/=(ColourFactor rhs) {
+  m_NC -= rhs.m_NC;
+  m_TR -= rhs.m_TR;
+  m_CF -= rhs.m_CF;
+  m_CA -= rhs.m_CA;
+  m_cmplx = m_cmplx / rhs.m_cmplx;
+}
+
+ColourFactor ColourFactor::cconj() {
+  ColourFactor new_gf = ColourFactor(m_cmplx, m_NC, m_TR, m_CF, m_CA);
+  new_gf.m_cmplx = conj(new_gf.m_cmplx);
+  return new_gf;
+}
+
+void ColourFactor::del() {
+  m_NC = 0;
+  m_TR = 0;
+  m_CF = 0;
+  m_CA = 0;
+  m_cmplx = 0.;
+}
+
+void ColourFactor::replace_CA() {
+  // Replace CA by 2*TR*NC
+  m_NC += m_CA;
+  m_TR += m_CA;
+  while (m_CA > 0) {
+    m_cmplx *= 2.;
+    --m_CA;
+  }
+  while (m_CA < 0) {
+    m_cmplx *= 1./2.;
+    ++m_CA;
+  }
+}
+
+void ColourFactor::replace_CF() {
+  // Replace CF by TR*NC (large-NC approximation)
+  m_NC += m_CF;
+  m_TR += m_CF;
+  m_CF = 0;
+}
+
+void ColourFactor::replace_TR() {
+  // Replace TR by whatever value it was assigned
+  while (m_TR > 0) {
+    m_cmplx *= 2.;
+    --m_TR;
+  }
+  while (m_TR > 0) {
+    m_cmplx *= 1./2.;
+    ++m_TR;
+  }
+}
+
+int ColourFactor::get_order_NC() {
+  int order(m_NC);
+  order += m_CF;
+  order += m_CA;
+  return order;
+}
+
+complex<double> ColourFactor::get_cnum() {
+  complex<double> result(m_cmplx);
+  result *= complex<double>(pow(TR, m_TR),0.);
+  result *= complex<double>(pow(NC, m_NC),0.);
+  result *= complex<double>(pow(CF, m_CF),0.);
+  result *= complex<double>(pow(CA, m_CA),0.);
+  return result; 
+}
+
+complex<double> ColourFactor::get_cnum_LC() {
+  complex<double> result(m_cmplx);
+  result *= complex<double>(pow(TR, m_TR),0.);
+  result *= complex<double>(pow(NC, m_NC),0.);
+  result *= complex<double>(pow(TR*NC, m_CF),0.);
+  result *= complex<double>(pow(CA, m_CA),0.);
+  return result; 
+  
+}
+
+complex<double> ColourFactor::get_cnum_large_NC() {
+  complex<double> result(m_cmplx);
+
+  // Replace CA first
+  replace_CA();
+
+  // Use leading colour approximation for CF: CF -> TR*NC 
+  int pow_NC = m_NC + m_CF;
+  int pow_TR = m_TR + m_CF;
+
+  // Multiply result by TR^pow_TR
+  result *= complex<double>(pow(TR,pow_TR),0.);
+
+  // Now check the power of NC
+  if (pow_NC < 0) return complex<double>(0.,0.);
+  if (pow_NC > 0) return complex<double>(NAN,NAN);
+  return result;
+}
+
+
+//*********************************************************************************************************
+//
+// Member functions of class ColourSum
+//
+//*********************************************************************************************************
+
+ColourSum::ColourSum() {
+  m_cf_sum = {};
+}
+
+ColourSum::ColourSum(ColourFactor cf) {
+  m_cf_sum.push_back(cf);
+}
+
+ColourSum::ColourSum(string expr) {
+  for (size_t mpos(expr.find('+')); mpos!=string::npos 
+	 or expr.length()>0; mpos=expr.find('+')) {
+    string summand;
+
+    if (mpos == string::npos) {
+      summand = expr;
+      expr = "";
+    }
+    else {
+      summand = expr.substr(0,mpos);
+      expr = expr.substr(mpos+1);
+    }
+    
+    m_cf_sum.push_back(ColourFactor(summand));
+  }
+}
+
+string ColourSum::get_string() {
+  string expr("");
+  for (auto& term : m_cf_sum) {
+    if (expr != "") expr += " + ";
+    expr += term.get_string();
+  }
+  return expr;
+}
+
+void ColourSum::operator=(complex<double> z) {
+  m_cf_sum.clear();
+  m_cf_sum.push_back(ColourFactor(z, 0, 0, 0, 0));
+}
+
+void ColourSum::operator=(string expr) {
+  ColourSum new_cs(expr);
+  m_cf_sum = new_cs.m_cf_sum;
+}
+
+ColourSum ColourSum::operator+(string expr) {
+  ColourSum result(expr);
+  result += (*this);
+  return result;
+}
+
+void ColourSum::operator+=(string expr) {
+  (*this) += ColourSum(expr);
+}
+
+ColourSum ColourSum::operator+(ColourFactor rhs) {
+  ColourSum new_cf_sum(*this);
+  new_cf_sum+=rhs;
+  return new_cf_sum;
+}
+
+void ColourSum::operator+=(ColourFactor rhs) {
+  m_cf_sum.push_back(rhs);
+}
+
+ColourSum ColourSum::operator+(ColourSum rhs) {
+  ColourSum new_cf_sum(rhs);
+  for (auto& term : m_cf_sum) new_cf_sum+=term;
+  return new_cf_sum;
+}
+
+void ColourSum::operator+=(ColourSum rhs) {
+  for (auto& term : rhs.m_cf_sum) m_cf_sum.push_back(term); 
+}
+
+ColourSum ColourSum::operator*(ColourSum rhs) {
+  ColourSum result;
+  for (auto& term1 : rhs.m_cf_sum) {
+    for (auto& term2 : this->m_cf_sum) {
+      result += term1 * term2;
+    }
+  }
+  return result;
+}
+
+void ColourSum::operator*=(ColourSum rhs) {
+  (*this) = (*this) * rhs;
+}
+
+ColourSum ColourSum::operator*(string expr) {
+  ColourSum result(expr);
+  result *= (*this);
+  return result;
+}
+
+void ColourSum::operator*=(string expr) {
+  (*this) *= ColourSum(expr);
+}
+
+ColourSum ColourSum::operator*(complex<double> z) {
+  ColourSum result(*this);
+  for (auto& term : result.m_cf_sum) term *= z;
+  return result;
+}
+
+void ColourSum::operator*=(complex<double> z) {
+  (*this) = (*this) * z;
+}
+
+ColourSum ColourSum::cconj() {
+  ColourSum result(*this);
+  for (auto& term : result.m_cf_sum) term = term.cconj();
+  return result;
+}
+
+void ColourSum::del() {
+  m_cf_sum.clear();
+}
+
+ColourFactor ColourSum::get_leading_NC() {
+  ColourFactor leading_term;
+  int current_order(0);
+  for (auto& term : m_cf_sum) {
+    int new_order(term.get_order_NC());
+    if (new_order > current_order) {
+      current_order = new_order;
+      leading_term = term;
+    }
+    else if (new_order == current_order) {
+      ColourFactor new_term(term);
+      new_term.replace_CA();
+      new_term.replace_CF();
+      new_term.replace_TR();
+      leading_term.m_cmplx += new_term.m_cmplx;
+    }
+  }
+
+  leading_term.replace_CA();
+  leading_term.replace_CF();
+  leading_term.replace_TR();
+  return leading_term;
+}
+
+complex<double> ColourSum::get_cnum() {
+  complex<double> result(0.);
+  for (auto& term : m_cf_sum) result += term.get_cnum();
+  return result;
+}
+
+complex<double> ColourSum::get_cnum_LC() {
+  complex<double> result(0.);
+  for (auto& term : m_cf_sum) result += term.get_cnum_LC();
+  return result;
+}
+
+complex<double> ColourSum::get_cnum_large_NC() {
+  complex<double> result(0.);
+  for (auto& term : m_cf_sum) result += term.get_cnum_large_NC();
+  return result;
+}
+
+//*********************************************************************************************************
+//
 // Member functions of class delta
 //
 //*********************************************************************************************************
@@ -172,7 +596,8 @@ string symmetric::build_string() {
 //*********************************************************************************************************
 
 c_term::c_term() {
-  m_cnum=1.;
+  //   m_cnum=1.;
+  m_cnum=ColourFactor();
   m_k_vec = {};
   m_t_vec = {};
   m_f_vec = {};
@@ -180,7 +605,7 @@ c_term::c_term() {
   m_fi=1001;
 }
 
-c_term::c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c) {
+c_term::c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, ColourFactor c) {
   m_cnum=c;
   m_k_vec = {k};
   m_t_vec = {t};
@@ -222,7 +647,7 @@ void c_term::push_back(symmetric d) {
   while (!d.is_free(m_fi)) ++m_fi;
 }
 
-void c_term::set_cnumber(complex<double> c) {
+void c_term::set_cnumber(ColourFactor c) {
   m_cnum=c;
 }
 
@@ -235,27 +660,27 @@ void c_term::simplify() {
 
 void c_term::replace_zero() {
   // check if fundamental vanishes
-  for (vector<fundamental>::iterator t_it(m_t_vec.begin()); m_cnum!=0. and t_it!=m_t_vec.end(); t_it++) {
+  for (vector<fundamental>::iterator t_it(m_t_vec.begin()); m_cnum.get_cnum()!=0. and t_it!=m_t_vec.end(); t_it++) {
     if (t_it->m_a == t_it->m_b) {
       clear();
-      m_cnum=0.;
+      m_cnum.del();
     }
   }
   
   // check if adjoint generators vanish
-  for (vector<antisymmetric>::iterator f_it(m_f_vec.begin()); m_cnum!=0. and f_it!=m_f_vec.end(); f_it++) {
+  for (vector<antisymmetric>::iterator f_it(m_f_vec.begin()); m_cnum.get_cnum()!=0. and f_it!=m_f_vec.end(); f_it++) {
     // check if antisymmetric structure constant vanishes
     if (f_it->m_i == f_it->m_j or f_it->m_i == f_it->m_k or f_it->m_j == f_it->m_k) {
       clear();
-      m_cnum=0.;
+      m_cnum.del();
     }
     
     // check if contraction with symmetric structure constant exists
-    for (vector<symmetric>::iterator d_it(m_d_vec.begin()); m_cnum!=0. and d_it!=m_d_vec.end(); d_it++) {
+    for (vector<symmetric>::iterator d_it(m_d_vec.begin()); m_cnum.get_cnum()!=0. and d_it!=m_d_vec.end(); d_it++) {
       // check if symmetric structure constant vanishes
       if (d_it->m_i == d_it->m_j or d_it->m_i == d_it->m_k or d_it->m_j == d_it->m_k) {
 	clear();
-	m_cnum=0.;
+	m_cnum.del();
       }
       else {
 	if (f_it->m_i == d_it->m_j) swap<size_t>(d_it->m_i,d_it->m_j);
@@ -292,7 +717,7 @@ void c_term::replace_zero() {
 	if (f_it->m_i == d_it->m_i) {
 	  if (f_it->m_j == d_it->m_j or f_it->m_j == d_it->m_k) {
 	    clear();
-	    m_cnum=0.;
+	    m_cnum.del();
 	  }
 	}
       }
@@ -344,9 +769,9 @@ bool c_term::replace_adjoint() {
         
 	if (f_it->m_i == f_it2->m_i) {
 	  if (f_it->m_j == f_it2->m_j) {
-	    if (f_it->m_k == f_it2->m_k) m_cnum*=CA*(NC*NC-1);
+	    if (f_it->m_k == f_it2->m_k) m_cnum*=ColourFactor(1., 1, -1, 1, 1); // CA*(NC*NC-1)
 	    else {
-	      m_cnum*=CA;
+	      m_cnum*=ColourFactor(1.,0, 0, 0, 1); // CA
 	      m_k_vec.push_back(delta(f_it->m_k,f_it2->m_k,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -355,9 +780,9 @@ bool c_term::replace_adjoint() {
 	    ev=true;
 	  }
 	  else if (f_it->m_j == f_it2->m_k) {
-	    if (f_it->m_k == f_it2->m_j) m_cnum*=-1.*CA*(NC*NC-1);
+	    if (f_it->m_k == f_it2->m_j) m_cnum*=ColourFactor(-1., 1, -1, 1, 1); // -1.*CA*(NC*NC-1)
 	    else {
-	      m_cnum*=-1.*CA;
+	      m_cnum*=ColourFactor(-1., 0, 0, 0, 1); // -1.*CA
 	      m_k_vec.push_back(delta(f_it->m_k,f_it2->m_j,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -366,9 +791,9 @@ bool c_term::replace_adjoint() {
 	    ev=true;
 	  }
 	  else if (f_it->m_k == f_it2->m_k) {
-	    if (f_it->m_j == f_it2->m_j) m_cnum*=CA*(NC*NC-1);
+	    if (f_it->m_j == f_it2->m_j) m_cnum*=ColourFactor(1., 1, -1, 1, 1); // CA*(NC*NC-1)
 	    else {
-	      m_cnum*=CA;
+	      m_cnum*=ColourFactor(1., 0, 0, 0, 1); // CA
 	      m_k_vec.push_back(delta(f_it->m_j,f_it2->m_j,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -377,9 +802,9 @@ bool c_term::replace_adjoint() {
 	    ev=true;
 	  }
 	  else if (f_it->m_k == f_it2->m_j) {
-	    if (f_it->m_j == f_it2->m_k) m_cnum*=-1.*CA*(NC*NC-1);
+	    if (f_it->m_j == f_it2->m_k) m_cnum*=ColourFactor(-1., 1, -1, 1, 1); // -1.*CA*(NC*NC-1)
 	    else {
-	      m_cnum*=-1.*CA;
+	      m_cnum*=ColourFactor(-1., 0, 0, 0, 1); // -1.*CA
 	      m_k_vec.push_back(delta(f_it->m_j,f_it2->m_k,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -393,7 +818,8 @@ bool c_term::replace_adjoint() {
       }
     }
   }
-  
+
+  // TODO: express as true ColourFactor!!!
   // replace contractions of symmetric structure constant
   for (vector<symmetric>::iterator d_it(m_d_vec.begin()); d_it!=m_d_vec.end(); d_it++) {
     bool ev(false);
@@ -459,7 +885,7 @@ bool c_term::replace_adjoint() {
 	    ev=true;
 	  }
 	  else if (d_it->m_k == d_it2->m_j) {
-	    if (d_it->m_j == d_it2->m_k) m_cnum*=(TR*(2*NC*NC-4)-2)/NC*(NC*NC-1);
+	    if (d_it->m_j == d_it2->m_k) m_cnum *= (TR*(2*NC*NC-4)-2)/NC*(NC*NC-1);
 	    else {
 	      m_cnum*=(TR*(2*NC*NC-4)-2)/NC;
 	      m_k_vec.push_back(delta(d_it->m_j,d_it2->m_k,true));
@@ -483,10 +909,10 @@ bool c_term::replace_adjoint() {
     for (vector<fundamental>::iterator t_it2(t_it+1); !ev and t_it2!=m_t_vec.end(); ++t_it2) {
       if (t_it->m_b == t_it2->m_a and t_it->m_a == t_it2->m_b) {
 	if (t_it->m_i == t_it2->m_i) {
-	  m_cnum*=TR*(NC*NC-1);
+	  m_cnum *= "CF*NC"; // TR*(NC*NC-1)
 	}
 	else {
-	  m_cnum*=TR;
+	  m_cnum *= "TR";
 	  m_k_vec.push_back(delta(t_it->m_i,t_it2->m_i,true));
 	}
 	ev=true;
@@ -509,8 +935,8 @@ void c_term::evaluate_deltas(bool to_LC) {
     // replace adjoint indices
     if (k_it->m_adj==true) {
       if (k_it->m_i == k_it->m_j) {
-	if (!to_LC) m_cnum*=(NC*NC-1);
-	else m_cnum*=NC*NC;
+	if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	else m_cnum *= "NC*NC";
 	ev=true;
       }
             
@@ -518,8 +944,8 @@ void c_term::evaluate_deltas(bool to_LC) {
       for (vector<delta>::iterator k_it2(k_it+1);!ev and k_it2!=m_k_vec.end() ; ++k_it2) {
 	if (k_it->m_i == k_it2->m_i) {
 	  if (k_it->m_j == k_it2->m_j) {
-	    if (!to_LC) m_cnum*=(NC*NC-1);
-	    else m_cnum*=NC*NC;
+	    if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -530,8 +956,8 @@ void c_term::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_j == k_it2->m_i) {
 	  if (k_it->m_i == k_it2->m_j) {
-	    if (!to_LC) m_cnum*=(NC*NC-1);
-	    else m_cnum*=NC*NC;
+	    if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -542,8 +968,8 @@ void c_term::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_i == k_it2->m_j) {
 	  if (k_it->m_j == k_it2->m_i) {
-	    if(!to_LC) m_cnum*=(NC*NC-1);
-	    else m_cnum*=NC*NC;
+	    if(!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -554,8 +980,8 @@ void c_term::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_j == k_it2->m_j) {
 	  if (k_it->m_i == k_it2->m_i) {
-	    if (!to_LC) m_cnum*=(NC*NC-1);
-	    else m_cnum*=NC*NC;
+	    if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -640,7 +1066,7 @@ void c_term::evaluate_deltas(bool to_LC) {
     // replace fundamental indices
     else {
       if (k_it->m_i == k_it->m_j) {
-	m_cnum*=NC;
+	m_cnum *= "NC";
 	ev=true;
       }
       
@@ -648,7 +1074,7 @@ void c_term::evaluate_deltas(bool to_LC) {
       for (vector<delta>::iterator k_it2(k_it+1); !ev and k_it2!=m_k_vec.end(); ++k_it2) {
 	if (k_it->m_i == k_it2->m_i) {
 	  if (k_it->m_j == k_it2->m_j) {
-	    m_cnum*=NC;
+	    m_cnum *= "NC"; 
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -659,7 +1085,7 @@ void c_term::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_j == k_it2->m_i) {
 	  if (k_it->m_i == k_it2->m_j) {
-	    m_cnum*=NC;
+	    m_cnum *= "NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -670,7 +1096,7 @@ void c_term::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_i == k_it2->m_j) {
 	  if (k_it->m_j == k_it2->m_i) {
-	    m_cnum*=NC;
+	    m_cnum *= "NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
@@ -681,13 +1107,13 @@ void c_term::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_j == k_it2->m_j) {
 	  if (k_it->m_i == k_it2->m_i) {
-	    m_cnum*=NC;
+	    m_cnum *= "NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
 	  }
 	  else {
 	    k_it2->m_j=k_it->m_i;
-                        ev=true;
+	    ev=true;
 	  }
 	}
       }
@@ -748,7 +1174,7 @@ c_term c_term::hconj() {
   for (auto & t : ct.m_t_vec) {
     swap(t.m_a,t.m_b);
   }
-  ct.m_cnum=conj(ct.m_cnum);
+  ct.m_cnum=ct.m_cnum.cconj();
   return ct;
 }
 
@@ -764,9 +1190,9 @@ c_term c_term::operator*(c_term ct) {
   return ct;
 }
 
-complex<double> c_term::result() {
+ColourSum c_term::result() {
   if (m_k_vec.size()==0 and m_t_vec.size()==0 and m_f_vec.size()==0 and m_d_vec.size()==0) return m_cnum;
-  else return complex<double>(NAN,NAN);
+  else return ColourFactor(complex<double>(NAN,NAN), 0, 0, 0, 0);
 }
 
 void c_term::clear() {
@@ -774,13 +1200,14 @@ void c_term::clear() {
   m_t_vec.clear();
   m_f_vec.clear();
   m_d_vec.clear();
-  m_cnum=0.;
+  m_cnum.del();
   m_fi=1001;
 }
 
 string c_term::build_string() {
   string str="";
-  if (m_cnum!=1.) str+="c_["+to_string(m_cnum.real())+","+to_string(m_cnum.imag())+"]";
+  complex<double> cnumber(m_cnum.get_cnum());
+  if (cnumber!=1.) str+="c_["+to_string(cnumber.real())+","+to_string(cnumber.imag())+"]";
   for (auto& k : m_k_vec) {
     if (str!="") str+="*";
     str+=k.build_string();
@@ -994,10 +1421,11 @@ void c_amplitude::multiply(c_amplitude ca) {
   }
 }
 
-complex<double> c_amplitude::scprod(c_amplitude ca, bool to_LC) {
+ColourSum c_amplitude::scprod(c_amplitude ca, bool to_LC) {
   c_amplitude scp(ca.hconj());
   scp=(*this)*scp;
-
+  
+  ColourSum result;
   if (to_LC) scp.evaluate_LC();
   else scp.evaluate();
 
@@ -1027,13 +1455,13 @@ void c_amplitude::evaluate_LC() {
       f_it--;
       
       // first term
-      c_it->m_cnum*=complex<double>(0.,-1./TR);
+      c_it->m_cnum*=ColourFactor(complex<double>(0.,-1.), 0, -1, 0, 0); //  complex<double>(0.,-1./TR);
       c_it->push_back(fundamental(i,c_it->m_fi,c_it->m_fi+1));
       c_it->push_back(fundamental(j,c_it->m_fi-1,c_it->m_fi));
       c_it->push_back(fundamental(k,c_it->m_fi-1,c_it->m_fi-3));
               
       // second term
-      ct.m_cnum*=complex<double>(0.,1./TR);
+      ct.m_cnum*=ColourFactor(complex<double>(0.,1.), 0, -1, 0, 0); // complex<double>(0.,1./TR);
       ct.push_back(fundamental(j,ct.m_fi,ct.m_fi+1));
       ct.push_back(fundamental(i,ct.m_fi-1,ct.m_fi));
       ct.push_back(fundamental(k,ct.m_fi-1,ct.m_fi-3));
@@ -1049,13 +1477,13 @@ void c_amplitude::evaluate_LC() {
       d_it--;
       
       // first term
-      c_it->m_cnum*=1/TR;
+      c_it->m_cnum*=ColourFactor(1., 0, -1, 0, 0); // 1/TR;
       c_it->push_back(fundamental(i,c_it->m_fi,c_it->m_fi+1));
       c_it->push_back(fundamental(j,c_it->m_fi-1,c_it->m_fi));
       c_it->push_back(fundamental(k,c_it->m_fi-1,c_it->m_fi-3));
               
       // second term
-      ct.m_cnum*=1./TR;
+      ct.m_cnum*=ColourFactor(1., 0, -1, 0, 0); // 1./TR;
       ct.push_back(fundamental(j,ct.m_fi,ct.m_fi+1));
       ct.push_back(fundamental(i,ct.m_fi-1,ct.m_fi));
       ct.push_back(fundamental(k,ct.m_fi-1,ct.m_fi-3));
@@ -1063,7 +1491,7 @@ void c_amplitude::evaluate_LC() {
     }
 
     // replace fundamentals by Fierz identity
-    for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
+    for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum.get_cnum()!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
       bool ev(false);
      
       for (vector<fundamental>::iterator t_it2(t_it+1); !ev and t_it2!=c_it->m_t_vec.end() and c_it->m_t_vec.size()>0; t_it2++) {
@@ -1075,7 +1503,7 @@ void c_amplitude::evaluate_LC() {
 	  c_term ct(*c_it);
 	  t_it--;
 
-	  c_it->m_cnum*=TR;
+	  c_it->m_cnum *= "TR";
 	  c_it->m_k_vec.push_back(delta(a,d,false));
 	  c_it->m_k_vec.push_back(delta(c,b,false));
 
@@ -1118,7 +1546,7 @@ void c_amplitude::evaluate_LC() {
     ca.evaluate_LC();
     m_result+=ca.result();
     
-    if (m_result==complex<double>(NAN,NAN)) {
+    if (m_result.get_cnum()==complex<double>(NAN,NAN)) {
       cerr<<"Error while computing a scalar product, result is nan:"<<endl;
       c_it->print();
     }
@@ -1159,7 +1587,8 @@ void c_amplitude::evaluate() {
 	  ev=true;
           
 	  // first term
-	  c_it->m_cnum*=-1./TR;
+	  c_it->m_cnum *= "TR/TR/TR";
+	  c_it->m_cnum *= -1.;
 	  c_it->push_back(fundamental(d,c_it->m_fi,c_it->m_fi+1));
 	  c_it->push_back(fundamental(e,c_it->m_fi-1,c_it->m_fi));
 	  c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
@@ -1168,7 +1597,7 @@ void c_amplitude::evaluate() {
           
 	  // second term
 	  c_term ct1(ct);
-	  ct1.m_cnum*=1./TR;
+	  ct1.m_cnum *= "TR/TR/TR";
 	  ct1.push_back(fundamental(b,ct1.m_fi,ct1.m_fi+1));
 	  ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
 	  ct1.push_back(fundamental(e,ct1.m_fi-1,ct1.m_fi));
@@ -1177,7 +1606,7 @@ void c_amplitude::evaluate() {
           
 	  // third term
 	  ct1=ct;
-	  ct1.m_cnum*=1./TR;
+	  ct1.m_cnum *= "TR/TR/TR";
 	  ct1.push_back(fundamental(e,ct1.m_fi,ct1.m_fi+1));
 	  ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
 	  ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
@@ -1185,7 +1614,8 @@ void c_amplitude::evaluate() {
 	  ca.add(ct1);
                     
 	  // fourth term
-	  ct.m_cnum*=-1./TR;
+	  ct.m_cnum *= "TR/TR/TR";
+	  ct.m_cnum *= -1.;
 	  ct.push_back(fundamental(b,ct.m_fi,ct.m_fi+1));
 	  ct.push_back(fundamental(e,ct.m_fi-1,ct.m_fi));
 	  ct.push_back(fundamental(d,ct.m_fi-1,ct.m_fi));
@@ -1209,7 +1639,8 @@ void c_amplitude::evaluate() {
 	  ev=true;
           
 	  // first term
-	  c_it->m_cnum*=complex<double>(0.,-1./TR);
+	  c_it->m_cnum *= "TR/TR/TR";
+	  c_it->m_cnum *= complex<double>(0.,-1.);
 	  c_it->push_back(fundamental(b,c_it->m_fi,c_it->m_fi+1));
 	  c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi));
 	  c_it->push_back(fundamental(d,c_it->m_fi-1,c_it->m_fi));
@@ -1218,7 +1649,8 @@ void c_amplitude::evaluate() {
                     
 	  // second term
 	  c_term ct1(ct);
-	  ct1.m_cnum*=complex<double>(0.,1./TR);
+	  ct1.m_cnum *= "TR/TR/TR";
+	  ct1.m_cnum *= complex<double>(0.,1.);
 	  ct1.push_back(fundamental(c,ct1.m_fi,ct1.m_fi+1));
 	  ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
 	  ct1.push_back(fundamental(d,ct1.m_fi-1,ct1.m_fi));
@@ -1227,7 +1659,8 @@ void c_amplitude::evaluate() {
                     
 	  // third term
 	  ct1=ct;
-	  ct1.m_cnum*=complex<double>(0.,-1./TR);
+	  ct1.m_cnum *= "TR/TR/TR";
+	  ct1.m_cnum *= complex<double>(0.,-1.);
 	  ct1.push_back(fundamental(d,ct1.m_fi,ct1.m_fi+1));
 	  ct1.push_back(fundamental(b,ct1.m_fi-1,ct1.m_fi));
 	  ct1.push_back(fundamental(c,ct1.m_fi-1,ct1.m_fi));
@@ -1235,7 +1668,8 @@ void c_amplitude::evaluate() {
 	  ca.add(ct1);
                     
 	  // fourth term
-	  ct.m_cnum*=complex<double>(0.,1./TR);
+	  ct.m_cnum *= "TR/TR/TR";
+	  ct.m_cnum *= complex<double>(0.,1.);
 	  ct.push_back(fundamental(d,ct.m_fi,ct.m_fi+1));
 	  ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi));
 	  ct.push_back(fundamental(b,ct.m_fi-1,ct.m_fi));
@@ -1243,7 +1677,7 @@ void c_amplitude::evaluate() {
 	  ca.add(ct);
 	}
       }
-            
+      
       // replace contractions of an antisymmetric structure constant with a fundamental generator
       for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); !ev and t_it!=c_it->m_t_vec.end(); t_it++) {
 	// replace f_{abc}(T_a)_{ij}
@@ -1256,12 +1690,12 @@ void c_amplitude::evaluate() {
 	  ev=true;
           
 	  // first term
-	  c_it->m_cnum*=complex<double>(0.,-1.);
+	  c_it->m_cnum *= complex<double>(0.,-1.);
 	  c_it->push_back(fundamental(b,i,c_it->m_fi));
 	  c_it->push_back(fundamental(c,c_it->m_fi-1,j));
           
 	  // second term
-	  ct.m_cnum*=complex<double>(0.,1.);
+	  ct.m_cnum *= complex<double>(0.,1.);
 	  ct.push_back(fundamental(c,i,ct.m_fi));
 	  ct.push_back(fundamental(b,ct.m_fi-1,j));
 	  ca.add(ct);
@@ -1278,13 +1712,13 @@ void c_amplitude::evaluate() {
       d_it--;
       
       // first term
-      c_it->m_cnum*=1./TR;
+      c_it->m_cnum *= "TR/TR/TR";
       c_it->push_back(fundamental(a,c_it->m_fi,c_it->m_fi+1));
       c_it->push_back(fundamental(b,c_it->m_fi-1,c_it->m_fi));
       c_it->push_back(fundamental(c,c_it->m_fi-1,c_it->m_fi-3));
       
       // second term
-      ct.m_cnum*=1./TR;
+      ct.m_cnum *= "TR/TR/TR";
       ct.push_back(fundamental(b,ct.m_fi,ct.m_fi+1));
       ct.push_back(fundamental(a,ct.m_fi-1,ct.m_fi));
       ct.push_back(fundamental(c,ct.m_fi-1,ct.m_fi-3));
@@ -1292,7 +1726,7 @@ void c_amplitude::evaluate() {
     }
         
     // replace fundamentals by Fierz identity
-    for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
+    for (vector<fundamental>::iterator t_it(c_it->m_t_vec.begin()); c_it->m_cnum.get_cnum()!=0. and t_it!=c_it->m_t_vec.end(); t_it++) {
       bool ev(false);
       
       // contract indices with fundamentals
@@ -1300,10 +1734,10 @@ void c_amplitude::evaluate() {
 	if (t_it->m_i == t_it2->m_i) {
 	  if (t_it->m_b == t_it2->m_a) {
 	    if (t_it->m_a == t_it2->m_b) {
-	      c_it->m_cnum*=TR*(NC*NC-1);
+	      c_it->m_cnum *= "CF*NC"; // TR*(NC*NC-1)
 	    }
 	    else {
-	      c_it->m_cnum*=CF;
+	      c_it->m_cnum *= "CF";
 	      c_it->m_k_vec.push_back(delta(t_it->m_a,t_it2->m_b,false));
 	    }
 	    c_it->m_t_vec.erase(t_it2);
@@ -1319,12 +1753,13 @@ void c_amplitude::evaluate() {
 	    t_it--;
                         
 	    // first term
-	    c_it->m_cnum*=TR;
+	    c_it->m_cnum *= "TR";
 	    c_it->m_k_vec.push_back(delta(a,d,false));
 	    c_it->m_k_vec.push_back(delta(b,c,false));
             
 	    // second term
-	    ct.m_cnum*=-1./(2.*NC);
+	    ct.m_cnum *= "TR/NC";
+	    ct.m_cnum *= -1.; 
 	    ct.m_k_vec.push_back(delta(a,b,false));
 	    ct.m_k_vec.push_back(delta(c,d,false));
 	    ca.add(ct);
@@ -1343,7 +1778,7 @@ void c_amplitude::evaluate() {
     ca.evaluate();
     m_result+=ca.result();
     
-    if (m_result==complex<double>(NAN,NAN)) {
+    if (m_result.get_cnum()==complex<double>(NAN,NAN)) {
       cerr<<"Error while computing a scalar product, result is nan:"<<endl;
       c_it->print();
     }
@@ -1374,9 +1809,9 @@ void c_amplitude::print() {
   cout<<this->build_string()<<endl;
 }
 
-complex<double> c_amplitude::result() {
+ColourSum c_amplitude::result() {
   if (m_cterm_vec.size()==0) return m_result;
-  else return complex<double>(NAN,NAN);
+  else return ColourSum(ColourFactor(complex<double>(NAN,NAN), 0, 0, 0, 0));
 }
 
 

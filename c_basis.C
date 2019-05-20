@@ -14,10 +14,13 @@
 
 double eps = 1.e-4;
 
-void c_basis::normalise() {
+void c_basis::normalise(bool to_LC) {
   for (size_t i(0);i<m_dim;i++) {
-    complex<double> z=m_ca_basis.at(i).scprod(m_ca_basis.at(i));
-    m_normalisations.at(i)=sqrt(abs(z));
+    ColourSum norm2 = m_ca_basis.at(i).scprod(m_ca_basis.at(i), to_LC);
+    //    cout << "c_basis::normalise() " << norm2.get_string() << endl;
+    m_normalisations.at(i) = sqrt(abs(norm2.get_cnum()));
+    //    cout << "c_basis::normalise() " << m_normalisations.at(i) << endl;
+    m_norms2.at(i) = norm2;
     m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
   }
 }
@@ -120,17 +123,25 @@ void c_basis::print_to_file(string filename, bool to_LC) {
 c_matrix c_basis::sm(bool to_LC) {
   for (size_t i(0); i<m_dim; ++i) {
     for (size_t j(0); j<m_dim; ++j) {
-      // Calculate scalar products only for full colour
       if (!to_LC) {
-	//            cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
+	// cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
 	complex<double> r;
-	if (j>=i) r = m_ca_basis.at(i).scprod(m_ca_basis.at(j));
+	if (j >= i) r = m_ca_basis.at(i).scprod(m_ca_basis.at(j)).get_cnum();
 	else r = m_smat[j][i];
 	m_smat[i][j] = (abs(r) < eps ? 0. : r);
       }
       else {
-	if (i == j) m_smat[i][j] = 1.;
-	else m_smat[i][j] = 0.;
+	ColourSum r;
+	if ( j >= i) { 
+	  r = m_ca_basis.at(i).scprod(m_ca_basis.at(j), to_LC);
+
+	  ColourFactor num(r.get_leading_NC());
+	  ColourFactor denom(m_norms2.at(i).get_leading_NC() * m_norms2.at(j).get_leading_NC());
+	  ColourFactor frac((num * num)/denom);
+	  
+	  m_smat[i][j] = sqrt(frac.get_cnum_large_NC());
+	}
+	else m_smat[i][j] = m_smat[j][i];
       }
     }
   }
@@ -147,15 +158,24 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, bool to_LC) {
     for (size_t j(0); j<m_dim; ++j) {
       cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
       c_amplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
-      //            cout<<"\n---------------------------"<<endl;
-      //            cout<<"bvj = ";
-      //            bvj.print();
       bvj.multiply(ins_op);
-      //            cout<<"bvj * ins_op = ";
-      //            bvj.print();
-      complex<double> r(m_ca_basis.at(i).scprod(bvj, to_LC));
-      colour_cm[i][j] = (abs(r) < eps ? 0. : r);
-      
+      if (!to_LC) {
+	complex<double> r(0.);
+	r = m_ca_basis.at(i).scprod(bvj).get_cnum();
+	colour_cm[i][j] = (abs(r) < eps ? 0. : r);
+      }
+      else {
+	ColourSum r = m_ca_basis.at(i).scprod(bvj, to_LC);
+	ColourSum v1 = bvj.scprod(bvj, to_LC);
+
+	ColourFactor num(r.get_leading_NC());
+	ColourFactor denom(m_norms2.at(i).get_leading_NC() * v1.get_leading_NC());
+	ColourFactor frac((num * num)/denom);
+	
+	//	cout << "c_basis::ccm() " << frac.get_string() << endl;
+
+	colour_cm[i][j] = sqrt(frac.get_cnum_large_NC());
+      }
     }
   }
   

@@ -19,9 +19,15 @@
 
 using namespace std;
 
+//*********************************************************************************************************
+//
+// Global Constants - TODO: put in Spectrum.h
+//
+//*********************************************************************************************************
+
 const double NC(3.); // number of colours
 const double TR(1./2.); // generator normalisation
-const double CF((NC*NC-1)/(2.*NC)); // Fundamental Casimir
+const double CF(TR*(NC*NC-1)/NC); // Fundamental Casimir
 const double CA(2.*TR*NC); // Adjoint Casimir
 
 //*********************************************************************************************************
@@ -44,6 +50,186 @@ class process {
         size_t no_of_legs();
         string leg(size_t lno);
         bool is_in_leg(size_t lno);
+};
+
+//*********************************************************************************************************
+// 
+// Class ColourFactor
+//
+//*********************************************************************************************************
+
+class ColourFactor {
+  // Power of NC
+  int m_NC;
+  
+  // Power of TR
+  int m_TR;
+
+  // Power of CF;
+  int m_CF;
+
+  // Power of CA;
+  int m_CA;
+
+  // Complex prefactor
+  complex<double> m_cmplx;
+
+  friend class ColourSum;
+
+ public:
+  // Default constructor
+  ColourFactor();
+
+  // Constructor from string
+  ColourFactor(string expr);
+
+  // Constructor from powers and cnumber
+  ColourFactor(complex<double> cnum, int pow_NC, int pow_TR, int pow_CF, int pow_CA);
+  
+  // Getter for string representation
+  string get_string();
+
+  // Assignment with string
+  void operator=(string expr);
+
+  // Assignment with number;
+  void operator=(complex<double> z);
+
+  // Multiplication with a colour factor in terms of a string
+  ColourFactor operator*(string expr);
+
+  // Multiplication with a colour factor in terms of a string
+  void operator*=(string expr);
+
+  // Multiplication with another ColourFactor
+  ColourFactor operator*(ColourFactor rhs);
+
+  // Multiplication with another ColourFactor and assignment
+  void operator*=(ColourFactor rhs);
+  
+  // Multiplication with a complex number
+  ColourFactor operator*(complex<double> rhs);
+
+  // Multiplication with a complex number and assignment
+  void operator*=(complex<double> rhs);
+
+  // Division by another ColourFactor
+  ColourFactor operator/(ColourFactor rhs);
+  
+  // Division by another ColourFactor and assignment
+  void operator/=(ColourFactor rhs);
+
+  // Complex conjugate
+  ColourFactor cconj();
+
+  // Delete
+  void del();
+
+  // Replace CA by 2*TR*NC
+  void replace_CA();
+
+  // Replace CF by TR*NC (large-NC approximation)
+  void replace_CF();
+
+  // Replace TR by whatever value it was given
+  void replace_TR();
+
+  // Method to get order in NC
+  int get_order_NC();
+
+  // Method to get cnumber
+  complex<double> get_cnum();
+
+  // Method to get cnumber at leading colour
+  complex<double> get_cnum_LC();
+
+  // Method to get cnumber at large-NC
+  complex<double> get_cnum_large_NC();
+
+};
+
+//*********************************************************************************************************
+// 
+// Class ColourSum
+//
+//*********************************************************************************************************
+
+class ColourSum {
+  // Sum of ColourFactors
+  vector<ColourFactor> m_cf_sum;
+
+ public:
+  // Default constructor
+  ColourSum();
+
+  // Constructor from ColourFactor
+  ColourSum(ColourFactor cf);
+
+  // Constructor from expression as string
+  ColourSum(string expr);
+
+  // Getter for string representation
+  string get_string();
+
+  // Assignment with number
+  void operator=(complex<double> z);
+
+  // Assignment with string
+  void operator=(string expr);
+
+  // Method to add further colour factors as string
+  ColourSum operator+(string expr);
+
+  // Method to add further colour factors as string and assignment
+  void operator+=(string expr);
+
+  // Method to add another ColourFactor
+  ColourSum operator+(ColourFactor rhs);
+
+  // Method to add another ColourFactor and assignment
+  void operator+=(ColourFactor rhs);
+
+  // Method to add two ColourSums
+  ColourSum operator+(ColourSum rhs);
+
+  // Method to add two ColourSums and assignment
+  void operator+=(ColourSum rhs);
+
+  // Method to multiply two ColourSums
+  ColourSum operator*(ColourSum rhs);
+
+  // Method to multiply two ColourSums and assignment
+  void operator*=(ColourSum rhs);
+
+  // Method to multiply ColourSum with string expression
+  ColourSum operator*(string expr);
+
+  // Method to multiply ColourSum with string expression and assignment
+  void operator*=(string expr);
+
+  // Method to multiply with complex number
+  ColourSum operator*(complex<double> z);
+
+  // Method to multiply with complex number and assignment
+  void operator*=(complex<double> z);
+
+  // Complex conjugate
+  ColourSum cconj();
+  
+  // Method to delete all terms
+  void del();
+  
+  // Method to get leading-NC term
+  ColourFactor get_leading_NC();
+
+  // Method to get cnumber
+  complex<double> get_cnum();
+
+  // Method to get cnumber at leading colour
+  complex<double> get_cnum_LC();
+
+  // Method to get cnumber at large-NC
+  complex<double> get_cnum_large_NC();
 };
 
 //*********************************************************************************************************
@@ -131,7 +317,7 @@ class symmetric {
  public:
   // Adjoint indices i, j, k in d_[i,j,k]
   size_t m_i, m_j, m_k;
-
+  
   // Constructor from indices
   symmetric(size_t i, size_t j, size_t k);
 
@@ -153,8 +339,8 @@ class symmetric {
 
 class c_term {
  private:
-  // The prefactor of the colour term
-  complex<double> m_cnum;
+  // The prefactor of the colour term as a ColourSum
+  ColourSum m_cnum;
 
   // The product of all Kronecker deltas (both fundamental and adjoint)
   vector<delta> m_k_vec;
@@ -187,8 +373,11 @@ class c_term {
   // Default constructor
   c_term();
 
+/*   // Constructor from given quantities */
+/*   c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c = complex<double>(0.,0.)); */
+
   // Constructor from given quantities
-  c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c = complex<double>(0.,0.));
+  c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, ColourFactor c = ColourFactor());
 
   // Destructor
   ~c_term();
@@ -209,7 +398,7 @@ class c_term {
   void push_back(symmetric d);
 
   // Method to set the prefactor
-  void set_cnumber(complex<double> c);
+  void set_cnumber(ColourFactor c);
     
   // Method to contract all internal indices
   // (no replacements will be made that produce new terms)
@@ -221,8 +410,8 @@ class c_term {
   // Method to multiply with another colour term (avoiding duplicate indices)
   c_term operator*(c_term ct);
 
-  // Method to get result from index contraction (if cnumber)
-  complex<double> result();
+  // Method to get result from index contraction
+  ColourSum result();
   
   // Method to delete all quantities from colour term
   void clear();
@@ -248,8 +437,8 @@ class c_amplitude {
   // Sum of all colour terms
   vector<c_term> m_cterm_vec;
   
-  // Result of index contraction in all terms (if cnumber)
-  complex<double> m_result;
+  // Result of index contraction in all terms 
+  ColourSum m_result;
     
  public:
   // Default constructor
@@ -283,8 +472,7 @@ class c_amplitude {
   c_amplitude shift_to_internal(size_t by);
 
   // Method to calculate scalar product < c1 | c2 > of two colour amplitudes
-  // If to_LC = true, all terms suppressed by at least 1/NC are neglected
-  complex<double> scprod(c_amplitude ca, bool to_LC = false);
+  ColourSum scprod(c_amplitude ca, bool to_LC = false);
 
   // Method to delete all terms
   void clear();
@@ -298,8 +486,8 @@ class c_amplitude {
   // Method to simplify colour amplitude (calls c_term::simplify() for all terms)
   void simplify();
 
-  // Method to get result of index contraction (if cnumber)
-  complex<double> result();
+  // Method to get result of index contraction
+  ColourSum result();
     
   // Method to get number of terms in colour amplitude
   size_t no_of_terms();

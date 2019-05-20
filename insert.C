@@ -10,8 +10,9 @@
 // construct insertion operator for gluon insertion between leg lno1 and lno2 as a colour term
 c_amplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
     c_term ins_op;
-    complex<double> prefactor(1.);
-    
+    //    complex<double> prefactor(1.);
+    ColourFactor prefactor = ColourFactor(1., 0, 0, 0, 0);
+
     if (proc.leg(lno1)=="g") {
         ins_op.push_back(antisymmetric(lno1,1001,lno1+2000));
         prefactor*=complex<double>(0.,1.);

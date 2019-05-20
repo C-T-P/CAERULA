@@ -47,7 +47,7 @@ matrix multiplet_basis::bcm() {
     
   for (size_t i(0); i<m_dim; i++) {
     for (size_t j(0); j<tr_dim; j++) {
-      tmp_bcm.at(i).at(j) = m_ca_basis.at(i).scprod(tr_basis.m_ca_basis.at(j));
+      tmp_bcm.at(i).at(j) = m_ca_basis.at(i).scprod(tr_basis.m_ca_basis.at(j)).get_cnum();
     }
   }
     

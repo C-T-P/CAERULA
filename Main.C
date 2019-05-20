@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
             ca.print();
 	    if (is_LC) ca.evaluate_LC();
 	    else ca.evaluate();
-            cout<<"= "<<ca.result()<<endl;
+            cout<<"= "<<ca.result().get_string()<<endl;
             
             return 0;
         }
@@ -169,8 +169,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    
-    if (norm_basis and !construct_bcm) basis->normalise();
+    if (norm_basis) basis->normalise(is_LC);
     if (print_to_console) {
         cout<<endl;
         if (construct_bcm or norm_basis) cout<<"Normalised ";
