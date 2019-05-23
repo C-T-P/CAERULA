@@ -7,10 +7,10 @@
 // any later version.
 
 #include<fstream>
-#include "gen_basis.h"
+#include "GenBasis.h"
 
-// member functions of gen_basis class
-gen_basis::gen_basis(string filename) {
+// member functions of GenBasis class
+GenBasis::GenBasis(string filename) {
   // set basis type
   m_btype=0;
   
@@ -45,7 +45,7 @@ gen_basis::gen_basis(string filename) {
       }
   }
     
-  for (auto& str : basis_strs) m_ca_basis.push_back(c_amplitude(str));
+  for (auto& str : basis_strs) m_ca_basis.push_back(CAmplitude(str));
   
   m_dim=m_ca_basis.size();
   m_confact=0.;
@@ -53,10 +53,10 @@ gen_basis::gen_basis(string filename) {
   for (size_t i(0); i<m_dim; i++) m_normalisations.push_back(1.);
   
   // initialise matrices
-  m_smat=c_matrix(m_dim);
-  m_ccmats=vector<c_matrix>();
+  m_smat=CMatrix(m_dim);
+  m_ccmats=vector<CMatrix>();
 }
 
-gen_basis::~gen_basis() {
+GenBasis::~GenBasis() {
     
 }

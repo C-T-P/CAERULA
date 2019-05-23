@@ -10,12 +10,12 @@
 #include<iomanip>
 #include<climits>
 #include<ctime>
-#include "c_matrix.h"
-#include "colourtools.h"
-#include "trace_basis.h"
-#include "f_basis.h"
-#include "gen_basis.h"
-#include "multiplet_basis.h"
+#include "CMatrix.h"
+#include "Colourtools.h"
+#include "TraceBasis.h"
+#include "FBasis.h"
+#include "GenBasis.h"
+#include "MultipletBasis.h"
 
 void run_error();
 void print_help_message();
@@ -24,7 +24,7 @@ void print_startup_message();
 int main(int argc, char **argv) {
     print_startup_message();
 
-    c_basis* basis=NULL;
+    CBasis* basis=NULL;
     size_t n_g(0), n_qp(0);
     string expr, filename;
     bool adjoint_basis(false), ortho_basis(false), norm_basis(true), construct_bcm(false), 
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     // perform colour calculations depending on the given input
     switch (runopt) {
         case 1: {
-            c_amplitude ca(expr);
+            CAmplitude ca(expr);
             ca.print();
 	    if (is_LC) ca.evaluate_LC();
 	    else ca.evaluate();
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
             return 0;
         }
         case 2: {
-            c_amplitude ca(expr);
+            CAmplitude ca(expr);
             ca.print();
             ca.simplify();
             cout<<"= ";
@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
             cout<<"Will construct colour basis from file "<<filename<<"."<<endl;
             cout<<"\nNOTE: amplitude permutations cannot be computed for bases read from files!"<<endl;
             
-            basis = new gen_basis(filename);
+            basis = new GenBasis(filename);
             
             break;
         }
@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
             if (ortho_basis) {
                 cout<<"Will read in multiplet basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
                 
-                multiplet_basis* m_basis = new multiplet_basis(n_g, n_qp);
+                MultipletBasis* m_basis = new MultipletBasis(n_g, n_qp);
                 
                 if (construct_bcm) {
                     m_basis->bcm();
@@ -151,11 +151,11 @@ int main(int argc, char **argv) {
             }
             else if (adjoint_basis) {
                 cout<<"Will construct adjoint basis for "<<n_g<<" gluons."<<endl;
-                basis = new f_basis(n_g);
+                basis = new FBasis(n_g);
             }
             else {
                 cout<<"Will construct trace basis for "<<n_g<<" gluons and "<<n_qp<<" quark pairs."<<endl;
-                basis = new trace_basis(n_g, n_qp);
+                basis = new TraceBasis(n_g, n_qp);
             }
             
             t=clock()-t;
@@ -179,7 +179,7 @@ int main(int argc, char **argv) {
         
     clock_t t(clock());
     cout<<"\nCalculating the soft matrix..."<<endl;
-    c_matrix soft_matrix(basis->sm(is_LC));
+    CMatrix soft_matrix(basis->sm(is_LC));
     if (print_to_console) {
         cout<<"\nSoft Matrix:"<<endl;
         soft_matrix.print();
@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 
     t=clock();
     cout<<"\nCalculating the colour change matrices..."<<endl;
-    vector<c_matrix> cc_mats(basis->ccms(is_LC));
+    vector<CMatrix> cc_mats(basis->ccms(is_LC));
     if (print_to_console) {
         cout<<"\nColour Change Matrices:"<<endl;
         for (auto& ccm : cc_mats) {

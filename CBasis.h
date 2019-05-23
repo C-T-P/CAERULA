@@ -6,25 +6,25 @@
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.
 
-#ifndef C_BASIS_H
-#define C_BASIS_H
+#ifndef CBASIS_H
+#define CBASIS_H
 
-#include "colourtools.h"
-#include "c_matrix.h"
+#include "Colourtools.h"
+#include "CMatrix.h"
 
 //*********************************************************************************************************
 //
-// Class c_basis
+// Class CBasis
 //
 //********************************************************************************************************* 
 
-class c_basis { 
+class CBasis { 
  protected:
   // Information about process
   process m_process;
 
   // Vector of colour amplitudes to represent colour basis
-  vector<c_amplitude> m_ca_basis;
+  vector<CAmplitude> m_ca_basis;
   
   // Dimension of the basis
   size_t m_dim;
@@ -39,14 +39,14 @@ class c_basis {
   // Normalisation factors of basis vectors
   vector<double> m_normalisations;
 
-  // Norms^2 of the basis vectors as ColourSums
+  // Norm squares of the basis vectors as ColourSums
   vector<ColourSum> m_norms2;
 
   // The scalar product (soft) matrix
-  c_matrix m_smat;
+  CMatrix m_smat;
 
   // The colour change matrices (colour soft anomalous dimension matrices)
-  vector<c_matrix> m_ccmats;
+  vector<CMatrix> m_ccmats;
 
   // The basis type
   // 0: general basis from file
@@ -72,15 +72,15 @@ class c_basis {
   
   // Method to calculate and store the soft matrix
   // if to_LC = true, a unit matrix will be constructed (no actual computation)
-  c_matrix sm(bool to_LC = false);
+  CMatrix sm(bool to_LC = false);
 
   // Method to calculate a colour change matrix between two legs
   // if to_LC = true, all scalar products will be evaluated at leading colour order
-  c_matrix ccm(size_t lno1, size_t lno2, bool to_LC = false);
+  CMatrix ccm(size_t lno1, size_t lno2, bool to_LC = false);
 
   // Method to calculate all colour change matrices for insertions between all legs
   // if to_LC = true, all scalar products will be evaluated at leading colour order
-  vector<c_matrix> ccms(bool to_LC = false);
+  vector<CMatrix> ccms(bool to_LC = false);
 
   // Method to check colour conservation for colour change matrices
   // Note: does not make sense for LC computations

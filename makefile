@@ -1,5 +1,5 @@
-o_objects = Main.o insert.o colourtools.o c_basis.o trace_basis.o f_basis.o gen_basis.o multiplet_basis.o
-c_objects = Main.C insert.C colourtools.C c_basis.C trace_basis.C f_basis.C gen_basis.C multiplet_basis.C
+o_objects = Main.o Insert.o Colourtools.o CBasis.o TraceBasis.o FBasis.o GenBasis.o MultipletBasis.o
+c_objects = Main.C Insert.C Colourtools.C CBasis.C TraceBasis.C FBasis.C GenBasis.C MultipletBasis.C
 
 CXX = g++ -Wall -std=c++11
 
@@ -9,26 +9,26 @@ Spectrum: $(o_objects)
 Main.o:	Main.C
 	$(CXX) -c -Wall Main.C
 
-insert.o: insert.C
-	$(CXX) -c -Wall insert.C
+Insert.o: Insert.C
+	$(CXX) -c -Wall Insert.C
 
-colourtools.o: colourtools.C
-	$(CXX) -c -Wall colourtools.C
+Colourtools.o: Colourtools.C
+	$(CXX) -c -Wall Colourtools.C
 
-c_basis.o: c_basis.C
-	$(CXX) -c -Wall c_basis.C
+CBasis.o: CBasis.C
+	$(CXX) -c -Wall CBasis.C
 
-trace_basis.o: trace_basis.C
-	$(CXX) -c -Wall trace_basis.C
+TraceBasis.o: TraceBasis.C
+	$(CXX) -c -Wall TraceBasis.C
 
-f_basis.o: f_basis.C
-	$(CXX) -c -Wall f_basis.C
+FBasis.o: FBasis.C
+	$(CXX) -c -Wall FBasis.C
 
-gen_basis.o: gen_basis.C
-	$(CXX) -c -Wall gen_basis.C
+GenBasis.o: GenBasis.C
+	$(CXX) -c -Wall GenBasis.C
 
-multiplet_basis.o: multiplet_basis.C
-	$(CXX) -c -Wall multiplet_basis.C
+MultipletBasis.o: MultipletBasis.C
+	$(CXX) -c -Wall MultipletBasis.C
 
 clean:
 	rm -f $(o_objects)

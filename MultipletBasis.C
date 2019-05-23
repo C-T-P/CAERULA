@@ -7,14 +7,14 @@
 // any later version.
 
 #include<fstream>
-#include "multiplet_basis.h"
-#include "trace_basis.h"
-#include "gen_basis.h"
+#include "MultipletBasis.h"
+#include "TraceBasis.h"
+#include "GenBasis.h"
 
 string get_filename(size_t n_g, size_t n_qp);
 
-// member functions of multiplet_basis class
-multiplet_basis::multiplet_basis(size_t n_g, size_t n_qp) : gen_basis(get_filename(n_g, n_qp)) {
+// member functions of MultipletBasis class
+MultipletBasis::MultipletBasis(size_t n_g, size_t n_qp) : GenBasis(get_filename(n_g, n_qp)) {
   // set basis type
   m_btype=1;
     
@@ -26,12 +26,12 @@ multiplet_basis::multiplet_basis(size_t n_g, size_t n_qp) : gen_basis(get_filena
   m_bcm=matrix();
 }
 
-multiplet_basis::~multiplet_basis() {
+MultipletBasis::~MultipletBasis() {
     
 }
 
-matrix multiplet_basis::bcm() {
-  trace_basis tr_basis(m_ng, m_nqp);
+matrix MultipletBasis::bcm() {
+  TraceBasis tr_basis(m_ng, m_nqp);
     
   this->normalise();
   tr_basis.normalise();

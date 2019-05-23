@@ -234,11 +234,11 @@ class ColourSum {
 
 //*********************************************************************************************************
 // 
-// Class delta
+// Class Delta
 //
 //*********************************************************************************************************
 
-class delta {
+class Delta {
  public:
   // Adjoint/Fundamental indices i, j in k_[i,j]/K_[i,j]
   size_t m_i, m_j;
@@ -247,10 +247,10 @@ class delta {
   bool m_adj;
   
   // Constructor from indices
-  delta(size_t i, size_t j, bool adj);
+  Delta(size_t i, size_t j, bool adj);
 
   // Destructor
-  ~delta();
+  ~Delta();
 
   // Method to check whether given index is free
   bool is_free(size_t ind);
@@ -261,20 +261,20 @@ class delta {
 
 //*********************************************************************************************************
 //
-// Class fundamental
+// Class Fundamental
 //
 //*********************************************************************************************************
 
-class fundamental {
+class Fundamental {
  public:
-  // Adjoint index i and fundamental indices a, b in t_[i,a,b]      
+  // Adjoint index i and Fundamental indices a, b in t_[i,a,b]      
   size_t m_i, m_a, m_b;
 
   // Constructor from indices
-  fundamental(size_t i, size_t a, size_t b);
+  Fundamental(size_t i, size_t a, size_t b);
 
   // Destructor
-  ~fundamental();
+  ~Fundamental();
   
   // Method to check whether given index is free
   bool is_free(size_t ind);
@@ -285,20 +285,20 @@ class fundamental {
 
 //*********************************************************************************************************
 //
-// Class antisymmetric
+// Class Antisymmetric
 //
 //*********************************************************************************************************
 
-class antisymmetric {
+class Antisymmetric {
  public:
   // Adjoint indices i, j, k in  f_[i,j,k]
   size_t m_i, m_j, m_k;
 
   // Constructor from indices
-  antisymmetric(size_t i, size_t j, size_t k);
+  Antisymmetric(size_t i, size_t j, size_t k);
 
   // Destructor
-  ~antisymmetric();
+  ~Antisymmetric();
 
   // Method to check whether given index is free
   bool is_free(size_t ind);
@@ -309,20 +309,20 @@ class antisymmetric {
 
 //*********************************************************************************************************
 //
-// Class symmetric
+// Class Symmetric
 //
 //*********************************************************************************************************
 
-class symmetric {
+class Symmetric {
  public:
   // Adjoint indices i, j, k in d_[i,j,k]
   size_t m_i, m_j, m_k;
   
   // Constructor from indices
-  symmetric(size_t i, size_t j, size_t k);
+  Symmetric(size_t i, size_t j, size_t k);
 
   // Destructor
-  ~symmetric();
+  ~Symmetric();
 
   // Method to check whether given index is free
   bool is_free(size_t ind);
@@ -333,26 +333,26 @@ class symmetric {
 
 //*********************************************************************************************************
 //
-// Class c_term
+// Class CTerm
 //
 //*********************************************************************************************************
 
-class c_term {
+class CTerm {
  private:
   // The prefactor of the colour term as a ColourSum
   ColourSum m_cnum;
 
-  // The product of all Kronecker deltas (both fundamental and adjoint)
-  vector<delta> m_k_vec;
+  // The product of all Kronecker Deltas (both Fundamental and adjoint)
+  vector<Delta> m_k_vec;
 
-  // The product of all fundamental generators
-  vector<fundamental> m_t_vec;
+  // The product of all Fundamental generators
+  vector<Fundamental> m_t_vec;
 
-  // The product of all antisymmetric structure constants
-  vector<antisymmetric> m_f_vec;
+  // The product of all Antisymmetric structure constants
+  vector<Antisymmetric> m_f_vec;
 
-  // The product of all symmetric structure constants
-  vector<symmetric> m_d_vec;
+  // The product of all Symmetric structure constants
+  vector<Symmetric> m_d_vec;
 
   // Integer to store first free index 
   size_t m_fi;
@@ -363,7 +363,7 @@ class c_term {
   // Method to replace quantities with adjoint indices
   bool replace_adjoint();
 
-  // Method to replace Kronecker deltas (both fundamental and adjoint)
+  // Method to replace Kronecker Deltas (both Fundamental and adjoint)
   void evaluate_deltas(bool to_LC = false);
 
   // Method to shift all indices by a constant
@@ -371,31 +371,31 @@ class c_term {
     
  public:
   // Default constructor
-  c_term();
+  CTerm();
 
 /*   // Constructor from given quantities */
-/*   c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, complex<double> c = complex<double>(0.,0.)); */
+/*   CTerm(Delta& k, Fundamental& t, Antisymmetric& f, Symmetric& d, complex<double> c = complex<double>(0.,0.)); */
 
   // Constructor from given quantities
-  c_term(delta& k, fundamental& t, antisymmetric& f, symmetric& d, ColourFactor c = ColourFactor());
+  CTerm(Delta& k, Fundamental& t, Antisymmetric& f, Symmetric& d, ColourFactor c = ColourFactor());
 
   // Destructor
-  ~c_term();
+  ~CTerm();
   
   // Method to multiply with another colour term (without checking for duplicate indices)
-  void push_back(c_term ct);
+  void push_back(CTerm ct);
 
-  // Method to multiply with a Kronecker delta (without checking for duplicate indices)
-  void push_back(delta k);
+  // Method to multiply with a Kronecker Delta (without checking for duplicate indices)
+  void push_back(Delta k);
 
-  // Method to multiply with a fundamental generator (without checking for duplicate indices)
-  void push_back(fundamental t);
+  // Method to multiply with a Fundamental generator (without checking for duplicate indices)
+  void push_back(Fundamental t);
 
-  // Method to multiply with an antisymmetric structure constant (without checking for duplicate indices)
-  void push_back(antisymmetric f);
+  // Method to multiply with an Antisymmetric structure constant (without checking for duplicate indices)
+  void push_back(Antisymmetric f);
 
-  // Method to multiply with a symmetric structure constant (without checking for duplicate indices)
-  void push_back(symmetric d);
+  // Method to multiply with a Symmetric structure constant (without checking for duplicate indices)
+  void push_back(Symmetric d);
 
   // Method to set the prefactor
   void set_cnumber(ColourFactor c);
@@ -405,10 +405,10 @@ class c_term {
   void simplify();
 
   // Method to get hermitian conjugate
-  c_term hconj();
+  CTerm hconj();
 
   // Method to multiply with another colour term (avoiding duplicate indices)
-  c_term operator*(c_term ct);
+  CTerm operator*(CTerm ct);
 
   // Method to get result from index contraction
   ColourSum result();
@@ -422,57 +422,57 @@ class c_term {
   // Method to print string representation to terminal
   void print();
   
-  // Declare c_amplitude as friend class
-  // (needed to alter c_terms)
-  friend class c_amplitude;
+  // Declare CAmplitude as friend class
+  // (needed to alter CTerms)
+  friend class CAmplitude;
 };
 
 //*********************************************************************************************************
 //
-// Class c_amplitude
+// Class CAmplitude
 //
 //*********************************************************************************************************
 
-class c_amplitude {
+class CAmplitude {
   // Sum of all colour terms
-  vector<c_term> m_cterm_vec;
+  vector<CTerm> m_cterm_vec;
   
   // Result of index contraction in all terms 
   ColourSum m_result;
     
  public:
   // Default constructor
-  c_amplitude();
+  CAmplitude();
 
   // Constructor from colour term
-  c_amplitude(c_term ct);
+  CAmplitude(CTerm ct);
   
   // Constructor from string representation of colour term
-  c_amplitude(string expr);
+  CAmplitude(string expr);
 
   // Destructor
-  ~c_amplitude();
+  ~CAmplitude();
   
   // Method to add another colour term
-  void add(c_term ct);
+  void add(CTerm ct);
 
   // Method to return hermitian conjugate of colour amplitude
-  c_amplitude hconj();
+  CAmplitude hconj();
 
   // Method to multiply by complex number
-  c_amplitude operator*(complex<double> z);
+  CAmplitude operator*(complex<double> z);
 
   // Method to multiply with another colour amplitude (avoiding duplicate indices)
-  c_amplitude operator*(c_amplitude ca);
+  CAmplitude operator*(CAmplitude ca);
 
   // Method to multiply with another colour amplitude (without check for duplicate indices)
-  void multiply(c_amplitude ca);
+  void multiply(CAmplitude ca);
 
   // Method to shift all indices by constant
-  c_amplitude shift_to_internal(size_t by);
+  CAmplitude shift_to_internal(size_t by);
 
   // Method to calculate scalar product < c1 | c2 > of two colour amplitudes
-  ColourSum scprod(c_amplitude ca, bool to_LC = false);
+  ColourSum scprod(CAmplitude ca, bool to_LC = false);
 
   // Method to delete all terms
   void clear();
@@ -483,7 +483,7 @@ class c_amplitude {
   // Method to evaluate colour amplitude at full colour
   void evaluate();
 
-  // Method to simplify colour amplitude (calls c_term::simplify() for all terms)
+  // Method to simplify colour amplitude (calls CTerm::simplify() for all terms)
   void simplify();
 
   // Method to get result of index contraction

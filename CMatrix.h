@@ -1,29 +1,29 @@
 // Copyright (C) 2018 Christian T Preuss
-// This file is part of Spectrum.                                                                                                                                                                                                                                              
-//                                                                                                                                                                                                                                                                             
-// Spectrum is free software: you can redistribute it and/or modify                                                                                                                                                                                                            
-// it under the terms of the GNU General Public License as published by                                                                                                                                                                                                        
-// the Free Software Foundation, either version 3 of the License, or                                                                                                                                                                                                           // any later version.     
+// This file is part of Spectrum.
+// Spectrum is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// any later version.
 
-#ifndef C_MATRIX_H
-#define C_MATRIX_H
+#ifndef CMATRIX_H
+#define CMATRIX_H
 
 #include<vector>
 #include<complex>
 #include<cmath>
-#include "colourtools.h"
+#include "Colourtools.h"
 
 using namespace std;
 
 typedef vector<vector<complex<double>>> matrix;
 
-class c_matrix {
+class CMatrix {
     vector<vector<complex<double>>> m_mat;
     public:
-    c_matrix() {
+    CMatrix() {
         m_mat=vector<vector<complex<double>>>();
     }
-    c_matrix(size_t dim) {
+    CMatrix(size_t dim) {
         for (size_t i(0);i<dim;i++)
             m_mat.push_back(vector<complex<double>>(dim,0.));
     }
@@ -36,9 +36,9 @@ class c_matrix {
     vector<complex<double>> operator[](size_t i) const {
         return m_mat[i];
     }
-    c_matrix operator*(c_matrix m_mat2) {
+    CMatrix operator*(CMatrix m_mat2) {
         size_t dim(m_mat2.dim());
-        c_matrix m_matr(dim);
+        CMatrix m_matr(dim);
         if (dim==m_mat.size()) {
             for (size_t i(0);i<dim;++i)
                 for (size_t j(0);j<dim;++j)
@@ -51,9 +51,9 @@ class c_matrix {
         }
         return m_matr;
     }
-    c_matrix operator+(c_matrix m_mat2) {
+    CMatrix operator+(CMatrix m_mat2) {
         size_t dim(m_mat2.dim());
-        c_matrix m_matr(dim);
+        CMatrix m_matr(dim);
         if (dim==m_mat.size()) {
             for (size_t i(0);i<dim;++i)
                 for (size_t j(0);j<dim;++j)
@@ -65,7 +65,7 @@ class c_matrix {
         }
         return m_matr;
     }
-    void operator+=(c_matrix m_mat2) {
+    void operator+=(CMatrix m_mat2) {
         size_t dim(m_mat2.dim());
         if (dim==m_mat.size()) {
             for (size_t i(0);i<dim;++i)

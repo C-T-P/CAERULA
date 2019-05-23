@@ -6,18 +6,25 @@
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.
 
-#ifndef GEN_BASIS_H
-#define GEN_BASIS_H
+#ifndef MULTIPLETBASIS_H
+#define MULTIPLETBASIS_H
 
-#include "c_basis.h"
+#include "GenBasis.h"
 
 using namespace std;
 
-class gen_basis : public c_basis {
+class MultipletBasis : public GenBasis {
+    
+  matrix m_bcm;
+  size_t m_ng, m_nqp;
   
  public:
-  gen_basis(string filename);
-  ~gen_basis();
+  MultipletBasis(size_t n_g, size_t n_qp);
+  ~MultipletBasis();
+    
+  matrix bcm();
+  
+  friend class CBasis;
 };
 
 #endif

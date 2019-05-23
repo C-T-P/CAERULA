@@ -6,15 +6,21 @@
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.
 
-#ifndef TRACE_BASIS_H
-#define TRACE_BASIS_H
+#ifndef TRACEBASIS_H
+#define TRACEBASIS_H
 
-#include "c_basis.h"
-#include "colourtools.h"
+#include "CBasis.h"
+#include "Colourtools.h"
 
 using namespace std;
 
-class trace_t {
+//*********************************************************************************************************
+//
+// Class TraceType
+//
+//********************************************************************************************************* 
+
+class TraceType {
   // The indices of the quark and antiquark
   size_t m_qb, m_q;
 
@@ -23,22 +29,22 @@ class trace_t {
 
  public:
   // Default constructor
-  trace_t(vector<size_t> g_inds = {}, size_t q_ind = 0, size_t qb_ind = 0);
+  TraceType(vector<size_t> g_inds = {}, size_t q_ind = 0, size_t qb_ind = 0);
   
   // Constructor from quark and antiquark indices
-  trace_t(size_t q_ind, size_t qb_ind);
+  TraceType(size_t q_ind, size_t qb_ind);
 
   //Destructor
-  ~trace_t();
+  ~TraceType();
   
   // Method to add one gluonic index
-  vector<trace_t> add_one_gluon(size_t g_ind);
+  vector<TraceType> add_one_gluon(size_t g_ind);
 
   // Method to get all indices
   vector<size_t> get_indices();
 
   // Method to compute conjugate
-  trace_t conj();
+  TraceType conj();
 
   // Method to get number of gluons
   size_t no_g();
@@ -54,45 +60,51 @@ class trace_t {
 
   // Method to check whether trace type is bigger than a second one
   // TODO: describe what '>' means
-  bool operator>(trace_t& rhs);
+  bool operator>(TraceType& rhs);
 
   // Method to check if two trace types are the same
-  bool operator==(trace_t& rhs);
+  bool operator==(TraceType& rhs);
 
   // Method to build colour amplitude from trace type
   // (A start index is needed)
-  c_amplitude build_ca(size_t start_ind);
+  CAmplitude build_ca(size_t start_ind);
 
   // Method to print string expression of trace type to terminal
   void print();
 };
 
-class trace_vec {
+//*********************************************************************************************************
+//
+// Class TraceVec
+//
+//********************************************************************************************************* 
+
+class TraceVec {
   
-  vector<trace_t> m_tr_vec;
+  vector<TraceType> m_tr_vec;
     
  public:
-  trace_vec(trace_t tr = trace_t({},0,0));
-  ~trace_vec();
-  void push_back(trace_t tr);
-  trace_t& at(size_t i);
-  trace_t at(size_t i) const;
-  vector<trace_vec> add_one_gluon(size_t g_ind);
-  vector<trace_vec> conjugates();
+  TraceVec(TraceType tr = TraceType({},0,0));
+  ~TraceVec();
+  void push_back(TraceType tr);
+  TraceType& at(size_t i);
+  TraceType at(size_t i) const;
+  vector<TraceVec> add_one_gluon(size_t g_ind);
+  vector<TraceVec> conjugates();
   vector<size_t> get_indices();
   size_t no_groups();
   //        bool is_tree_level();
   bool has_sg();
   void order();
-  bool operator>(trace_vec& rhs);
-  bool operator==(trace_vec& rhs);
-  c_amplitude build_ca();
+  bool operator>(TraceVec& rhs);
+  bool operator==(TraceVec& rhs);
+  CAmplitude build_ca();
   void print();
 };
 
-class trace_basis : public c_basis {
+class TraceBasis : public CBasis {
     
-  vector<trace_vec> m_tr_basis;
+  vector<TraceVec> m_tr_basis;
   vector<size_t> m_g_indices, m_q_indices, m_qb_indices;
   size_t m_ng, m_nqp;
   
@@ -104,10 +116,10 @@ class trace_basis : public c_basis {
   void normal_order();
   
  public:
-  trace_basis(size_t n_g, size_t n_qp);
-  ~trace_basis();
+  TraceBasis(size_t n_g, size_t n_qp);
+  ~TraceBasis();
   
-  friend class multiplet_basis;
+  friend class MultipletBasis;
 };
 
 #endif

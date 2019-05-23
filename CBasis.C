@@ -8,35 +8,39 @@
 
 #include<iomanip>
 #include<fstream>
-#include "c_basis.h"
-#include "insert.h"
-#include "multiplet_basis.h"
+#include "CBasis.h"
+#include "Insert.h"
+#include "MultipletBasis.h"
 
 double eps = 1.e-4;
 
-void c_basis::normalise(bool to_LC) {
+void CBasis::normalise(bool to_LC) {
   for (size_t i(0);i<m_dim;i++) {
-    ColourSum norm2 = m_ca_basis.at(i).scprod(m_ca_basis.at(i), to_LC);
-    //    cout << "c_basis::normalise() " << norm2.get_string() << endl;
-    m_normalisations.at(i) = sqrt(abs(norm2.get_cnum()));
-    //    cout << "c_basis::normalise() " << m_normalisations.at(i) << endl;
+    ColourSum norm2 = m_ca_basis.at(i).scprod(m_ca_basis.at(i));
     m_norms2.at(i) = norm2;
-    m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
+    // Only normalise for full colour
+    if (!to_LC) {
+      m_normalisations.at(i) = sqrt(abs(norm2.get_cnum()));
+      m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
+    }
+    else {
+      m_normalisations.at(i) = 1.;//sqrt(abs(norm2.get_leading_NC().get_cnum()));
+    }
   }
 }
 
-size_t c_basis::dim() {
+size_t CBasis::dim() {
   return m_ca_basis.size();
 }
 
-void c_basis::print() {
+void CBasis::print() {
   for (size_t i(0); i<m_dim; i++) {
     cout<< "b_" << i+1 << " = ";
     m_ca_basis.at(i).print();
   }
 }
 
-void c_basis::print_to_file(string filename, bool to_LC) {
+void CBasis::print_to_file(string filename, bool to_LC) {
   string out_filename="";
   if (filename=="") {
     size_t n_q(0), n_qb(0), n_g(0);
@@ -60,10 +64,10 @@ void c_basis::print_to_file(string filename, bool to_LC) {
   ofstream file;
   file.open(out_filename+".dat");
     
-  // Print info if file is leading colour
-  if (to_LC) file << "% NOTE: This is a LC file." << endl;
+  // Print info if file is in large-NC limit
+  if (to_LC) file << "% NOTE: This is a large-NC file." << endl;
 
-  // print amplitude permutations and normalisations for trace and adjoint basis (and multiplet basis if calculated)
+  // Print amplitude permutations and normalisations for trace and adjoint basis (and multiplet basis if calculated)
   if (m_amp_perms.size()>0) {
     file<<"% number of basis vectors with non-zero coefficient"<<endl;
     file<<"SIZE_CONNECTED = "<<m_amp_perms.size()<<";\n"<<endl;
@@ -82,7 +86,7 @@ void c_basis::print_to_file(string filename, bool to_LC) {
   
   // print basis change matrix if basis is a multiplet basis
   if (m_btype==1) {
-    multiplet_basis *ortho_basis = static_cast<multiplet_basis*>(this);
+    MultipletBasis *ortho_basis = static_cast<MultipletBasis*>(this);
     
     if (ortho_basis->m_bcm.size()>0) {
       file<<"% basis change matrix from trace basis to multiplet basis"<<endl;
@@ -108,7 +112,7 @@ void c_basis::print_to_file(string filename, bool to_LC) {
   for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
     for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
       file<<"C_"<<lno1-1<<lno2-1<<" =";
-      c_matrix ccm(m_ccmats.at(i));
+      CMatrix ccm(m_ccmats.at(i));
       for (size_t m(0);m<m_dim;m++)
 	for (size_t n(0);n<m_dim;n++)
 	  file<<fixed<<setprecision(17)<<" "<<ccm[m][n].real();
@@ -120,11 +124,11 @@ void c_basis::print_to_file(string filename, bool to_LC) {
   file.close();
 }
 
-c_matrix c_basis::sm(bool to_LC) {
+CMatrix CBasis::sm(bool to_LC) {
   for (size_t i(0); i<m_dim; ++i) {
     for (size_t j(0); j<m_dim; ++j) {
+      // cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
       if (!to_LC) {
-	// cout << "\rCalculating S" << "[" << i << "][" << j << "]..." << flush;
 	complex<double> r;
 	if (j >= i) r = m_ca_basis.at(i).scprod(m_ca_basis.at(j)).get_cnum();
 	else r = m_smat[j][i];
@@ -133,13 +137,14 @@ c_matrix c_basis::sm(bool to_LC) {
       else {
 	ColourSum r;
 	if ( j >= i) { 
-	  r = m_ca_basis.at(i).scprod(m_ca_basis.at(j), to_LC);
+	  r = m_ca_basis.at(i).scprod(m_ca_basis.at(j));
 
 	  ColourFactor num(r.get_leading_NC());
-	  ColourFactor denom(m_norms2.at(i).get_leading_NC() * m_norms2.at(j).get_leading_NC());
-	  ColourFactor frac((num * num)/denom);
+	  ColourFactor denom1(m_norms2.at(i).get_leading_NC());
+	  ColourFactor denom2(m_norms2.at(j).get_leading_NC());
+	  ColourFactor frac((num * num)/(denom1 * denom2));
 	  
-	  m_smat[i][j] = sqrt(frac.get_cnum_large_NC());
+	  m_smat[i][j] = sqrt(frac.get_cnum_large_NC())*num.get_cnum();
 	}
 	else m_smat[i][j] = m_smat[j][i];
       }
@@ -149,15 +154,15 @@ c_matrix c_basis::sm(bool to_LC) {
   return m_smat;
 }
 
-c_matrix c_basis::ccm(size_t lno1, size_t lno2, bool to_LC) {
-  c_matrix colour_cm(m_dim);
+CMatrix CBasis::ccm(size_t lno1, size_t lno2, bool to_LC) {
+  CMatrix colour_cm(m_dim);
   
-  c_amplitude ins_op=construct_insertion_op(m_process,lno1,lno2);
+  CAmplitude ins_op=construct_insertion_op(m_process,lno1,lno2);
   
   for (size_t i(0); i<m_dim; ++i) {
     for (size_t j(0); j<m_dim; ++j) {
       cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
-      c_amplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
+      CAmplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
       bvj.multiply(ins_op);
       if (!to_LC) {
 	complex<double> r(0.);
@@ -165,16 +170,18 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, bool to_LC) {
 	colour_cm[i][j] = (abs(r) < eps ? 0. : r);
       }
       else {
-	ColourSum r = m_ca_basis.at(i).scprod(bvj, to_LC);
-	ColourSum v1 = bvj.scprod(bvj, to_LC);
-
-	ColourFactor num(r.get_leading_NC());
-	ColourFactor denom(m_norms2.at(i).get_leading_NC() * v1.get_leading_NC());
-	ColourFactor frac((num * num)/denom);
+	ColourSum r = m_ca_basis.at(i).scprod(bvj);
 	
-	//	cout << "c_basis::ccm() " << frac.get_string() << endl;
+	ColourFactor num(r.get_leading_NC());
+ 	ColourFactor denom1(m_norms2.at(i).get_leading_NC());
+ 	ColourFactor denom2(m_norms2.at(j).get_leading_NC());
+	ColourFactor frac((num * num)/(denom1 * denom2 * "NC*NC"));
+	
+	// cout << "CBasis::ccm() " << (num*num).get_string() << " / " << (denom1 * denom2 * "NC*NC").get_string() << " = " << frac.get_string() << endl;
 
-	colour_cm[i][j] = sqrt(frac.get_cnum_large_NC());
+	complex<double> limit = sqrt(frac.get_cnum_large_NC());
+	if (limit != 0. and limit != complex<double>(NAN,NAN))
+	  colour_cm[i][j] = num.get_cnum();
       }
     }
   }
@@ -182,7 +189,7 @@ c_matrix c_basis::ccm(size_t lno1, size_t lno2, bool to_LC) {
   return colour_cm;
 }
 
-vector<c_matrix> c_basis::ccms(bool to_LC) {
+vector<CMatrix> CBasis::ccms(bool to_LC) {
   for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
     for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
       m_ccmats.push_back(this->ccm(lno1, lno2, to_LC));
@@ -191,25 +198,16 @@ vector<c_matrix> c_basis::ccms(bool to_LC) {
   return m_ccmats;
 }
 
-bool c_basis::check_colourcons() {
+bool CBasis::check_colourcons() {
   bool is_conserved(true);
   size_t no_legs(m_process.no_of_legs());
   complex<double> casimir(0.);
   for (size_t i(1);i<=no_legs;i++) {
-    if (m_process.leg(i)=="q" or m_process.leg(i)=="qb") casimir+=CF;
-    else if (m_process.leg(i)=="g") casimir+=CA;
+    if (m_process.leg(i)=="q" or m_process.leg(i)=="qb") casimir += CF;
+    else if (m_process.leg(i)=="g") casimir += CA;
   }
-  casimir*=0.5;
+  casimir *= 0.5;
     
-  //    c_matrix casimir_mat(m_smat);
-  //    for (size_t i(0); i<m_dim; ++i)
-  //        for (size_t j(0); j<m_dim; ++j)
-  //            casimir_mat[i][j]*=casimir;
-  //
-  //    c_matrix sum_ccmats(m_dim);
-  //    for (size_t i(0); i<no_ccmats; ++i)
-  //        sum_ccmats+=m_ccmats.at(i);
-  
   size_t no_ccmats(m_ccmats.size());
   for (size_t i(0); i<m_dim; ++i) {
     for (size_t j(0); j<m_dim; ++j) {
