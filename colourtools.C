@@ -9,7 +9,7 @@
 
 //*********************************************************************************************************
 //
-// Member functions of class process
+// Member functions of class process TODO: put in class Spectrum
 //
 //*********************************************************************************************************
 
@@ -263,11 +263,11 @@ void ColourFactor::replace_CF() {
 void ColourFactor::replace_TR() {
   // Replace TR by whatever value it was assigned
   while (m_TR > 0) {
-    m_cmplx *= 2.;
+    m_cmplx *= TR;
     --m_TR;
   }
-  while (m_TR > 0) {
-    m_cmplx *= 1./2.;
+  while (m_TR < 0) {
+    m_cmplx *= 1./TR;
     ++m_TR;
   }
 }
@@ -433,6 +433,24 @@ void ColourSum::operator*=(complex<double> z) {
   (*this) = (*this) * z;
 }
 
+void ColourSum::simplify() {
+  for (vector<ColourFactor>::iterator it(m_cf_sum.begin()); it < m_cf_sum.end(); ++it) {
+    if (abs(it->m_cmplx.real()) < TINY && abs(it->m_cmplx.imag()) < TINY) {
+      m_cf_sum.erase(it);
+      --it;
+    }
+
+    for (vector<ColourFactor>::iterator it2(it+1); it2 < m_cf_sum.end(); ++it2) {
+      if (it->m_NC == it2->m_NC and it->m_TR == it2->m_TR 
+	  and it->m_CF == it2->m_CF and it->m_CA == it2->m_CA) {
+	it->m_cmplx += it2->m_cmplx;
+	m_cf_sum.erase(it2);
+	--it2;
+      }
+    }
+  }
+}
+
 ColourSum ColourSum::cconj() {
   ColourSum result(*this);
   for (auto& term : result.m_cf_sum) term = term.cconj();
@@ -451,6 +469,9 @@ ColourFactor ColourSum::get_leading_NC() {
     if (new_order > current_order) {
       current_order = new_order;
       leading_term = term;
+      leading_term.replace_CA();
+      leading_term.replace_CF();
+      leading_term.replace_TR();
     }
     else if (new_order == current_order) {
       ColourFactor new_term(term);
@@ -461,9 +482,6 @@ ColourFactor ColourSum::get_leading_NC() {
     }
   }
 
-  leading_term.replace_CA();
-  leading_term.replace_CF();
-  leading_term.replace_TR();
   return leading_term;
 }
 
@@ -706,7 +724,7 @@ void CTerm::replace_zero() {
 	else if (f_it->m_k == d_it->m_j) {
 	  swap<size_t>(f_it->m_k,f_it->m_i);
 	  swap<size_t>(f_it->m_j,f_it->m_k);
-                    swap<size_t>(d_it->m_j,d_it->m_i);
+	  swap<size_t>(d_it->m_j,d_it->m_i);
 	}
 	else if (f_it->m_k == d_it->m_k) {
 	  swap<size_t>(f_it->m_k,f_it->m_i);
@@ -771,7 +789,7 @@ bool CTerm::replace_adjoint() {
 	  if (f_it->m_j == f_it2->m_j) {
 	    if (f_it->m_k == f_it2->m_k) m_cnum*=ColourFactor(1., 1, -1, 1, 1); // CA*(NC*NC-1)
 	    else {
-	      m_cnum*=ColourFactor(1.,0, 0, 0, 1); // CA
+	      m_cnum *= "CA"; // ColourFactor(1.,0, 0, 0, 1); // CA
 	      m_k_vec.push_back(Delta(f_it->m_k,f_it2->m_k,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -782,7 +800,8 @@ bool CTerm::replace_adjoint() {
 	  else if (f_it->m_j == f_it2->m_k) {
 	    if (f_it->m_k == f_it2->m_j) m_cnum*=ColourFactor(-1., 1, -1, 1, 1); // -1.*CA*(NC*NC-1)
 	    else {
-	      m_cnum*=ColourFactor(-1., 0, 0, 0, 1); // -1.*CA
+	      m_cnum *= "CA"; //ColourFactor(-1., 0, 0, 0, 1); // -1.*CA
+	      m_cnum *= -1.;
 	      m_k_vec.push_back(Delta(f_it->m_k,f_it2->m_j,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -793,7 +812,7 @@ bool CTerm::replace_adjoint() {
 	  else if (f_it->m_k == f_it2->m_k) {
 	    if (f_it->m_j == f_it2->m_j) m_cnum*=ColourFactor(1., 1, -1, 1, 1); // CA*(NC*NC-1)
 	    else {
-	      m_cnum*=ColourFactor(1., 0, 0, 0, 1); // CA
+	      m_cnum *= "CA"; //ColourFactor(1., 0, 0, 0, 1); // CA
 	      m_k_vec.push_back(Delta(f_it->m_j,f_it2->m_j,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -804,7 +823,8 @@ bool CTerm::replace_adjoint() {
 	  else if (f_it->m_k == f_it2->m_j) {
 	    if (f_it->m_j == f_it2->m_k) m_cnum*=ColourFactor(-1., 1, -1, 1, 1); // -1.*CA*(NC*NC-1)
 	    else {
-	      m_cnum*=ColourFactor(-1., 0, 0, 0, 1); // -1.*CA
+	      m_cnum *= "CA"; //ColourFactor(-1., 0, 0, 0, 1); // -1.*CA
+	      m_cnum *= -1.;
 	      m_k_vec.push_back(Delta(f_it->m_j,f_it2->m_k,true));
 	    }
 	    m_f_vec.erase(f_it2);
@@ -910,6 +930,7 @@ bool CTerm::replace_adjoint() {
       if (t_it->m_b == t_it2->m_a and t_it->m_a == t_it2->m_b) {
 	if (t_it->m_i == t_it2->m_i) {
 	  m_cnum *= "CF*NC"; // TR*(NC*NC-1)
+	  //	  cout << "CTerm::replace_zero() m_cnum = " << m_cnum.get_string() << endl;
 	}
 	else {
 	  m_cnum *= "TR";
@@ -935,7 +956,7 @@ void CTerm::evaluate_deltas(bool to_LC) {
     // replace adjoint indices
     if (k_it->m_adj==true) {
       if (k_it->m_i == k_it->m_j) {
-	if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	if (!to_LC) m_cnum *= "NC/TR*CF"; // (NC*NC-1)
 	else m_cnum *= "NC*NC";
 	ev=true;
       }
@@ -944,7 +965,7 @@ void CTerm::evaluate_deltas(bool to_LC) {
       for (vector<Delta>::iterator k_it2(k_it+1);!ev and k_it2!=m_k_vec.end() ; ++k_it2) {
 	if (k_it->m_i == k_it2->m_i) {
 	  if (k_it->m_j == k_it2->m_j) {
-	    if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    if (!to_LC) m_cnum *= "NC/TR*CF"; // (NC*NC-1)
 	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
@@ -956,7 +977,7 @@ void CTerm::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_j == k_it2->m_i) {
 	  if (k_it->m_i == k_it2->m_j) {
-	    if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    if (!to_LC) m_cnum *= "NC/TR*CF"; // (NC*NC-1)
 	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
@@ -968,7 +989,7 @@ void CTerm::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_i == k_it2->m_j) {
 	  if (k_it->m_j == k_it2->m_i) {
-	    if(!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    if(!to_LC) m_cnum *= "NC/TR*CF"; // (NC*NC-1)
 	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
@@ -980,7 +1001,7 @@ void CTerm::evaluate_deltas(bool to_LC) {
 	}
 	else if (k_it->m_j == k_it2->m_j) {
 	  if (k_it->m_i == k_it2->m_i) {
-	    if (!to_LC) m_cnum *= "CF/TR*NC"; // (NC*NC-1)
+	    if (!to_LC) m_cnum *= "NC/TR*CF"; // (NC*NC-1)
 	    else m_cnum *= "NC*NC";
 	    m_k_vec.erase(k_it2);
 	    ev=true;
@@ -1233,7 +1254,7 @@ void CTerm::print() {
 
 //*********************************************************************************************************
 //
-// member functions of class CAmplitude
+// Member functions of class CAmplitude
 //
 //*********************************************************************************************************
 
@@ -1424,10 +1445,10 @@ void CAmplitude::multiply(CAmplitude ca) {
 ColourSum CAmplitude::scprod(CAmplitude ca, bool to_LC) {
   CAmplitude scp(ca.hconj());
   scp=(*this)*scp;
-  
-  ColourSum result;
-  if (to_LC) scp.evaluate_LC();
-  else scp.evaluate();
+  //  cout << scp.build_string() << endl;
+  scp.evaluate();
+  // if (to_LC) scp.evaluate_LC();
+  // else scp.evaluate();
 
   return scp.result();
 }
@@ -1587,8 +1608,8 @@ void CAmplitude::evaluate() {
 	  ev=true;
           
 	  // first term
-	  c_it->m_cnum *= "TR/TR/TR";
 	  c_it->m_cnum *= -1.;
+	  c_it->m_cnum *= "TR/TR/TR";
 	  c_it->push_back(Fundamental(d,c_it->m_fi,c_it->m_fi+1));
 	  c_it->push_back(Fundamental(e,c_it->m_fi-1,c_it->m_fi));
 	  c_it->push_back(Fundamental(b,c_it->m_fi-1,c_it->m_fi));
@@ -1614,8 +1635,8 @@ void CAmplitude::evaluate() {
 	  ca.add(ct1);
                     
 	  // fourth term
-	  ct.m_cnum *= "TR/TR/TR";
 	  ct.m_cnum *= -1.;
+	  ct.m_cnum *= "TR/TR/TR";
 	  ct.push_back(Fundamental(b,ct.m_fi,ct.m_fi+1));
 	  ct.push_back(Fundamental(e,ct.m_fi-1,ct.m_fi));
 	  ct.push_back(Fundamental(d,ct.m_fi-1,ct.m_fi));
@@ -1639,8 +1660,8 @@ void CAmplitude::evaluate() {
 	  ev=true;
           
 	  // first term
-	  c_it->m_cnum *= "TR/TR/TR";
 	  c_it->m_cnum *= complex<double>(0.,-1.);
+	  c_it->m_cnum *= "TR/TR/TR";
 	  c_it->push_back(Fundamental(b,c_it->m_fi,c_it->m_fi+1));
 	  c_it->push_back(Fundamental(c,c_it->m_fi-1,c_it->m_fi));
 	  c_it->push_back(Fundamental(d,c_it->m_fi-1,c_it->m_fi));
@@ -1649,8 +1670,8 @@ void CAmplitude::evaluate() {
                     
 	  // second term
 	  CTerm ct1(ct);
-	  ct1.m_cnum *= "TR/TR/TR";
 	  ct1.m_cnum *= complex<double>(0.,1.);
+	  ct1.m_cnum *= "TR/TR/TR";
 	  ct1.push_back(Fundamental(c,ct1.m_fi,ct1.m_fi+1));
 	  ct1.push_back(Fundamental(b,ct1.m_fi-1,ct1.m_fi));
 	  ct1.push_back(Fundamental(d,ct1.m_fi-1,ct1.m_fi));
@@ -1772,7 +1793,7 @@ void CAmplitude::evaluate() {
     
     // by now only quark lines and rings exist
     c_it->evaluate_deltas();
-    m_result+=c_it->result();
+    m_result += c_it->result();
     m_cterm_vec.erase(c_it);
         
     ca.evaluate();

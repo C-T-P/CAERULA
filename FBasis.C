@@ -247,13 +247,20 @@ FBasis::FBasis(size_t n_g) {
   //    for (auto& v : m_FBasis) v.print();
   
   m_dim=m_FBasis.size();
-  for (size_t i(0);i<m_dim;i++) m_normalisations.push_back(1.);
+  for (size_t i(0);i<m_dim;i++) {
+    m_normalisations.push_back(1.);
+    m_norms2.push_back(ColourSum(ColourFactor(0., 0, 0, 0, 0)));
+  }
+
   this->make_perms();
   this->make_ca_basis();
   
   // initialise matrices
   m_smat=CMatrix(m_dim);
   m_ccmats=vector<CMatrix>();
+
+  // Basis is currently not normalised
+  m_is_normalised = false;
 }
 FBasis::~FBasis() {
   

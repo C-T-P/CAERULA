@@ -21,6 +21,7 @@ using namespace std;
 //*********************************************************************************************************
 
 class Spectrum {
+
   // Run option
   int m_runoption;
 
@@ -46,6 +47,7 @@ class Spectrum {
   bool m_traceBasis;
   bool m_adjointBasis;
   bool m_multipletBasis;
+  bool m_reduceDim;
   
   // Normalise basis?
   bool m_norm_basis;
@@ -53,11 +55,14 @@ class Spectrum {
   // Construct basis change matrix to trace basis?
   bool m_construct_bcm;
 
+  // Calculate determinant of soft matrix?
+  bool m_calcDet;
+
   // Verbosity
-  // 0: only banner
-  // 1: only errors and option messages
-  // 2: debug info
-  // 3: full information
+  //   0: only banner
+  //   1: only errors and option messages
+  //   2: debug info
+  //   3: full information
   int m_verbose;
 
   // Print banner to terminal
@@ -79,16 +84,62 @@ class Spectrum {
     m_runoption = 0; m_n_g = 0; m_n_qp = 0; m_largeNC = false; 
     m_expr = ""; m_in_filename = ""; m_out_filename = ""; m_no_outfile = false;
     m_traceBasis = true; m_adjointBasis = false; m_multipletBasis = false;
-    m_norm_basis = true; m_construct_bcm = false; m_verbose = 1;
+    m_reduceDim = true; m_norm_basis = true; m_construct_bcm = false; 
+    m_calcDet = false; m_verbose = 1;
   }
 
-  // Constructor from vector of arguments
-  Spectrum(int argc, char **argv);
+  // Initialise from vector of arguments
+  void init(int argc, char **argv);
 
-  // Start colour computation
+  // Start automated colour computation
   bool start();
+  
+  // Evaluate a given colour amplitude
+  bool evaluate_ca(string expr = "");
 
-  // TODO: setters for process, basis, etc.
+  // Simplify a given colour amplitude
+  bool simplify_ca(string expr = "");
+
+  //----------------------------------------------------------------------------------
+  // Setters
+  //----------------------------------------------------------------------------------
+  void set_verbose(int verbosity) {
+    if (verbosity < 0) m_verbose = 0;
+    else if (verbosity > 3) m_verbose = 3;
+    else m_verbose = verbosity;
+  };
+  void set_ng(size_t ng) { m_n_g = ng; };
+  void set_nqp(size_t nqp) { m_n_qp = nqp; };
+  void set_largeNC(bool isLC) { m_largeNC = isLC; };
+  void set_in_filename(string filename) { m_in_filename = filename; };
+  void set_out_filename(string filename) { m_out_filename = filename; };
+  void print_outfile(bool print_file) { m_no_outfile = !print_file; };
+  void use_trace_basis(bool use_tr_basis) { m_traceBasis = use_tr_basis; };
+  void use_adjoint_basis(bool use_adj_basis) { m_adjointBasis = use_adj_basis; };
+  void use_multiplet_basis(bool use_orth_basis) { m_multipletBasis = use_orth_basis; };
+  void reduce_trace_dim(bool reduce_dim) { m_reduceDim = reduce_dim; };
+  void normalise_basis(bool is_normalised) { m_norm_basis = is_normalised; };
+  void construct_bcm(bool constr_bcm) { m_construct_bcm = constr_bcm; };
+  void set_calc_det(bool calcDet) { m_calcDet = calcDet; };
+
+  //----------------------------------------------------------------------------------
+  // Getters
+  //----------------------------------------------------------------------------------
+  int get_verbose(int verbosity) { return m_verbose; };
+  size_t get_ng() { return m_n_g; };
+  size_t get_nqp() { return m_n_qp; };
+  bool is_largeNC() { return m_largeNC; };
+  string get_in_filename() { return m_in_filename; };
+  string get_out_filename() { return m_out_filename; };
+  bool print_outfile() { return !m_no_outfile; };
+  bool use_trace_basis() { return m_traceBasis; };
+  bool use_adjoint_basis() { return m_adjointBasis; };
+  bool use_multiplet_basis() { return m_multipletBasis; };
+  bool reduce_trace_dim() { return m_reduceDim; };
+  bool normalise_basis() { return m_norm_basis; };
+  bool construct_bcm() { return m_construct_bcm; };
+  bool get_calc_det() { return m_calcDet; };
+
 };
 
 #endif

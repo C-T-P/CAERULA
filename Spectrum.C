@@ -20,11 +20,11 @@ void Spectrum::print_banner() {
   cout<<"============  Calculations in Colour Space   ==============="<<endl;
   cout<<"============================================================"<<endl;
   cout<<endl;
-  cout<<"Spectrum version 2.0, Copyright (C) 2018 Christian T Preuss"<<endl;
+  cout<<"Spectrum version 2.0, Copyright (C) 2019 Christian T Preuss"<<endl;
   cout<<endl;
   cout<<"=== Author =================================================\n"<<endl;
   cout<<"\tChristian Tobias Preuss\n\t";
-  cout<<"School of Physics and Astronomy, Monash University,";
+  cout<<"School of Physics and Astronomy,\n\tMonash University,";
   cout<<"\n\t3800 Melbourne, Australia\n\t";
   cout<<"email: christian.preuss@monash.edu\n"<<endl;
   cout<<"============================================================\n"<<endl;
@@ -50,13 +50,13 @@ void Spectrum::print_help_message() {
 
   cout<<"\t-f, -file:";
   cout<<"\t\tRead process and colour basis from input file and compute the soft matrix";
-  cout<<" and all colour change matrices."<<endl;
+  cout<<"\n\t\t\t\tand all colour change matrices."<<endl;
 
-  cout<<"\t-ng:\t\t\tSpecify number of gluons to construct";
-  cout<<"the trace basis and compute the soft matrix and all colour change matrices."<<endl;
+  cout<<"\t-ng:\t\t\tSpecify number of gluons to construct the trace basis";
+  cout<<"\n\t\t\t\t and compute the soft matrix and all colour change matrices."<<endl;
 
   cout<<"\t-nqp:\t\t\tSpecify number of quark pairs to construct the colour flow/trace basis";
-  cout<<"and compute the soft matrix and all colour change matrices."<<endl;
+  cout<<"\n\t\t\t\tand compute the soft matrix and all colour change matrices."<<endl;
 
   cout<<"\t-adj:\t\t\tBuild adjoint basis (f-basis) instead of trace basis.";
   cout<<"\n\t\t\t\tWorks only for pure gluon processes with ng>=3."<<endl;
@@ -70,22 +70,22 @@ void Spectrum::print_help_message() {
 
   cout<<"\t-bcm:\t\t\tBuild basis change matrix from trace basis to multiplet basis.";
   cout<<"\n\t\t\t\tWorks only together with the -multiplet option and if a ";
-  cout<<"precalculated multiplet basis for the process is provided."<<endl;
+  cout<<"\n\t\t\t\tprecalculated multiplet basis for the process is provided."<<endl;
 
 
-  cout<<"\t-nonorm:\t\t\tDeactivates normalisation of basis vectors."<<endl;
+  cout<<"\t-nonorm:\t\tDeactivates normalisation of basis vectors."<<endl;
 
   cout<<endl;
 
   cout<<"\t-v, -verbose:";
-  cout<<"\t\t\tVerbosity, choose";
+  cout<<"\t\tVerbosity, choose";
   cout<<"\n\t\t\t\t0: silent mode - no output except for errorst";
   cout<<"\n\t\t\t\t1: default mode - additionally settings and diagnostics";
   cout<<"\n\t\t\t\t2: debug mode - additionally  computation infos";
   cout<<"\n\t\t\t\t3: full mode - complete output for each term"<<endl;
 
   cout<<"\t-nooutfile:";
-  cout<<"\t\t\tDo not save computation to a file."<<endl;
+  cout<<"\t\tDo not save computation to a file."<<endl;
   
   cout<<endl;
 
@@ -108,19 +108,18 @@ void Spectrum::basis_error() {
   exit(EXIT_FAILURE);
 }
 
-/// Constructor from vector of arguments
-Spectrum::Spectrum(int argc, char **argv) {
-  print_banner();
+/// Initialise from vector of arguments
+void Spectrum::init(int argc, char **argv) {
 
-  /// No input given
+  // No input given
   if (argc==1) print_help_message();
   
-  /// Standard settings
-  m_runoption = 0; m_n_g = 0; m_n_qp = 0;
-  m_expr = ""; m_in_filename = ""; m_out_filename = ""; m_no_outfile = false;
-  m_traceBasis = true; m_adjointBasis = false; m_multipletBasis = false;
-  m_norm_basis = true; m_construct_bcm = false; m_verbose = 1;
-
+//   // Standard settings
+//   m_runoption = 0; m_n_g = 0; m_n_qp = 0;
+//   m_expr = ""; m_in_filename = ""; m_out_filename = ""; m_no_outfile = false;
+//   m_traceBasis = true; m_adjointBasis = false; m_multipletBasis = false;
+//   m_norm_basis = true; m_construct_bcm = false; m_verbose = 1;
+  
   for(int i(1); i<argc; ++i) {
     /// Print help message and exit
     if (strcmp(argv[i], "-help")==0 or strcmp(argv[i], "-h")==0) {
@@ -171,6 +170,14 @@ Spectrum::Spectrum(int argc, char **argv) {
       ++i;
     }
 
+    /// Reduce the dimension of the trace basis by summing conjugates
+    else if (strcmp(argv[i],"-reduceDim")==0) {
+      if (m_traceBasis) m_reduceDim=true;
+      else run_error();
+      if (m_verbose>=1)
+	cout<<"Spectrum::Spectrum() Dimension of trace basis will be reduced."<<endl;
+    }
+
     /// Use the adjoint basis
     else if (strcmp(argv[i],"-adj")==0) {
       if (!m_multipletBasis) m_adjointBasis=true;
@@ -193,7 +200,7 @@ Spectrum::Spectrum(int argc, char **argv) {
     else if (strcmp(argv[i],"-largeNC")==0) {
       m_largeNC = true;
       if (m_verbose>=1)
-	cout<<"Spectrum::Spectrum() Multiplet basis will be used."<<endl;
+	cout<<"Spectrum::Spectrum() Large-NC limit will be used."<<endl;
     }   
 
     /// Do not normalise basis
@@ -210,11 +217,23 @@ Spectrum::Spectrum(int argc, char **argv) {
 	cout<<"Spectrum::Spectrum() Basis change matrix will be computed."<<endl;
     }
 
+    /// Calculate determinant of soft matrix
+    else if (strcmp(argv[i],"-det")==0) {
+      m_calcDet=true;
+      if (m_verbose>=1)
+	cout<<"Spectrum::Spectrum() Determinant of soft matrix will be calculated."<<endl;
+    }
+
     /// Do not save calculation to file
     else if (strcmp(argv[i],"-nooutfile")==0) {
       m_no_outfile=true;
       if (m_verbose>=1)
 	cout<<"Spectrum::Spectrum() No output file will be saved."<<endl;
+    }
+
+    else {
+      if (m_verbose >= 1)
+	cout << "Spectrum::Spectrum() unrecognised option " << argv[i] << ". Will skip." << endl;
     }
   }  
 }
@@ -226,20 +245,10 @@ bool Spectrum::start() {
   // Perform colour calculations depending on the given input                                     
   switch (m_runoption) {
     case 1: {
-      CAmplitude ca(m_expr);
-      ca.print();
-      ca.evaluate();
-      cout<<"= "<<ca.result().get_string()<<endl;
-      cout<<"= "<<ca.result().get_cnum()<<endl;
-      return 0;
+      return evaluate_ca();
     }
     case 2: {
-      CAmplitude ca(m_expr);
-      ca.print();
-      ca.simplify();
-      cout<<"= ";
-      ca.print();
-      return 0;
+      return simplify_ca();
     }
     case 3: {
       if (m_verbose>=1) {
@@ -274,8 +283,11 @@ bool Spectrum::start() {
 	if (m_verbose>=1) {
 	  cout<<"Spectrum::start() Will construct trace basis for "<<m_n_g<<" gluons";
 	  cout<<" and "<<m_n_qp<<" quark pairs."<<endl;
+          if (m_reduceDim) {
+            cout<<"Spectrum::start() Dimension of trace basis will be reduced."<<endl;
+          }
 	}
-	basis = new TraceBasis(m_n_g, m_n_qp);
+	basis = new TraceBasis(m_n_g, m_n_qp, m_reduceDim);
       }
       else {
         cerr<<"Spectrum::start() Error! No basis type specified."<<endl;
@@ -298,7 +310,7 @@ bool Spectrum::start() {
   if (m_norm_basis) basis->normalise(m_largeNC);
   if (m_verbose>=2) {
     cout<<endl;
-    if (m_construct_bcm or m_norm_basis) cout<<"Normalised ";
+    if (basis->is_normalised()) cout << "Normalised ";
     cout<<"Basis Vectors:"<<endl;
     basis->print();
   }
@@ -306,45 +318,107 @@ bool Spectrum::start() {
   clock_t t(clock());
   if (m_verbose>=1)
     cout<<"\nCalculating the soft matrix..."<<endl;
+  CMatrix soft_matrix(basis->sm(m_largeNC));
   if (m_verbose>=2) {
-    CMatrix soft_matrix(basis->sm(m_largeNC));
     cout<<"\nSoft Matrix:"<<endl;
     soft_matrix.print();
   }
-  else basis->sm();
   t=clock()-t;
   if (m_verbose>=1)
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
 
+  if (m_calcDet) {
+    t=clock();
+    double softDet = soft_matrix.det().real();
+    t=clock()-t;
+    if (m_verbose>=1)
+      cout<<"Determinant = "<<softDet<<" (computation time: "<<(float)t/CLOCKS_PER_SEC<<"s)"<<endl;
+  }
+
   t=clock();
   if (m_verbose>=1)
     cout<<"\nCalculating the colour change matrices..."<<endl;
+  vector<CMatrix> cc_mats(basis->ccms(m_largeNC));
   if (m_verbose>=2) {
-    vector<CMatrix> cc_mats(basis->ccms(m_largeNC));
     cout<<"\nColour Change Matrices:"<<endl;
     for (auto& ccm : cc_mats) {
       ccm.print();
       cout<<endl;
     }
   }
-  else basis->ccms();
   t=clock()-t;
   if (m_verbose>=1)
     cout<<"Computation time: "<<(float)t/CLOCKS_PER_SEC<<"s."<<endl;
 
   if (m_verbose>=1) {
     cout<<"\nIs colour conserved? ";
-    if(basis->check_colourcons()) cout<<"Yes!"<<endl;
+    if (m_largeNC) cout << "(in large-NC limit) ";
+    if(basis->check_colourcons(m_largeNC)) cout<<"Yes!"<<endl;
     else cout<<"NO!"<<endl;
   }
 
   if (!m_no_outfile) {
     if (m_verbose>=1)
       cout<<"\nPrinting to file..."<<endl;
-    basis->print_to_file();
+    basis->print_to_file("", m_largeNC);
     if (m_verbose>=1)
       cout<<"Done!"<<endl;
   }
+
+  return 0;
+}
+
+bool Spectrum::evaluate_ca(string expr) {
+  CAmplitude* ca(NULL);
+  if (expr != "") {
+    ca = new CAmplitude(expr);
+  }
+  else {
+    if (m_expr != "") ca = new CAmplitude(m_expr);
+    else {
+      if (m_verbose >= 1) {
+	cerr << "Spectrum::evaluate_ca() Error! No colour amplitude given." << endl;
+	return 1;
+      }
+    }
+  }
+  
+  if (ca != NULL) {
+    ca->print();
+    ca->evaluate();
+    ColourSum result(ca->result());
+    result.simplify();
+    cout << "= " << result.get_string() << endl;
+    cout << "= " << result.get_cnum() << " (NC = 3)" << endl;
+  }
+  else return 1;
+
+  return 0;
+}
+
+bool Spectrum::simplify_ca(string expr) {
+  CAmplitude* ca(NULL);
+  if (expr != "") {
+    ca = new CAmplitude(expr);
+  }
+  else {
+    if (m_expr != "") ca = new CAmplitude(m_expr);
+    else {
+      if (m_verbose >= 1) {
+	cerr << "Spectrum::evaluate_ca() Error! No colour amplitude given." << endl;
+	return 1;
+      }
+    }
+  }
+  
+  if (ca != NULL) {
+    CAmplitude ca(m_expr);
+    ca.print();
+    ca.simplify();
+    cout<<"= ";
+    ca.print();
+  }
+  else return 1;
 
   return 0;
 }

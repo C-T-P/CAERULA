@@ -25,14 +25,18 @@ using namespace std;
 //
 //*********************************************************************************************************
 
+// Colour constants
 const double NC(3.); // number of colours
 const double TR(1./2.); // generator normalisation
 const double CF(TR*(NC*NC-1)/NC); // Fundamental Casimir
 const double CA(2.*TR*NC); // Adjoint Casimir
 
+// Other constants
+const double TINY(1.e-6);
+
 //*********************************************************************************************************
 //
-// Class process
+// Class process - TODO: put in Spectrum.h
 //
 //*********************************************************************************************************
 
@@ -212,6 +216,9 @@ class ColourSum {
 
   // Method to multiply with complex number and assignment
   void operator*=(complex<double> z);
+
+  // Simplify expression: delete terms equal 0 and add equal powers
+  void simplify();
 
   // Complex conjugate
   ColourSum cconj();

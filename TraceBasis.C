@@ -11,7 +11,12 @@
 
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds);
 
-// member functions of TraceType class
+//*********************************************************************************************************
+//
+// Member Functions of TraceType
+//
+//*********************************************************************************************************
+
 TraceType::TraceType(vector<size_t> g_inds, size_t q_ind, size_t qb_ind) {
   m_q=q_ind;
   m_qb=qb_ind;
@@ -92,7 +97,7 @@ bool TraceType::operator==(TraceType& rhs) {
   if (i==s_1) return true;
   return false;
 }
-CAmplitude TraceType::build_ca(size_t start_ind) {
+CAmplitude TraceType::build_ca(size_t start_ind, bool combineConj) {
   CTerm ct;
   size_t n_g(m_g.size());
   
@@ -116,23 +121,27 @@ CAmplitude TraceType::build_ca(size_t start_ind) {
     }
     
     CAmplitude ca(ct);
-    ct.clear();
+
+    // Add conjugate amplitude
+    if (combineConj) {
+      ct.clear();
+      
+      vector<size_t> refl_ind(n_g,m_g.at(0));
+      reverse_copy(m_g.begin()+1,m_g.end(),refl_ind.begin()+1);
     
-    vector<size_t> refl_ind(n_g,m_g.at(0));
-    reverse_copy(m_g.begin()+1,m_g.end(),refl_ind.begin()+1);
-    
-    incr=0;
-    for (size_t i(0);i<n_g;i++) {
-      int c_ind;
-      if (i==n_g-1) c_ind=start_ind;
-      else c_ind=start_ind+incr+1;
-      ct.push_back(Fundamental(refl_ind.at(i),start_ind+incr,c_ind));
-      incr++;
+      incr=0;
+      for (size_t i(0);i<n_g;i++) {
+	int c_ind;
+	if (i==n_g-1) c_ind=start_ind;
+	else c_ind=start_ind+incr+1;
+	ct.push_back(Fundamental(refl_ind.at(i),start_ind+incr,c_ind));
+	incr++;
+      }
+      if (n_g%2!=0) ct.set_cnumber(ColourFactor(-1., 0, 0, 0, 0));
+      else ct.set_cnumber(ColourFactor(1., 0, 0, 0, 0));
+      
+      ca.add(ct);
     }
-    if (n_g%2!=0) ct.set_cnumber(ColourFactor(-1., 0, 0, 0, 0));
-    else ct.set_cnumber(ColourFactor(1., 0, 0, 0, 0));
-    
-    ca.add(ct);
     
     return ca;
   }
@@ -161,8 +170,12 @@ void TraceType::print() {
   else cout<<")";
 }
 
+//*********************************************************************************************************
+//
+// Member Functions of TraceVec
+//
+//*********************************************************************************************************
 
-// member functions of TraceVec class
 TraceVec::TraceVec(TraceType tr) {
   if (tr.is_not_empty())
     m_tr_vec.push_back(tr);
@@ -175,7 +188,7 @@ void TraceVec::push_back(TraceType tr) {
   if (tr.is_not_empty())
     m_tr_vec.push_back(tr);
   else {
-    cerr<<"Error: can't push empty TraceType to TraceVec."<<endl;
+    cerr<<"TraceVec::push_back() Error! Can't push empty TraceType to TraceVec."<<endl;
     exit(EXIT_FAILURE);
   }
 }
@@ -280,11 +293,11 @@ bool TraceVec::operator==(TraceVec& rhs) {
   if (i==s_1) return true;
   return false;
 }
-CAmplitude TraceVec::build_ca() {
+CAmplitude TraceVec::build_ca(bool reduceDim) {
   CAmplitude ca;
   size_t start_ind(101);
   for (auto& tr_t : m_tr_vec) {
-    ca.multiply(tr_t.build_ca(start_ind));
+    ca.multiply(tr_t.build_ca(start_ind,reduceDim));
     
     size_t n_qp(tr_t.no_qp()), n_g(tr_t.no_g());
     if (n_qp!=0 and n_g>0) start_ind+=n_g-1;
@@ -298,40 +311,51 @@ void TraceVec::print() {
   cout<<"]"<<endl;
 }
 
-// Member functions of TraceBasis class
-TraceBasis::TraceBasis(size_t n_g, size_t n_qp) {
-  // set basis type
+//*********************************************************************************************************
+//
+// Member Functions of TraceBasis
+//
+//*********************************************************************************************************
+
+TraceBasis::TraceBasis(size_t n_g, size_t n_qp, bool reduceDim) {
+  // Set basis type
   m_btype=2;
   
-  // set number of particles
+  // Set number of particles
   m_ng=n_g;
   m_nqp=n_qp;
     
-  // initialise process specifications
+  // Initialise process specifications
   for (size_t n(0);n<m_nqp;n++) m_process.add_out_leg("q");
   for (size_t n(0);n<m_nqp;n++) m_process.add_out_leg("qb");
   for (size_t n(0);n<m_ng;n++) m_process.add_out_leg("g");
     
-  // set conversion factor to colour flow basis
+  // Set conversion factor to colour flow basis
   m_confact=pow(sqrt(1./TR),m_ng);
     
-  // initialise quark, anti quark and gluon indices 
-  // the process is ordered as q,...,q,qb,...,qb,g,...,g
+  // Set whether we reduce the dimension of the basis by combining conjugate amplitudes
+  m_reduce_dim = reduceDim;
+
+  // Initialise quark, anti quark and gluon indices 
+  // Note: the process is ordered as q,...,q,qb,...,qb,g,...,g
   for (size_t n(1);n<=m_nqp;n++) m_q_indices.push_back(n);
   for (size_t n(m_nqp+1);n<=2*m_nqp;n++) m_qb_indices.push_back(n);
   for (size_t n(2*m_nqp+1);n<=2*m_nqp+m_ng;n++) m_g_indices.push_back(n);
   size_t g_start(0);
   
-//     cout<<"q indices:"<<endl;
-//     for (const auto& i : m_q_indices) cout<<i<<" ";
-//     cout<<endl;
-//     cout<<"qb indices:"<<endl;
-//     for (const auto& i : m_qb_indices) cout<<i<<" ";
-//     cout<<endl;
-//     cout<<"g indices:"<<endl;
-//     for (const auto& i : m_g_indices) cout<<i<<" ";
-//     cout<<endl;
-    
+  if (m_verbose >= 1) {
+    cout<<"TraceBasis::TraceBasis() Index summary:"<<endl;
+    cout<<" q indices:"<<endl;
+    for (const auto& i : m_q_indices) cout<<" "<<i<<" ";
+    cout<<endl;
+    cout<<" qb indices:"<<endl;
+    for (const auto& i : m_qb_indices) cout<<" "<<i<<" ";
+    cout<<endl;
+    cout<<" g indices:"<<endl;
+    for (const auto& i : m_g_indices) cout<<" "<<i<<" ";
+    cout<<endl;
+  }
+
   // build all possible quark lines
   if (m_nqp!=0) {
     vector<vector<size_t>> qqb_ind_combos(get_q_ind_combinations(m_q_indices,m_qb_indices));
@@ -369,7 +393,8 @@ TraceBasis::TraceBasis(size_t n_g, size_t n_qp) {
     
   this->remove_sg();
   this->normal_order();
-  this->remove_conj();
+  if (m_reduce_dim)
+    this->remove_conj();
   //  for (auto& v : m_tr_basis) v.print();
   
   m_dim=m_tr_basis.size();
@@ -383,6 +408,9 @@ TraceBasis::TraceBasis(size_t n_g, size_t n_qp) {
   // initialise matrices
   m_smat=CMatrix(m_dim);
   m_ccmats=vector<CMatrix>();
+
+  // Basis is currently not normalised
+  m_is_normalised = false;
 }
 TraceBasis::~TraceBasis() {
     
@@ -422,10 +450,15 @@ void TraceBasis::make_perms() {
 }
 void TraceBasis::make_ca_basis() {
   for (auto& bv : m_tr_basis)
-    m_ca_basis.push_back(bv.build_ca());
+    m_ca_basis.push_back(bv.build_ca(m_reduce_dim));
 }
 
-// helper functions
+//*********************************************************************************************************
+//
+// Helper Functions
+//
+//*********************************************************************************************************
+
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds) {
   vector<vector<size_t>> q_ind_perms, qqb_ind_combos;
   vector<size_t> tmp;
@@ -443,19 +476,3 @@ vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size
   }
   return qqb_ind_combos;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

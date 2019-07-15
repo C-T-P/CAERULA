@@ -9,6 +9,7 @@
 #include "Spectrum.h"
 
 int main(int argc, char **argv) {
-  Spectrum  spectrum(argc,argv);
+  Spectrum  spectrum;
+  spectrum.init(argc,argv);
   return spectrum.start();
 }

@@ -20,6 +20,7 @@
 
 class CBasis { 
  protected:
+
   // Information about process
   process m_process;
 
@@ -49,12 +50,22 @@ class CBasis {
   vector<CMatrix> m_ccmats;
 
   // The basis type
-  // 0: general basis from file
-  // 1: multiplet basis
-  // 2: trace basis
-  // 3: adjoint basis
+  //   0: general basis from file
+  //   1: multiplet basis
+  //   2: trace basis
+  //   3: adjoint basis
   size_t m_btype;    
+
+  // Is basis normalised?
+  bool m_is_normalised;
  
+  // Verbosity
+  //   0: only banner
+  //   1: only errors and option messages
+  //   2: debug info
+  //   3: full information
+  int m_verbose = 1;
+
  public:
   // Method to normalise basis vectors
   void normalise(bool to_LC = false);
@@ -83,8 +94,10 @@ class CBasis {
   vector<CMatrix> ccms(bool to_LC = false);
 
   // Method to check colour conservation for colour change matrices
-  // Note: does not make sense for LC computations
-  bool check_colourcons();
+  bool check_colourcons(bool to_LC = false);
+
+  // Method to check whether basis is normalised
+  bool is_normalised() {return m_is_normalised;}
 };
 
 #endif

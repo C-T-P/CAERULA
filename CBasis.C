@@ -12,21 +12,21 @@
 #include "Insert.h"
 #include "MultipletBasis.h"
 
-double eps = 1.e-4;
+const double eps = 1.e-4;
 
 void CBasis::normalise(bool to_LC) {
   for (size_t i(0);i<m_dim;i++) {
     ColourSum norm2 = m_ca_basis.at(i).scprod(m_ca_basis.at(i));
     m_norms2.at(i) = norm2;
-    // Only normalise for full colour
     if (!to_LC) {
       m_normalisations.at(i) = sqrt(abs(norm2.get_cnum()));
-      m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
     }
     else {
-      m_normalisations.at(i) = 1.;//sqrt(abs(norm2.get_leading_NC().get_cnum()));
+      m_normalisations.at(i) = sqrt(abs(norm2.get_leading_NC().get_cnum()));
     }
+    m_ca_basis.at(i)=m_ca_basis.at(i)*complex<double>(1./m_normalisations.at(i),0.);
   }
+  m_is_normalised = true;
 }
 
 size_t CBasis::dim() {
@@ -140,11 +140,21 @@ CMatrix CBasis::sm(bool to_LC) {
 	  r = m_ca_basis.at(i).scprod(m_ca_basis.at(j));
 
 	  ColourFactor num(r.get_leading_NC());
-	  ColourFactor denom1(m_norms2.at(i).get_leading_NC());
-	  ColourFactor denom2(m_norms2.at(j).get_leading_NC());
+	  ColourFactor denom1, denom2;
+
+	  if (m_is_normalised) {
+	    denom1 = m_norms2.at(j).get_leading_NC();
+	    denom2 = m_norms2.at(i).get_leading_NC();
+	  }
+	  else {
+	    denom1 = m_ca_basis.at(i).scprod(m_ca_basis.at(i)).get_leading_NC();
+	    denom2 = m_ca_basis.at(j).scprod(m_ca_basis.at(j)).get_leading_NC();
+	  }
 	  ColourFactor frac((num * num)/(denom1 * denom2));
 	  
-	  m_smat[i][j] = sqrt(frac.get_cnum_large_NC())*num.get_cnum();
+	  complex<double> limit = frac.get_cnum_large_NC();
+	  if (limit != 0. and limit != complex<double>(NAN,NAN))
+	    m_smat[i][j] = num.get_cnum();
 	}
 	else m_smat[i][j] = m_smat[j][i];
       }
@@ -173,13 +183,20 @@ CMatrix CBasis::ccm(size_t lno1, size_t lno2, bool to_LC) {
 	ColourSum r = m_ca_basis.at(i).scprod(bvj);
 	
 	ColourFactor num(r.get_leading_NC());
- 	ColourFactor denom1(m_norms2.at(i).get_leading_NC());
- 	ColourFactor denom2(m_norms2.at(j).get_leading_NC());
-	ColourFactor frac((num * num)/(denom1 * denom2 * "NC*NC"));
-	
-	// cout << "CBasis::ccm() " << (num*num).get_string() << " / " << (denom1 * denom2 * "NC*NC").get_string() << " = " << frac.get_string() << endl;
+ 	ColourFactor denom1, denom2;
 
-	complex<double> limit = sqrt(frac.get_cnum_large_NC());
+	if (m_is_normalised) {
+	  denom1 = m_norms2.at(j).get_leading_NC();
+	  denom2 = m_norms2.at(i).get_leading_NC();
+	}
+	else {
+	  denom1 = m_ca_basis.at(i).scprod(m_ca_basis.at(i)).get_leading_NC();
+	  denom2 = m_ca_basis.at(j).scprod(m_ca_basis.at(j)).get_leading_NC();
+	}
+	
+	ColourFactor frac((num * num)/(denom1 * denom2 * "NC*NC"));
+
+	complex<double> limit = frac.get_cnum_large_NC();
 	if (limit != 0. and limit != complex<double>(NAN,NAN))
 	  colour_cm[i][j] = num.get_cnum();
       }
@@ -198,12 +215,15 @@ vector<CMatrix> CBasis::ccms(bool to_LC) {
   return m_ccmats;
 }
 
-bool CBasis::check_colourcons() {
+bool CBasis::check_colourcons(bool to_LC) {
   bool is_conserved(true);
   size_t no_legs(m_process.no_of_legs());
   complex<double> casimir(0.);
   for (size_t i(1);i<=no_legs;i++) {
-    if (m_process.leg(i)=="q" or m_process.leg(i)=="qb") casimir += CF;
+    if (m_process.leg(i)=="q" or m_process.leg(i)=="qb") {
+      if (!to_LC) casimir += CF;
+      else casimir += TR*NC;
+    }
     else if (m_process.leg(i)=="g") casimir += CA;
   }
   casimir *= 0.5;
@@ -214,18 +234,12 @@ bool CBasis::check_colourcons() {
       complex<double> sum_all(casimir*m_smat[i][j]);
       for (size_t k(0); k<no_ccmats; ++k)
 	sum_all+=m_ccmats[k][i][j];
-      if (abs(sum_all)>eps) is_conserved=false;
+      if (abs(sum_all)>eps) {
+	is_conserved=false;
+	cout << "[" << i << "," << j << "] " << sum_all << endl;
+      }
     }
   }
-  
-  //    cout<<"Sum TProds:"<<endl;
-  //    sum_ccmats.print();
-  //    cout<<"Casimir Matrix:"<<endl;
-  //    casimir_mat.print();
-  
+    
   return is_conserved;
 }
-
-
-
-
