@@ -343,7 +343,7 @@ TraceBasis::TraceBasis(size_t n_g, size_t n_qp, bool reduceDim) {
   for (size_t n(2*m_nqp+1);n<=2*m_nqp+m_ng;n++) m_g_indices.push_back(n);
   size_t g_start(0);
   
-  if (m_verbose >= 1) {
+  if (m_verbose >= 3) {
     cout<<"TraceBasis::TraceBasis() Index summary:"<<endl;
     cout<<" q indices:"<<endl;
     for (const auto& i : m_q_indices) cout<<" "<<i<<" ";

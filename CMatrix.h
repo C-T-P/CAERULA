@@ -1,5 +1,6 @@
 // Copyright (C) 2018 Christian T Preuss
 // This file is part of Spectrum.
+//
 // Spectrum is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -51,7 +52,8 @@ class CMatrix {
             m_matr[i][j]+=m_mat[i][k]*m_mat2[k][j];
     }
     else {
-      cout<<"Error mutliplying square matrices "<<&m_mat<<" and "<< &m_mat2<<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
+      cout<<"Error mutliplying square matrices "<<&m_mat<<" and "<< &m_mat2
+          <<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
       exit(EXIT_FAILURE);
     }
     return m_matr;
@@ -65,7 +67,8 @@ class CMatrix {
           m_matr[i][j]=m_mat[i][j]+m_mat2[i][j];
     }
     else {
-      cout<<"Error adding square matrices "<<&m_mat<<" and "<< &m_mat2<<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
+      cout<<"Error adding square matrices "<<&m_mat<<" and "<< &m_mat2
+          <<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
       exit(EXIT_FAILURE);
     }
     return m_matr;
@@ -78,7 +81,8 @@ class CMatrix {
           m_mat[i][j]+=m_mat2[i][j];
     }
     else {
-      cout<<"Error adding square matrices "<<&m_mat<<" and "<< &m_mat2<<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
+      cout<<"Error adding square matrices "<<&m_mat<<" and "<< &m_mat2
+          <<": mismatch of dimensions: "<<m_mat.size()<<" vs. "<<dim<<endl;
       exit(EXIT_FAILURE);
     }
   }
@@ -86,7 +90,7 @@ class CMatrix {
     size_t dim(m_mat.size());
     for (size_t i(0);i<dim;i++) {
       for (size_t j(0);j<dim;j++)
-        cout<<fixed<<setprecision(17)<<m_mat[i][j].real()<<" ";
+        cout<<fixed<<setprecision(8)<<m_mat[i][j].real()<<" ";
       cout<<endl;
     }
   }

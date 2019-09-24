@@ -67,9 +67,10 @@ void CBasis::print_to_file(string filename, bool to_LC) {
   // Print info if file is in large-NC limit
   if (to_LC) file << "% NOTE: This is a large-NC file." << endl;
 
-  // Print amplitude permutations and normalisations for trace and adjoint basis (and multiplet basis if calculated)
+  // Print amplitude permutations and normalisations for trace and adjoint basis 
+  // (and multiplet basis if calculated)
   if (m_amp_perms.size()>0) {
-    file<<"% number of basis vectors with non-zero coefficient"<<endl;
+    file<<"% number of basis vectors"<<endl;
     file<<"SIZE_CONNECTED = "<<m_amp_perms.size()<<";\n"<<endl;
     file<<"% prefactors of the partial amplitude in total amplitude"<<endl;
     for (size_t i(0);i<m_amp_perms.size();i++)
@@ -81,7 +82,6 @@ void CBasis::print_to_file(string filename, bool to_LC) {
       for (const auto& ind : m_amp_perms[i]) file<<" "<<ind-1;
       file<<";"<<endl;
     }
-    file<<"\n"<<endl;
   }
   
   // print basis change matrix if basis is a multiplet basis
@@ -98,7 +98,7 @@ void CBasis::print_to_file(string filename, bool to_LC) {
     }
   }
   
-  file<<"% dimension of the colour space"<<endl;
+  file<<"\n% dimension of the colour space"<<endl;
   file<<"DIM = "<<m_dim<<";"<<endl;
   
   file<<"\n% colour metric aka soft matrix"<<endl;
@@ -171,7 +171,7 @@ CMatrix CBasis::ccm(size_t lno1, size_t lno2, bool to_LC) {
   
   for (size_t i(0); i<m_dim; ++i) {
     for (size_t j(0); j<m_dim; ++j) {
-      cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
+      //cout << "\rCalculating C_(" << lno1 << "," << lno2 << ")[" << i << "][" << j << "]..." << flush;
       CAmplitude bvj(m_ca_basis.at(j).shift_to_internal(2000));
       bvj.multiply(ins_op);
       if (!to_LC) {

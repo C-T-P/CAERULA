@@ -11,7 +11,6 @@
 // construct Insertion operator for gluon Insertion between leg lno1 and lno2 as a colour term
 CAmplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
     CTerm ins_op;
-    //    complex<double> prefactor(1.);
     ColourFactor prefactor = ColourFactor(1., 0, 0, 0, 0);
 
     if (proc.leg(lno1)=="g") {
@@ -53,5 +52,3 @@ CAmplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
 
     return CAmplitude(ins_op);
 }
-
-// TODO find algorithm to determine which insertions are equivalent
