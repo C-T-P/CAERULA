@@ -35,7 +35,7 @@ size_t CBasis::dim() {
 
 void CBasis::print() {
   for (size_t i(0); i<m_dim; i++) {
-    cout<< "b_" << i+1 << " = ";
+    cout<< "  b_" << i+1 << " = ";
     m_ca_basis.at(i).print();
   }
 }

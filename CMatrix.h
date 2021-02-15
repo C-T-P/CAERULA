@@ -89,6 +89,7 @@ class CMatrix {
   void print() {
     size_t dim(m_mat.size());
     for (size_t i(0);i<dim;i++) {
+      cout<<"  ";
       for (size_t j(0);j<dim;j++)
         cout<<fixed<<setprecision(8)<<m_mat[i][j].real()<<" ";
       cout<<endl;

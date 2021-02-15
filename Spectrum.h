@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -9,12 +9,22 @@
 #ifndef SPECTRUM_H
 #define SPECTRUM_H
 
+// Standard includes.
 #include<cstring>
 #include<iostream>
+
+// Spectrum includes.
 #include "CMatrix.h"
 #include "CBasis.h"
+#include "Colourtools.h"
+#include "TraceBasis.h"
+#include "FBasis.h"
+#include "GenBasis.h"
+#include "MultipletBasis.h"
 
 using namespace std;
+
+namespace SPECTRUM {
 
 //******************************************************************************
 //
@@ -106,16 +116,15 @@ class Spectrum {
   void set_verbose(int verbosity) {
     if (verbosity < 0) m_verbose = 0;
     else if (verbosity > 3) m_verbose = 3;
-    else m_verbose = verbosity;
-  };
+    else m_verbose = verbosity;};
+  void set_ng(int n_g) { m_n_g = n_g; };
+  void set_nqp(int n_qp) { m_n_qp = n_qp; };
   void set_largeNC(bool isLC) { m_largeNC = isLC; };
   void set_use_trace_basis(bool use_tr_basis) { m_traceBasis = use_tr_basis; };
   void set_use_adjoint_basis(bool use_adj_basis) { 
-    m_adjointBasis = use_adj_basis;
-  };
+    m_adjointBasis = use_adj_basis;};
   void set_use_multiplet_basis(bool use_orth_basis) { 
-    m_multipletBasis = use_orth_basis; 
-  };
+    m_multipletBasis = use_orth_basis;};
   void set_reduce_trace_dim(bool reduce_dim) { m_reduceDim = reduce_dim; };
   void set_normalise_basis(bool is_normalised) { m_norm_basis = is_normalised; };
   void set_construct_bcm(bool constr_bcm) { m_construct_bcm = constr_bcm; };
@@ -142,5 +151,11 @@ class Spectrum {
   void print_settings();
   void print_basis();
 };
+
+// Some small helper functions.
+string bool2str(bool in);
+string int2str(int in, int pad=0);
+
+}
 
 #endif

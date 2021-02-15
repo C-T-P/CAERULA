@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -9,7 +9,12 @@
 #include "FBasis.h"
 #include "Colourtools.h"
 
-// member functions of FType class
+//*****************************************************************************
+//
+// Member functions of class FType.
+//
+//*****************************************************************************
+
 FType::FType(vector<size_t> g_inds) {
   m_g=g_inds;
 }
@@ -107,7 +112,12 @@ void FType::print() {
 }
 
 
-// member functions of FVec class
+//*****************************************************************************
+//
+// Member functions of class FVec.
+//
+//*****************************************************************************
+
 FVec::FVec(FType f) {
   if (f.is_not_empty())
     m_FVec.push_back(f);
@@ -206,7 +216,12 @@ void FVec::print() {
   cout<<"]"<<endl;
 }
 
-// member functions of FBasis class
+//*****************************************************************************
+//
+// Member functions of class FVec.
+//
+//*****************************************************************************
+
 FBasis::FBasis(size_t n_g) {
   // set basis type
   m_btype=3;

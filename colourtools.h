@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -26,10 +26,10 @@ using namespace std;
 //******************************************************************************
 
 // Colour constants
-const double NC(3.); // number of colours
-const double TR(1./2.); // generator normalisation
+const double NC(3.);              // Number of Colours.
+const double TR(1./2.);           // Generator Normalisation.
 const double CF(TR*(NC*NC-1)/NC); // Fundamental Casimir
-const double CA(2.*TR*NC); // Adjoint Casimir
+const double CA(2.*TR*NC);        // Adjoint Casimir.
 
 // Other constants
 const double TINY(1.e-6);

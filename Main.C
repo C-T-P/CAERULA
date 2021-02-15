@@ -1,4 +1,4 @@
-// Copyright (C) 2019 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -61,10 +61,12 @@ int main(int argc, char **argv) {
     // We want to do a full colour computation for process specified by partons
     else if (strcmp(argv[i],"-ng")==0) {
       ng = stoi(argv[i+1]);
+      spectrum.set_ng(ng);
       ++i;
     }
     else if (strcmp(argv[i],"-nqp")==0) {
       nqp = stoi(argv[i+1]);
+      spectrum.set_nqp(nqp);
       ++i;
     }
 
@@ -110,7 +112,7 @@ int main(int argc, char **argv) {
 
     // Do not normalise basis
     else if (strcmp(argv[i],"-nonorm")==0) {
-      spectrum.set_normalise_basis(true);
+      spectrum.set_normalise_basis(false);
     }
 
     // Construct basis change matrix to trace basis
@@ -144,9 +146,8 @@ int main(int argc, char **argv) {
            << in_filename << "." << endl;
       exit(EXIT_FAILURE);
     }
-  }
-  else {
-    if (!spectrum.construct_basis(ng, nqp)) {
+  } else {
+    if (!spectrum.construct_basis(nqp, ng)) {
       cerr << "ERROR: Could not construct basis for " 
            << nqp << " quark pairs and " << ng << " gluons." << endl;
       exit(EXIT_FAILURE);

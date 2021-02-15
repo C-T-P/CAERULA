@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -6,16 +6,15 @@
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.
 
-#include "CBasis.h"
 #include "TraceBasis.h"
 
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds);
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
 // Member Functions of TraceType
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 TraceType::TraceType(vector<size_t> g_inds, size_t q_ind, size_t qb_ind) {
   m_q=q_ind;
@@ -170,11 +169,11 @@ void TraceType::print() {
   else cout<<")";
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
 // Member Functions of TraceVec
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 TraceVec::TraceVec(TraceType tr) {
   if (tr.is_not_empty())
@@ -311,11 +310,11 @@ void TraceVec::print() {
   cout<<"]"<<endl;
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
 // Member Functions of TraceBasis
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 TraceBasis::TraceBasis(size_t n_g, size_t n_qp, bool reduceDim) {
   // Set basis type
@@ -416,12 +415,13 @@ TraceBasis::~TraceBasis() {
     
 }
 
-// private functions
+// Private functions.
+
 void TraceBasis::remove_sg() {
   for (size_t i(0);i<m_tr_basis.size();i++) {
     if (m_tr_basis.at(i).has_sg()) {
       m_tr_basis.erase(m_tr_basis.begin()+i);
-      i--;
+      --i;
     }
   }
 }
@@ -453,11 +453,11 @@ void TraceBasis::make_ca_basis() {
     m_ca_basis.push_back(bv.build_ca(m_reduce_dim));
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
 // Helper Functions
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds) {
   vector<vector<size_t>> q_ind_perms, qqb_ind_combos;

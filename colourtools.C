@@ -7,11 +7,11 @@
 
 #include "Colourtools.h"
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
 // Member functions of class process TODO: put in class Spectrum
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 process::process(void) {
   m_in_legs={};
@@ -61,11 +61,11 @@ bool process::is_in_leg(size_t lno) {
   else return false;
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class ColourFactor
+// Member functions of class ColourFactor.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 ColourFactor::ColourFactor() {
   m_NC = 0;
@@ -125,19 +125,24 @@ ColourFactor::ColourFactor(complex<double> cnum, int pow_NC, int pow_TR, int pow
 
 string ColourFactor::get_string() {
   string str("");
-  str += "(" + to_string(m_cmplx.real());
-  if (m_cmplx.imag() < 0.) str += "-";
-  else str += "+";
-  str += to_string(m_cmplx.imag())+")";
-  if (m_NC != 0) str +=  " * NC^{" + to_string(m_NC) + "}";
+  if (fabs(m_cmplx.real()) <= TINY && fabs(m_cmplx.imag()) <= TINY) return str;
+  if (fabs(m_cmplx.real()) > TINY) {
+    str += to_string(m_cmplx.real());
+  }
+  if (fabs(m_cmplx.imag()) > TINY) {
+    if (m_cmplx.imag() < 0.) str += "-";
+    else str += "+";
+    str += to_string(abs(m_cmplx.imag()))+"I";
+  }
+  if (m_NC != 0) str +=  " * NC^" + to_string(m_NC);
   if (m_TR != 0) {
-    str += " * TR^{" + to_string(m_TR) + "}";
+    str += " * TR^" + to_string(m_TR);
   }
   if (m_CF != 0) {
-    str += " * CF^{" + to_string(m_CF) + "}";
+    str += " * CF^" + to_string(m_CF);
  }
  if (m_CA != 0) {
-    str += " * CA^{" + to_string(m_CA) + "}";
+    str += " * CA^" + to_string(m_CA);
  }
  return str;
 }
@@ -318,11 +323,11 @@ complex<double> ColourFactor::get_cnum_large_NC() {
 }
 
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class ColourSum
+// Member functions of class ColourSum.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 ColourSum::ColourSum() {
   m_cf_sum = {};
@@ -353,8 +358,11 @@ ColourSum::ColourSum(string expr) {
 string ColourSum::get_string() {
   string expr("");
   for (auto& term : m_cf_sum) {
-    if (expr != "") expr += " + ";
-    expr += term.get_string();
+    string strNow = term.get_string();
+    if (strNow != "") {
+      if (expr != "") expr += " + ";
+      expr += strNow;
+    }
   }
   return expr;
 }
@@ -503,11 +511,11 @@ complex<double> ColourSum::get_cnum_large_NC() {
   return result;
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class Delta
+// Member functions of class Delta.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 Delta::Delta(size_t i, size_t j, bool adj) {
   m_i=i;
@@ -532,11 +540,11 @@ string Delta::build_string() {
   return str;
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class Fundamental
+// Member functions of class Fundamental.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 Fundamental::Fundamental(size_t i, size_t a, size_t b) {
   m_i=i;
@@ -557,11 +565,11 @@ string Fundamental::build_string() {
   return "t_["+to_string(m_i)+","+to_string(m_a)+","+to_string(m_b)+"]";
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class Antisymmetric
+// Member functions of class Antisymmetric.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 Antisymmetric::Antisymmetric(size_t i, size_t j, size_t k) {
   m_i=i;
@@ -582,11 +590,11 @@ string Antisymmetric::build_string() {
   return "f_["+to_string(m_i)+","+to_string(m_j)+","+to_string(m_k)+"]";
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class Symmetric
+// Member functions of class Symmetric.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 Symmetric::Symmetric(size_t i, size_t j, size_t k) {
   m_i=i;
@@ -607,11 +615,11 @@ string Symmetric::build_string() {
   return "d_["+to_string(m_i)+","+to_string(m_j)+","+to_string(m_k)+"]";
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
-// Member functions of class CTerm
+// Member functions of class CTerm.
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 CTerm::CTerm() {
   //   m_cnum=1.;
@@ -1252,11 +1260,11 @@ void CTerm::print() {
   cout<<build_string()<<endl;
 }
 
-//*********************************************************************************************************
+//*****************************************************************************
 //
 // Member functions of class CAmplitude
 //
-//*********************************************************************************************************
+//*****************************************************************************
 
 CAmplitude::CAmplitude() {
   m_result=0.;
@@ -1304,7 +1312,7 @@ CAmplitude::CAmplitude(string expr) {
 	  cerr << "Invalid prefactor." << endl;
 	  exit(EXIT_FAILURE);
 	}
-	double real(stod(factor.substr(2,cpos-2)));
+	double real(stod(factor.substr(3,cpos-2)));
 	double imaginary(stod(factor.substr(cpos+1,factor.length()-cpos-2)));
 	ct.m_cnum*=complex<double>(real,imaginary);
       }
@@ -1834,6 +1842,3 @@ ColourSum CAmplitude::result() {
   if (m_cterm_vec.size()==0) return m_result;
   else return ColourSum(ColourFactor(complex<double>(NAN,NAN), 0, 0, 0, 0));
 }
-
-
-
