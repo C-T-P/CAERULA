@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -10,9 +10,31 @@
 #define CBASIS_H
 
 #include "CMatrix.H"
-#include "Insert.H"
 
 namespace SPECTRUM {
+
+//******************************************************************************
+//
+// Class Process.
+//
+//******************************************************************************
+
+class Process {
+  // Incoming and outgoing legs: an index is assigned to each leg 
+  // (first component) and the particle is stored in second component.
+  vector<pair<size_t,string>> m_in_legs;
+  vector<pair<size_t,string>> m_out_legs;
+
+ public:
+  Process();
+  ~Process();
+  void add_in_leg(string ptcl);
+  void add_out_leg(string ptcl);
+  void delete_all_legs();
+  size_t no_of_legs();
+  string leg(size_t lno);
+  bool is_in_leg(size_t lno);
+};
 
 //*****************************************************************************
 //
@@ -24,7 +46,7 @@ class CBasis {
  protected:
 
   // Information about process
-  process m_process;
+  Process m_process;
 
   // Vector of colour amplitudes to represent colour basis
   vector<CAmplitude> m_ca_basis;

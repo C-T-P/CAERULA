@@ -10,11 +10,72 @@
 #include<iomanip>
 #include<fstream>
 #include "CBasis.H"
+#include "Insert.H"
 #include "MultipletBasis.H"
 
 namespace SPECTRUM {
 
 const double eps = 1.e-4;
+
+//*****************************************************************************
+//
+// Member functions of class Process TODO: put in class Spectrum
+//
+//*****************************************************************************
+
+Process::Process(void) {
+  m_in_legs={};
+  m_out_legs={};
+}
+
+Process::~Process(void) {
+    
+}
+
+void Process::add_in_leg(string ptcl) {
+  size_t index=m_in_legs.size()+1;
+  if (m_out_legs.size()>0) {
+    for (size_t i(0);i<m_out_legs.size();i++) {
+      m_out_legs.at(i).first+=1;
+    }
+  }
+  m_in_legs.push_back(pair<size_t,string>(index,ptcl));
+}
+
+void Process::add_out_leg(string ptcl) {
+  size_t index=m_in_legs.size()+m_out_legs.size()+1;
+  m_out_legs.push_back(pair<size_t,string>(index,ptcl));
+}
+
+void Process::delete_all_legs() {
+  m_in_legs.clear();
+  m_out_legs.clear();
+}
+
+size_t Process::no_of_legs() {
+  return m_in_legs.size()+m_out_legs.size();
+}
+
+string Process::leg(size_t lno) {
+  // leg numbering starts at 1 !
+  if (lno<=m_in_legs.size()) return m_in_legs.at(lno-1).second;
+  else if (lno<=m_out_legs.size()+m_in_legs.size()) return m_out_legs.at(lno-m_in_legs.size()-1).second;
+  else {
+    cerr << "Leg " << lno << " does not exist in diagram." << endl;
+    return "";
+  }
+}
+
+bool Process::is_in_leg(size_t lno) {
+  if (lno<=m_in_legs.size()) return true;
+  else return false;
+}
+
+//*****************************************************************************
+//
+// Member functions of class CBasis.
+//
+//*****************************************************************************
 
 void CBasis::normalise(bool to_LC) {
   for (size_t i(0);i<m_dim;i++) {

@@ -9,11 +9,12 @@
 #ifndef INSERT_H
 #define INSERT_H
 
+#include "CBasis.H"
 #include "Colourtools.H"
 
 namespace SPECTRUM {
 
-CAmplitude construct_insertion_op(process proc, size_t lno1, size_t lno2);
+CAmplitude construct_insertion_op(Process proc, size_t lno1, size_t lno2);
 
 }
 

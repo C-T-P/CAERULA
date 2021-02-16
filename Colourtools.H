@@ -24,7 +24,7 @@ namespace SPECTRUM {
 
 //******************************************************************************
 //
-// Global Constants - TODO: put in Spectrum.h
+// Global Constants.
 //
 //******************************************************************************
 
@@ -34,31 +34,8 @@ const double TR(1./2.);           // Generator Normalisation.
 const double CF(TR*(NC*NC-1)/NC); // Fundamental Casimir
 const double CA(2.*TR*NC);        // Adjoint Casimir.
 
-// Other constants
+// Other constants.
 const double TINY(1.e-6);
-
-//******************************************************************************
-//
-// Class process - TODO: put in Spectrum.h
-//
-//******************************************************************************
-
-class process {
-  // incoming and outgoing legs: an index is assigned to each leg 
-  // (first component) and the particle is stored in second component
-  vector<pair<size_t,string>> m_in_legs;
-  vector<pair<size_t,string>> m_out_legs;
-
- public:
-  process();
-  ~process();
-  void add_in_leg(string ptcl);
-  void add_out_leg(string ptcl);
-  void delete_all_legs();
-  size_t no_of_legs();
-  string leg(size_t lno);
-  bool is_in_leg(size_t lno);
-};
 
 //******************************************************************************
 // 

@@ -12,60 +12,6 @@ namespace SPECTRUM {
 
 //*****************************************************************************
 //
-// Member functions of class process TODO: put in class Spectrum
-//
-//*****************************************************************************
-
-process::process(void) {
-  m_in_legs={};
-  m_out_legs={};
-}
-
-process::~process(void) {
-    
-}
-
-void process::add_in_leg(string ptcl) {
-  size_t index=m_in_legs.size()+1;
-  if (m_out_legs.size()>0) {
-    for (size_t i(0);i<m_out_legs.size();i++) {
-      m_out_legs.at(i).first+=1;
-    }
-  }
-  m_in_legs.push_back(pair<size_t,string>(index,ptcl));
-}
-
-void process::add_out_leg(string ptcl) {
-  size_t index=m_in_legs.size()+m_out_legs.size()+1;
-  m_out_legs.push_back(pair<size_t,string>(index,ptcl));
-}
-
-void process::delete_all_legs() {
-  m_in_legs.clear();
-  m_out_legs.clear();
-}
-
-size_t process::no_of_legs() {
-  return m_in_legs.size()+m_out_legs.size();
-}
-
-string process::leg(size_t lno) {
-  // leg numbering starts at 1 !
-  if (lno<=m_in_legs.size()) return m_in_legs.at(lno-1).second;
-  else if (lno<=m_out_legs.size()+m_in_legs.size()) return m_out_legs.at(lno-m_in_legs.size()-1).second;
-  else {
-    cerr << "Leg " << lno << " does not exist in diagram." << endl;
-    return "";
-  }
-}
-
-bool process::is_in_leg(size_t lno) {
-  if (lno<=m_in_legs.size()) return true;
-  else return false;
-}
-
-//*****************************************************************************
-//
 // Member functions of class ColourFactor.
 //
 //*****************************************************************************
