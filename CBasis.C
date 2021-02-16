@@ -114,8 +114,12 @@ void CBasis::print_to_file(string filename, bool to_LC) {
       else if (ptcl=="qb") n_qb++;
       else if (ptcl=="g") n_g++;
     }
-    if (n_q!=0) out_filename+=to_string(n_q)+"q";
-    if (n_qb!=0) out_filename+=to_string(n_qb)+"qb";
+    if (n_q!=0 && n_qb!=0) {
+      if (n_q!=n_qb) {
+        out_filename+=to_string(n_q)+"q";
+        out_filename+=to_string(n_qb)+"qb";
+      } else out_filename+=to_string(n_q)+"qqb";
+    }
     if (n_g!=0) out_filename+=to_string(n_g)+"g";
     
     if (m_btype==1) out_filename+="_multiplet";
@@ -170,7 +174,7 @@ void CBasis::print_to_file(string filename, bool to_LC) {
     for (size_t n(0);n<m_dim;n++) file<<fixed<<setprecision(17)<<" "<<m_smat[m][n].real();
   file<<";"<<endl;
   
-  file<<"\n% colour change matrices"<<endl;
+  file<<"\n% colour insertion matrices"<<endl;
   size_t i(0);
   for (unsigned int lno1(1);lno1<=m_process.no_of_legs();lno1++) {
     for (unsigned int lno2(lno1+1);lno2<=m_process.no_of_legs();lno2++) {
