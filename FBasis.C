@@ -9,6 +9,8 @@
 #include "FBasis.h"
 #include "Colourtools.h"
 
+namespace SPECTRUM {
+
 //*****************************************************************************
 //
 // Member functions of class FType.
@@ -303,4 +305,6 @@ void FBasis::make_perms() {
 void FBasis::make_ca_basis() {
   for (auto& bv : m_FBasis)
     m_ca_basis.push_back(bv.build_ca());
+}
+
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss 
+// Copyright (C) 2021 Christian T Preuss 
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -8,7 +8,9 @@
 
 #include "Insert.h"
 
-// construct Insertion operator for gluon Insertion between leg lno1 and lno2 as a colour term
+namespace SPECTRUM {
+
+// Construct Insertion operator for gluon Insertion between leg lno1 and lno2 as a colour term.
 CAmplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
     CTerm ins_op;
     ColourFactor prefactor = ColourFactor(1., 0, 0, 0, 0);
@@ -51,4 +53,6 @@ CAmplitude construct_insertion_op(process proc, size_t lno1, size_t lno2) {
     ins_op.set_cnumber(prefactor);
 
     return CAmplitude(ins_op);
+}
+
 }

@@ -1,11 +1,14 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
+//
 // Spectrum is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.     
 
 #include "Colourtools.h"
+
+namespace SPECTRUM {
 
 //*****************************************************************************
 //
@@ -1841,4 +1844,6 @@ void CAmplitude::print() {
 ColourSum CAmplitude::result() {
   if (m_cterm_vec.size()==0) return m_result;
   else return ColourSum(ColourFactor(complex<double>(NAN,NAN), 0, 0, 0, 0));
+}
+
 }

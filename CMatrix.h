@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -17,10 +17,14 @@
 
 using namespace std;
 
+namespace SPECTRUM {
+
 typedef vector<vector<complex<double>>> matrix;
 
 class CMatrix {
+  
   vector<vector<complex<double>>> m_mat;
+
  public:
   CMatrix() {
     m_mat=vector<vector<complex<double>>>();
@@ -97,6 +101,7 @@ class CMatrix {
   }
 
  private:
+  
   // Helper function
   complex<double> determinant(CMatrix mat, size_t n) {
     if (n == 1) {
@@ -129,5 +134,7 @@ class CMatrix {
     }
   }
 };
+
+}
 
 #endif

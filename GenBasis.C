@@ -9,6 +9,8 @@
 #include<fstream>
 #include "GenBasis.h"
 
+namespace SPECTRUM {
+
 //*****************************************************************************
 //
 // Member functions of class GenBasis.
@@ -39,7 +41,9 @@ GenBasis::GenBasis(string filename) {
 	  if (direc=="in") m_process.add_in_leg(line);
 	  else if (direc=="out") m_process.add_out_leg(line);
 	  else {
-	    cerr << "Error reading in process: leg needs either direction \"in\" or \"out\" , but was given direction \"" << direc << "\"." << endl;
+	    cerr << "Error reading in process:"
+                 << " leg needs either direction \"in\" or \"out\" , but was given \""
+                 << direc << "\"." << endl;
 	    exit(EXIT_FAILURE);
 	  }
 	}
@@ -62,6 +66,6 @@ GenBasis::GenBasis(string filename) {
   m_ccmats=vector<CMatrix>();
 }
 
-GenBasis::~GenBasis() {
-    
+GenBasis::~GenBasis() {;}
+
 }

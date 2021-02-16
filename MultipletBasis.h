@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace SPECTRUM {
+
 //*****************************************************************************
 //
 // Class SU3Irrep
@@ -121,5 +123,7 @@ class MultipletBasis : public GenBasis {
 
   friend class CBasis;
 };
+
+}
 
 #endif

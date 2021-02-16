@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -10,6 +10,8 @@
 #include "MultipletBasis.h"
 #include "TraceBasis.h"
 #include "GenBasis.h"
+
+namespace SPECTRUM {
 
 string get_filename(size_t n_g, size_t n_qp);
 
@@ -71,4 +73,6 @@ string get_filename(size_t n_g, size_t n_qp) {
   }
   filename="precalc_multiplet_bases/"+filename;
   return filename;
+}
+
 }

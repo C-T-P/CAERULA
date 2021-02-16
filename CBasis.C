@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss
+// Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -11,6 +11,8 @@
 #include "CBasis.h"
 #include "Insert.h"
 #include "MultipletBasis.h"
+
+namespace SPECTRUM {
 
 const double eps = 1.e-4;
 
@@ -242,4 +244,6 @@ bool CBasis::check_colourcons(bool to_LC) {
   }
     
   return is_conserved;
+}
+
 }

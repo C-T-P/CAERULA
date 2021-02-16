@@ -19,6 +19,8 @@
 
 using namespace std;
 
+namespace SPECTRUM {
+
 //******************************************************************************
 //
 // Global Constants - TODO: put in Spectrum.h
@@ -506,5 +508,7 @@ class CAmplitude {
   // Method to print string representation to terminal
   void print();
 };
+
+}
 
 #endif

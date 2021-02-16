@@ -11,54 +11,55 @@
 void print_help_message();
 
 int main(int argc, char **argv) {
-  // Create instance of Spectrum
-  Spectrum  spectrum;
 
-  // Store filenames
+  // Create instance of Spectrum.
+  SPECTRUM::Spectrum  spectrum;
+
+  // Store filenames.
   string in_filename("");
   string out_filename("");
 
-  // Store number of quark pairs and gluons
+  // Store number of quark pairs and gluons.
   int nqp(0), ng(0);
 
-  // Store whether we want to print everything to a file
+  // Store whether we want to print everything to a file.
   bool printfile(true);
 
-  // If no input given, print help meassage
+  // If no input given, print help meassage.
   if (argc==1) print_help_message();
   
-  // Determine options from command line input
+  // Determine options from command line input.
   for(int i(1); i<argc; ++i) {
-    // Print help message and exit
+    // Print help message and exit.
     if (strcmp(argv[i], "-help")==0 or strcmp(argv[i], "-h")==0) {
       print_help_message();
     }
 
-    // Set verbosity
+    // Set verbosity.
     else if (strcmp(argv[i], "-verbose")==0 or strcmp(argv[i], "-v")==0) {
       spectrum.set_verbose(stoi(argv[i+1]));
       ++i;
     }
 
-    // We want to evaluate a given colour amplitude
+    // We want to evaluate a given colour amplitude.
     else if (strcmp(argv[i], "-evaluate")==0 or strcmp(argv[i], "-e")==0) {
       spectrum.evaluate_ca(argv[i+1]);
       return 0;
     }
 
-    // We want to simplify a given colour amplitude
+    // We want to simplify a given colour amplitude.
     else if (strcmp(argv[i], "-simplify")==0 or strcmp(argv[i], "-s")==0) {
       spectrum.simplify_ca(argv[i+1]);
       return 0;
     }
 
-    // We want to do a full colour computation for process read from file
+    // We want to do a full colour computation for process read from file.
     else if (strcmp(argv[i], "-f")==0 or strcmp(argv[i], "-file")==0) {
       in_filename = argv[i+1];
       ++i;
     }
 
-    // We want to do a full colour computation for process specified by partons
+    // We want to do a full colour computation for process specified by partons.
     else if (strcmp(argv[i],"-ng")==0) {
       ng = stoi(argv[i+1]);
       spectrum.set_ng(ng);
@@ -70,7 +71,7 @@ int main(int argc, char **argv) {
       ++i;
     }
 
-    // We want to reduce the dimension of the trace basis by summing conjugates
+    // We want to reduce the dimension of the trace basis by summing conjugates.
     else if (strcmp(argv[i],"-reduceDim")==0) {
       if (spectrum.get_use_trace_basis()) spectrum.set_reduce_trace_dim(true);
       else {
@@ -79,7 +80,7 @@ int main(int argc, char **argv) {
       }
     }
 
-    // Use the adjoint basis
+    // Use the adjoint basis.
     else if (strcmp(argv[i],"-adj")==0) {
       if (!spectrum.get_use_multiplet_basis()) {
         spectrum.set_use_adjoint_basis(true);
@@ -92,7 +93,7 @@ int main(int argc, char **argv) {
       }
     }
 
-    // Use the multiplet basis
+    // Use the multiplet basis.
     else if (strcmp(argv[i],"-multiplet")==0) {
       if (!spectrum.get_use_adjoint_basis()) {
         spectrum.set_use_multiplet_basis(true);
@@ -105,27 +106,27 @@ int main(int argc, char **argv) {
       }
     }
 
-    // Use large-NC limit
+    // Use large-NC limit.
     else if (strcmp(argv[i],"-largeNC")==0) {
       spectrum.set_largeNC(true);
     }   
 
-    // Do not normalise basis
+    // Do not normalise basis.
     else if (strcmp(argv[i],"-nonorm")==0) {
       spectrum.set_normalise_basis(false);
     }
 
-    // Construct basis change matrix to trace basis
+    // Construct basis change matrix to trace basis.
     else if (strcmp(argv[i],"-bcm")==0) {
       spectrum.set_construct_bcm(true);
     }
 
-    // Calculate determinant of soft matrix
+    // Calculate determinant of soft matrix.
     else if (strcmp(argv[i],"-det")==0) {
       spectrum.set_calc_det(true);
     }
 
-    // Do not save calculation to file
+    // Do not save calculation to file.
     else if (strcmp(argv[i],"-nooutfile")==0) {
       printfile = false;
     }
@@ -158,15 +159,13 @@ int main(int argc, char **argv) {
   spectrum.print_basis();
 
   // Calculate soft matrix
-  CMatrix softmatrix = spectrum.calculate_soft_matrix();
+  SPECTRUM::CMatrix softmatrix = spectrum.calculate_soft_matrix();
 
   // Calculate colour correlators
-  vector<CMatrix> ccmatrices = spectrum.calculate_colour_correlators();
+  vector<SPECTRUM::CMatrix> ccmatrices = spectrum.calculate_colour_correlators();
 
   // Save everything to file
-  if (printfile) {
-    spectrum.save_to_file(out_filename);
-  }
+  if (printfile) spectrum.save_to_file(out_filename);
 
   return 0;
 }

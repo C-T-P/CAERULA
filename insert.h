@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Christian T Preuss 
+// Copyright (C) 2021 Christian T Preuss 
 // This file is part of Spectrum.
 //
 // Spectrum is free software: you can redistribute it and/or modify
@@ -11,6 +11,10 @@
 
 #include "Colourtools.h"
 
+namespace SPECTRUM {
+
 CAmplitude construct_insertion_op(process proc, size_t lno1, size_t lno2);
+
+}
 
 #endif

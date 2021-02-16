@@ -8,6 +8,8 @@
 
 #include "TraceBasis.h"
 
+namespace SPECTRUM {
+
 vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size_t> qb_inds);
 
 //*****************************************************************************
@@ -475,4 +477,6 @@ vector<vector<size_t>> get_q_ind_combinations(vector<size_t> q_inds, vector<size
     qqb_ind_combos.push_back(tmp);
   }
   return qqb_ind_combos;
+}
+
 }

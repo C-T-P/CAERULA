@@ -26,11 +26,11 @@ using namespace std;
 
 namespace SPECTRUM {
 
-//******************************************************************************
+//*****************************************************************************
 //
-// Base class Spectrum
+// Base class Spectrum.
 //
-//******************************************************************************
+//*****************************************************************************
 
 class Spectrum {
 
@@ -86,8 +86,7 @@ class Spectrum {
     m_traceBasis = true; m_adjointBasis = false; m_multipletBasis = false;
     m_reduceDim = true; m_norm_basis = true; m_construct_bcm = false; 
     m_calcDet = false; m_verbose = 1;
-    m_basis = NULL;
-  }
+    m_basis = NULL;}
 
   // Evaluate a given colour amplitude
   bool evaluate_ca(string expr = "");
@@ -130,9 +129,9 @@ class Spectrum {
   void set_construct_bcm(bool constr_bcm) { m_construct_bcm = constr_bcm; };
   void set_calc_det(bool calcDet) { m_calcDet = calcDet; };
 
-  //----------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Getters
-  //----------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   int get_verbose(int verbosity) { return m_verbose; };
   size_t get_ng() { return m_n_g; };
   size_t get_nqp() { return m_n_qp; };
@@ -145,9 +144,9 @@ class Spectrum {
   bool get_construct_bcm() { return m_construct_bcm; };
   bool get_calc_det() { return m_calcDet; };
 
-  //----------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   // Printers
-  //----------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
   void print_settings();
   void print_basis();
 };

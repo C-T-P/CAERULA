@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace SPECTRUM {
+
 //*****************************************************************************
 //
 // Class FType
@@ -121,5 +123,7 @@ class FBasis : public CBasis {
   FBasis(size_t n_g);
   ~FBasis();
 };
+
+}
 
 #endif

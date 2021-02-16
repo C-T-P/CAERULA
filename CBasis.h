@@ -12,6 +12,8 @@
 #include "Colourtools.h"
 #include "CMatrix.h"
 
+namespace SPECTRUM {
+
 //******************************************************************************
 //
 // Class CBasis
@@ -99,5 +101,7 @@ class CBasis {
   // Method to check whether basis is normalised
   bool is_normalised() {return m_is_normalised;}
 };
+
+}
 
 #endif

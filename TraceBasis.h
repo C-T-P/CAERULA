@@ -14,6 +14,8 @@
 
 using namespace std;
 
+namespace SPECTRUM {
+
 //*****************************************************************************
 //
 // Class TraceType
@@ -183,5 +185,7 @@ class TraceBasis : public CBasis {
   
   friend class MultipletBasis;
 };
+
+}
 
 #endif

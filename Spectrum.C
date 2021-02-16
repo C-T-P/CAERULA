@@ -1,8 +1,18 @@
+// Copyright (C) 2021 Christian T Preuss
+// This file is part of Spectrum.
+//
+// Spectrum is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// any later version.                                                                               
+
 #include<fstream>
 #include<iomanip>
 #include<climits>
 
 #include "Spectrum.h"
+
+namespace SPECTRUM {
 
 // Method to print the banner on startup
 void Spectrum::print_banner() {
@@ -73,14 +83,11 @@ bool Spectrum::construct_basis(int nqp, int ng) {
       
       m_basis = ortho_basis;
     }
-  }
-  else if (m_adjointBasis) {
+  }  else if (m_adjointBasis) {
     if (m_verbose>=3)
       cout<<" Spectrum::construct_basis() Constructing adjoint basis for "<<m_n_g<<" gluons."<<endl;
-
     m_basis = new FBasis(m_n_g);
-  }
-  else if (m_traceBasis) {
+  } else if (m_traceBasis) {
     if (m_verbose>=3) {
       cout<<" Spectrum::construct_basis() Constructing trace basis for "<<m_n_g<<" gluons";
       cout<<" and "<<m_n_qp<<" quark pairs."<<endl;
@@ -90,8 +97,7 @@ bool Spectrum::construct_basis(int nqp, int ng) {
     }
     
     m_basis = new TraceBasis(m_n_g, m_n_qp, m_reduceDim);
-  }
-  else {
+  } else {
     cerr<<" Spectrum::construct_basis() Error! No basis type specified."<<endl;
     exit(EXIT_FAILURE);
   }
@@ -278,4 +284,6 @@ string int2str(int in, int pad) {
   string str=std::to_string(in);
   for (int i(0); i<pad; ++i) str+=" ";
   return str;
+}
+
 }
