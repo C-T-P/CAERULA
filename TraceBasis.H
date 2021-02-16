@@ -9,8 +9,7 @@
 #ifndef TRACEBASIS_H
 #define TRACEBASIS_H
 
-#include "CBasis.h"
-#include "Colourtools.h"
+#include "CBasis.H"
 
 using namespace std;
 

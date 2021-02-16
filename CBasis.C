@@ -1,3 +1,4 @@
+
 // Copyright (C) 2021 Christian T Preuss
 // This file is part of Spectrum.
 //
@@ -8,9 +9,8 @@
 
 #include<iomanip>
 #include<fstream>
-#include "CBasis.h"
-#include "Insert.h"
-#include "MultipletBasis.h"
+#include "CBasis.H"
+#include "MultipletBasis.H"
 
 namespace SPECTRUM {
 

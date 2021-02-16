@@ -9,13 +9,14 @@
 #ifndef COLOURTOOLS_H
 #define COLOURTOOLS_H
 
+#include<algorithm>
+#include<climits>
+#include<cmath>
+#include<complex>
 #include<cstring>
 #include<iostream>
+#include<iomanip>
 #include<vector>
-#include<algorithm>
-#include<complex>
-#include<cmath>
-#include<climits>
 
 using namespace std;
 

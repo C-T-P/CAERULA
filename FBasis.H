@@ -9,7 +9,7 @@
 #ifndef FBASIS_H
 #define FBASIS_H
 
-#include "CBasis.h"
+#include "CBasis.H"
 
 using namespace std;
 

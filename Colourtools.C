@@ -6,7 +6,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.     
 
-#include "Colourtools.h"
+#include "Colourtools.H"
 
 namespace SPECTRUM {
 

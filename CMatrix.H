@@ -9,11 +9,7 @@
 #ifndef CMATRIX_H
 #define CMATRIX_H
 
-#include<vector>
-#include<complex>
-#include<cmath>
-#include<iomanip>
-#include "Colourtools.h"
+#include "Colourtools.H"
 
 using namespace std;
 

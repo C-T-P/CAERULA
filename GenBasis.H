@@ -9,7 +9,7 @@
 #ifndef GENBASIS_H
 #define GENBASIS_H
 
-#include "CBasis.h"
+#include "CBasis.H"
 
 using namespace std;
 

@@ -14,13 +14,13 @@
 #include<iostream>
 
 // Spectrum includes.
-#include "CMatrix.h"
-#include "CBasis.h"
-#include "Colourtools.h"
-#include "TraceBasis.h"
-#include "FBasis.h"
-#include "GenBasis.h"
-#include "MultipletBasis.h"
+#include "CBasis.H"
+#include "CMatrix.H"
+#include "Colourtools.H"
+#include "FBasis.H"
+#include "GenBasis.H"
+#include "MultipletBasis.H"
+#include "TraceBasis.H"
 
 using namespace std;
 

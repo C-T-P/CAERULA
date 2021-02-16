@@ -7,9 +7,7 @@
 // any later version.
 
 #include<fstream>
-#include "MultipletBasis.h"
-#include "TraceBasis.h"
-#include "GenBasis.h"
+#include "MultipletBasis.H"
 
 namespace SPECTRUM {
 
@@ -28,9 +26,7 @@ MultipletBasis::MultipletBasis(size_t n_g, size_t n_qp) : GenBasis(get_filename(
   m_bcm=matrix();
 }
 
-MultipletBasis::~MultipletBasis() {
-    
-}
+MultipletBasis::~MultipletBasis() {;}
 
 matrix MultipletBasis::bcm() {
   TraceBasis tr_basis(m_ng, m_nqp);

@@ -10,7 +10,7 @@
 #include<iomanip>
 #include<climits>
 
-#include "Spectrum.h"
+#include "Spectrum.H"
 
 namespace SPECTRUM {
 

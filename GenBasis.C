@@ -7,7 +7,7 @@
 // any later version.
 
 #include<fstream>
-#include "GenBasis.h"
+#include "GenBasis.H"
 
 namespace SPECTRUM {
 

@@ -6,8 +6,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // any later version.
 
-#include "FBasis.h"
-#include "Colourtools.h"
+#include "FBasis.H"
 
 namespace SPECTRUM {
 

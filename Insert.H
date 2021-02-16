@@ -9,7 +9,7 @@
 #ifndef INSERT_H
 #define INSERT_H
 
-#include "Colourtools.h"
+#include "Colourtools.H"
 
 namespace SPECTRUM {
 
